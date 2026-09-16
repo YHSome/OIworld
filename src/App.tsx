@@ -58,7 +58,7 @@ export default function App() {
     <Layout style={{ minHeight: '100vh' }}>
       <Header className="app-header">
         <div className="app-header-inner">
-          <div className="brand" onClick={() => navigate(pythonRoute ? '/python' : '/')} role="presentation">
+          <div className="brand" onClick={() => navigate(javaRoute ? '/java' : pythonRoute ? '/python' : '/')} role="presentation">
             <CodeOutlined className="brand-icon" />
             <span className="brand-name">OIworld</span>
             <Text className="brand-slogan">{javaRoute ? 'Java 基础语法靶场 · 浏览器本地运行' : pythonRoute ? 'Python 基础语法靶场 · 浏览器本地运行' : 'C++ 基础语法靶场 · 浏览器本地编译'}</Text>

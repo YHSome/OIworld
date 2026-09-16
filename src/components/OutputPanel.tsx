@@ -15,6 +15,7 @@ import {
   parseDiagnostics,
   type BeginnerTip,
 } from '../compiler/diagnostics';
+import { pythonBeginnerTips } from '../python/diagnostics';
 
 const { Text } = Typography;
 
@@ -285,7 +286,9 @@ function CompileErrorPanel({
   const parsed = parseDiagnostics(diagnostics).filter(
     (item) => item.severity === 'error',
   );
-  const tips = language === 'cpp' ? beginnerTips(code, diagnostics) : [];
+  const tips = language === 'cpp'
+    ? beginnerTips(code, diagnostics)
+    : pythonBeginnerTips(code, diagnostics);
   return (
     <div className="output-panel">
       <Alert

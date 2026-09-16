@@ -145,7 +145,8 @@ try {
   const settings = await page.locator('body').innerText();
   check(
     '设置页说明开发者模式的作用',
-    settings.includes('开发者模式') && settings.includes('全部题目解锁'),
+    settings.includes('开发者模式') &&
+      /(解锁全部题目|全部题目解锁)/.test(settings),
   );
   check('提示了 ?dev=1 与快捷键', settings.includes('?dev=1') && settings.includes('Ctrl + Shift + D'));
   check(

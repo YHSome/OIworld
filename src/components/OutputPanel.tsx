@@ -16,6 +16,7 @@ import {
   type BeginnerTip,
 } from '../compiler/diagnostics';
 import { pythonBeginnerTips } from '../python/diagnostics';
+import { javaBeginnerTips } from '../java/diagnostics';
 
 const { Text } = Typography;
 
@@ -290,7 +291,7 @@ function CompileErrorPanel({
     ? beginnerTips(code, diagnostics)
     : language === 'python'
       ? pythonBeginnerTips(code, diagnostics)
-      : [];
+      : javaBeginnerTips(code, diagnostics);
   return (
     <div className="output-panel">
       <Alert

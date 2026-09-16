@@ -29,6 +29,8 @@ class JavaService {
 
   subscribe(listener: Listener) { this.listeners.add(listener); listener(this.status); return () => { this.listeners.delete(listener); }; }
   getStatus() { return this.status; }
+  /** 预热运行环境：题目页打开时调用，避免第一次点「运行」才开始下载 */
+  warmUp() { return this.ensureReady(); }
   private setStatus(status: JavaRuntimeStatus) { this.status = status; this.listeners.forEach((listener) => listener(status)); }
   private base() { return `${import.meta.env.BASE_URL}doppio-runtime`; }
 

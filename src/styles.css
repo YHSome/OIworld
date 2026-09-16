@@ -79,6 +79,19 @@
   border-color: #531dab !important;
 }
 
+/* Java 靶场主色为橙色，与题目/工具栏里的 Java 标签保持一致 */
+.language-switch .java-switch-active {
+  background: #fa8c16;
+  border-color: #fa8c16;
+  box-shadow: none;
+}
+
+.language-switch .java-switch-active:hover,
+.language-switch .java-switch-active:focus {
+  background: #d46b08 !important;
+  border-color: #d46b08 !important;
+}
+
 .header-stat {
   font-size: 12px;
   color: #595959;
@@ -144,6 +157,31 @@
   right: 28px;
   bottom: -42px;
   color: rgba(114, 46, 209, 0.06);
+  font-family: Georgia, serif;
+  font-size: 170px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Java 靶场的首页 / 指南页头图：橙色主题，右上角有一枚爪哇咖啡色装饰字 */
+.java-hero-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 16%, rgba(250, 140, 22, 0.16), transparent 26%),
+    radial-gradient(circle at 74% 104%, rgba(212, 107, 8, 0.1), transparent 34%),
+    linear-gradient(135deg, #fff8ef 0%, #fff 65%);
+  border: 1px solid #ffe1bd;
+  box-shadow: 0 12px 30px rgba(212, 107, 8, 0.07);
+}
+
+.java-hero-card::after {
+  content: 'Jv';
+  position: absolute;
+  right: 28px;
+  bottom: -42px;
+  color: rgba(250, 140, 22, 0.08);
   font-family: Georgia, serif;
   font-size: 170px;
   font-weight: 700;

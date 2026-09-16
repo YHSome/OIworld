@@ -441,6 +441,23 @@
   line-height: 1.4;
 }
 
+/* 题面以二级标题组织“任务 / 新知识 / 样例 / 常见错误”；
+   给它与三级标题一致的视觉锚点，长篇零基础讲解才容易扫读。 */
+.problem-desc-card .markdown-body h2 {
+  margin: 24px 0 10px;
+  padding-left: 10px;
+  border-left: 3px solid #1677ff;
+  color: #1f1f1f;
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.4;
+  scroll-margin-top: 96px;
+}
+
+.problem-desc-card .markdown-body h2:first-child {
+  margin-top: 0;
+}
+
 .markdown-body h4 {
   font-size: 14px;
   font-weight: 600;

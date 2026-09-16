@@ -16,6 +16,7 @@ test-results/
 # 编译器工具链（约 95MB，由 `npm run setup:toolchain` 从 node_modules 复制生成）
 public/toolchain/
 public/python-runtime/
+public/java-runtime/
 
 # 编辑器
 .vscode/*

@@ -3,14 +3,18 @@
  *
  * 三种来源，按优先级：
  *  1. 构建期环境变量 VITE_TOOLCHAIN_BASE
- *  2. 同源静态目录 /toolchain（执行 `npm run setup:toolchain` 后存在，可完全离线）
- *  3. jsDelivr CDN 上的 browsercc npm 包
+ *  2. 同源静态目录 <base>/toolchain（执行 `npm run setup:toolchain` 后存在，可完全离线）
+ *  3. jsDelivr CDN 上的 browsercc npm 包（GitHub Pages 等纯静态托管默认走这条路）
  */
 
 export const CDN_TOOLCHAIN_BASE =
   'https://cdn.jsdelivr.net/npm/browsercc@0.1.1/dist';
 
-export const LOCAL_TOOLCHAIN_BASE = '/toolchain';
+/**
+ * 同源工具链目录。用 BASE_URL 拼接，
+ * 这样部署到 GitHub Pages 这类子路径站点（/OIworld/）时能正确指向 /OIworld/toolchain。
+ */
+export const LOCAL_TOOLCHAIN_BASE = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/toolchain`;
 
 /** 需要下载的静态资源（用于展示下载进度） */
 export const TOOLCHAIN_FILES = [

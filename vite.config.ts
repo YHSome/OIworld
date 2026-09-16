@@ -26,6 +26,7 @@ function toolchainDevServer(): Plugin {
   let distDir = '';
   let version = '0.0.0';
   let publicDir = path.resolve(process.cwd(), 'public');
+  let basePath = '/';
   try {
     const pkgPath = require.resolve('browsercc/package.json');
     distDir = path.join(path.dirname(pkgPath), 'dist');
@@ -52,7 +53,11 @@ function toolchainDevServer(): Plugin {
   );
 
   const handler: Connect.NextHandleFunction = (req, res, next) => {
-    const url = (req.url ?? '').split('?')[0];
+    const raw = (req.url ?? '').split('?')[0];
+    // dev / preview 也支持部署用的子路径（例如 --base=/OIworld/）
+    const url = basePath !== '/' && raw.startsWith(basePath)
+      ? `/${raw.slice(basePath.length)}`
+      : raw;
     if (!url.startsWith('/toolchain/')) {
       next();
       return;
@@ -96,6 +101,7 @@ function toolchainDevServer(): Plugin {
     name: 'oiworld-toolchain-dev-server',
     configResolved(config) {
       publicDir = config.publicDir || publicDir;
+      basePath = config.base || '/';
     },
     configureServer(server) {
       server.middlewares.use(handler);
@@ -106,7 +112,16 @@ function toolchainDevServer(): Plugin {
   };
 }
 
+/**
+ * 部署到 GitHub Pages 时：
+ *   base 设为 /<仓库名>/（例如 /OIworld/）
+ *   VITE_HASH_ROUTER=1 启用 hash 路由，避免刷新深链时 404
+ * 本地开发保持 base='/'、BrowserRouter，地址栏更干净。
+ */
+const base = process.env.VITE_BASE || '/';
+
 export default defineConfig({
+  base,
   plugins: [react(), toolchainDevServer()],
   optimizeDeps: {
     // run.worker.ts 只在“第一次运行”时才被浏览器加载，

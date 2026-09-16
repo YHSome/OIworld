@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OIworld · C++ 基础语法靶场</title>
+    <script>
+      /*
+       * GitHub Pages 对「找不到的路径」会返回这个 404.html。
+       *
+       * 本站部署时使用 hash 路由（VITE_HASH_ROUTER=1），所以正常访问永远是
+       *   https://<用户>.github.io/<仓库>/           ← 首页
+       *   https://<用户>.github.io/<仓库>/#/problem/s1-p1
+       * 不会走到这里。
+       *
+       * 但如果有人拿着「本地开发的干净链接」（例如 /OIworld/problem/s1-p1）
+       * 或旧书签访问，就会命中 404。这里把它重定向成对应的 hash 路由，
+       * 保证链接永远能用。
+       */
+      (function () {
+        var segments = location.pathname.split('/').filter(Boolean);
+        // 项目站点形如 /OIworld/problem/s1-p1 → base 为 /OIworld/，余下为路由
+        // 用户站点形如 /problem/s1-p1 → base 为 /，余下为路由
+        var base = segments.length > 0 ? '/' + segments[0] : '';
+        // 仓库名恰好等于路径首段时视为项目站点；否则当作域名根部署
+        var rest = segments.slice(1);
+        var path = rest.join('/');
+        var target =
+          base + '/#' + (path ? '/' + path : '/') + location.search + location.hash;
+        location.replace(target);
+      })();
+    </script>
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei",
+          sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background: #f5f7fa;
+        color: #6b7280;
+      }
+      a {
+        color: #1677ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <p>正在跳转到 OIworld…</p>
+      <p>如果没有自动跳转，请<a href="./">点这里返回首页</a>。</p>
+    </div>
+  </body>
+</html>

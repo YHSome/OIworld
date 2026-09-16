@@ -77,6 +77,45 @@ npm run preview      # 预览生产构建，默认 http://localhost:4173
 
 ---
 
+## 部署到 GitHub Pages
+
+仓库自带 `.github/workflows/deploy-pages.yml`：**推送到 `main` 就自动构建并发布**（也可在 Actions 里手动触发）。
+线上地址：<https://yhsome.github.io/OIworld/>
+
+部署形态与本地开发有三点差异，工作流里已经处理好：
+
+| 差异 | 本地开发 | GitHub Pages |
+| --- | --- | --- |
+| base 路径 | `/` | `/<仓库名>/` —— 项目站点不在域名根下，资源与 Worker 都必须带前缀 |
+| 路由 | `BrowserRouter`（干净 URL） | `HashRouter`（`#/problem/s1-p1`）—— 刷新深链不会 404 |
+| 编译器工具链 | `<base>/toolchain`（dev 中间件映射 `node_modules`） | jsDelivr CDN（Pages 上没有 `/toolchain`，`fetchManifest` 失败后自动回退） |
+
+`public/404.html` 会把「本地开发的干净链接」（如 `/OIworld/problem/s1-p1`）重定向成对应的 hash 路由，
+所以老书签也不会失效。
+
+**想改成同源加载编译器（完全不依赖外部 CDN）：**
+
+```bash
+npm run setup:toolchain     # 生成 public/toolchain（约 90MB）
+# 然后把 .gitignore 里的 public/toolchain 一行去掉，一起提交
+```
+
+代价：仓库体积涨到约 95MB（`clang.wasm` 单文件 43MB，未超 GitHub 的 100MB 限制每文件），
+且 GitHub Pages 每月 100GB 的软带宽上限大约只够 1000 个首次访问者。
+
+**本地验证部署形态：**
+
+```bash
+npm run build -- --base=/OIworld/     # 配合环境变量 VITE_HASH_ROUTER=1
+npx vite preview --base=/OIworld/
+node scripts/e2e-static.mjs http://localhost:4173/OIworld/
+```
+
+> 本站在 Pages 上不需要任何自定义响应头（没有使用 SharedArrayBuffer 与线程），
+> 所以"Pages 不能设置 header"这条限制对我们没有影响。
+
+---
+
 ## 技术栈
 
 | 方向 | 选型 |
@@ -318,6 +357,7 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
 | `npm run test:problem -- <url> <id>` | 单题深度验收 |
 | `node scripts/e2e-beginner.mjs <url>` | 零基础路径验收（指南 / 跳转 TODO / 中文标点提示） |
 | `node scripts/e2e-devmode.mjs <url>` | 开发者模式验收（解锁 / 免通过看题解 / 快捷键 / 面板） |
+| `node scripts/e2e-static.mjs <base>` | 静态部署验收（hash 路由 / 深链刷新 / base 子路径），本地与线上站点都能跑 |
 
 ---
 
@@ -335,6 +375,9 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
 - 开发者模式验收：默认状态确认被锁 → `?dev=1` 一键解锁并出现 DEV 标记与调试面板 →
   免通过查看题解 → 一键填入题解提交全部通过 → `Ctrl+Shift+D` 双向切换 → `?dev=0` 关闭，
   全程无控制台报错
+- 静态部署验收（GitHub Pages 形态）：7 阶段 42 题正常渲染 → 点进题目 → 编译器就绪 →
+  浏览器本地编译运行 → 提交通过 → **刷新深链仍在题目页（hash 路由）** →
+  `#/guide` 与 `?dev=1` 深链均可用，控制台无报错
 
 ---
 

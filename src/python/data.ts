@@ -295,19 +295,19 @@ length * width
       id: 'py-s3-p1', title: '倒序输出', difficulty: '简单', knowledge_point: '列表切片',
       description: '## 任务\n输入一行由空格分隔的整数，把它们按相反顺序输出，数字之间用一个空格分隔。\n\n## 输入格式\n一行若干整数。\n\n## 输出格式\n倒序后的整数。',
       starter_code: 'numbers = input().split()\n# TODO: 倒序输出 numbers\n', solution_code: 'numbers = input().split()\nprint(" ".join(numbers[::-1]))\n',
-      test_cases: [{ input: '1 2 3 4\n', expected_output: '4 3 2 1\n' }, { input: '42\n', expected_output: '42\n' }], hints: ['`numbers[::-1]` 得到倒序列表；`" ".join(...)` 用空格拼接文字。'],
+      test_cases: [{ input: '1 2 3 4\n', expected_output: '4 3 2 1\n' }, { input: '42\n', expected_output: '42\n' }, { input: '-1 0 -1 5\n', expected_output: '5 -1 0 -1\n' }, { input: '9 9 9\n', expected_output: '9 9 9\n' }], hints: ['`numbers[::-1]` 得到倒序列表；`" ".join(...)` 用空格拼接文字。'],
     },
     {
       id: 'py-s3-p2', title: '元音字母计数', difficulty: '简单', knowledge_point: '字符串遍历',
       description: '## 任务\n输入一个只含英文小写字母的单词，统计其中 `a e i o u` 的数量。\n\n## 输入格式\n一行一个单词。\n\n## 输出格式\n一个整数。',
       starter_code: 'word = input()\ncount = 0\n# TODO: 遍历 word，统计元音字母\nprint(count)\n', solution_code: 'word = input()\ncount = 0\nfor char in word:\n    if char in "aeiou":\n        count += 1\nprint(count)\n',
-      test_cases: [{ input: 'hello\n', expected_output: '2\n' }, { input: 'rhythm\n', expected_output: '0\n' }, { input: 'aeiou\n', expected_output: '5\n' }], hints: ['`for char in word` 会逐个取出字符；`in` 可以判断字符是否在一段文字中。'],
+      test_cases: [{ input: 'hello\n', expected_output: '2\n' }, { input: 'rhythm\n', expected_output: '0\n' }, { input: 'aeiou\n', expected_output: '5\n' }, { input: 'a\n', expected_output: '1\n' }, { input: 'banana\n', expected_output: '3\n' }], hints: ['`for char in word` 会逐个取出字符；`in` 可以判断字符是否在一段文字中。'],
     },
     {
       id: 'py-s3-p3', title: '求绝对值', difficulty: '简单', knowledge_point: '函数',
       description: '## 任务\n定义一个函数 `absolute(n)`：当 n 小于 0 时返回它的相反数，否则返回 n。读取一个整数并输出函数结果。\n\n## 输入格式\n一个整数。\n\n## 输出格式\n一个整数。',
       starter_code: 'def absolute(n):\n    # TODO: 在这里返回 n 的绝对值\n    pass\n\nn = int(input())\nprint(absolute(n))\n', solution_code: 'def absolute(n):\n    if n < 0:\n        return -n\n    return n\n\nn = int(input())\nprint(absolute(n))\n',
-      test_cases: [{ input: '-12\n', expected_output: '12\n' }, { input: '0\n', expected_output: '0\n' }, { input: '7\n', expected_output: '7\n' }], hints: ['函数内部用 `return` 把结果交回去；`pass` 只是占位符，要替换掉。'],
+      test_cases: [{ input: '-12\n', expected_output: '12\n' }, { input: '0\n', expected_output: '0\n' }, { input: '7\n', expected_output: '7\n' }, { input: '-1\n', expected_output: '1\n' }, { input: '-99999\n', expected_output: '99999\n' }], hints: ['函数内部用 `return` 把结果交回去；`pass` 只是占位符，要替换掉。'],
     },
   ]),
 ];

@@ -275,19 +275,19 @@ length * width
       id: 'py-s2-p1', title: '判断奇偶', difficulty: '入门', knowledge_point: 'if 与取模',
       description: '## 任务\n输入一个整数。如果它是偶数，输出 `even`；否则输出 `odd`。\n\n## 输入格式\n一个整数。\n\n## 输出格式\n`even` 或 `odd`。',
       starter_code: 'n = int(input())\n# TODO: 用 if 判断 n 是奇数还是偶数\n', solution_code: 'n = int(input())\nif n % 2 == 0:\n    print("even")\nelse:\n    print("odd")\n',
-      test_cases: [{ input: '8\n', expected_output: 'even\n' }, { input: '-3\n', expected_output: 'odd\n' }, { input: '0\n', expected_output: 'even\n' }], hints: ['`n % 2` 是除以 2 的余数；余数为 0 就是偶数。冒号后面的代码要缩进四格。'],
+      test_cases: [{ input: '8\n', expected_output: 'even\n' }, { input: '-3\n', expected_output: 'odd\n' }, { input: '0\n', expected_output: 'even\n' }, { input: '1\n', expected_output: 'odd\n' }, { input: '-100\n', expected_output: 'even\n' }], hints: ['`n % 2` 是除以 2 的余数；余数为 0 就是偶数。冒号后面的代码要缩进四格。'],
     },
     {
       id: 'py-s2-p2', title: '1 到 n 的和', difficulty: '简单', knowledge_point: 'for 与 range',
       description: '## 任务\n输入正整数 `n`，计算并输出 `1 + 2 + ... + n`。\n\n## 输入格式\n一个正整数。\n\n## 输出格式\n一个整数。',
       starter_code: 'n = int(input())\ntotal = 0\n# TODO: 用 for 循环累加 1 到 n\nprint(total)\n', solution_code: 'n = int(input())\ntotal = 0\nfor i in range(1, n + 1):\n    total += i\nprint(total)\n',
-      test_cases: [{ input: '1\n', expected_output: '1\n' }, { input: '5\n', expected_output: '15\n' }, { input: '100\n', expected_output: '5050\n' }], hints: ['`range(1, n + 1)` 会产生 1 到 n；`+=` 是“在原来的基础上加”。'],
+      test_cases: [{ input: '1\n', expected_output: '1\n' }, { input: '2\n', expected_output: '3\n' }, { input: '5\n', expected_output: '15\n' }, { input: '10\n', expected_output: '55\n' }, { input: '100\n', expected_output: '5050\n' }], hints: ['`range(1, n + 1)` 会产生 1 到 n；`+=` 是“在原来的基础上加”。'],
     },
     {
       id: 'py-s2-p3', title: '最大的数', difficulty: '简单', knowledge_point: '循环与比较',
       description: '## 任务\n第一行输入整数 `n`，第二行输入 `n` 个整数。输出其中最大的数。\n\n## 输入格式\n第一行一个整数 `n`；第二行 n 个整数。\n\n## 输出格式\n一个整数。',
       starter_code: 'n = int(input())\nnumbers = list(map(int, input().split()))\n# TODO: 输出 numbers 中的最大值\n', solution_code: 'n = int(input())\nnumbers = list(map(int, input().split()))\nprint(max(numbers))\n',
-      test_cases: [{ input: '3\n1 9 4\n', expected_output: '9\n' }, { input: '4\n-2 -8 -1 -5\n', expected_output: '-1\n' }], hints: ['Python 自带 `max(numbers)`，可以直接找出列表最大值。'],
+      test_cases: [{ input: '3\n1 9 4\n', expected_output: '9\n' }, { input: '4\n-2 -8 -1 -5\n', expected_output: '-1\n' }, { input: '1\n42\n', expected_output: '42\n' }, { input: '5\n7 7 7 7 7\n', expected_output: '7\n' }, { input: '6\n0 -1 100 99 100 -3\n', expected_output: '100\n' }], hints: ['Python 自带 `max(numbers)`，可以直接找出列表最大值。'],
     },
   ]),
   stage(3, '第三阶段：整理与复用', '列表、字符串与函数', '把一组数据装进列表，用函数给重复步骤起名字。', [

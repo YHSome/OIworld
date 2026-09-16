@@ -572,6 +572,80 @@ for (const [problemId, walkthrough] of Object.entries(SECOND_STAGE_WALKTHROUGHS)
   if (problem) problem.description += `\n\n${walkthrough.replace(/\\n/g, '\n')}`;
 }
 
+const THIRD_STAGE_WALKTHROUGHS: Record<string, string> = {
+  'py-s3-p1': `## 列表和字符串：为什么这题先不把数字变成 int
+
+这题只要求把输入的顺序倒过来输出，不需要加减乘除。因此 \`input().split()\` 得到的 \`"1"\`、\`"2"\`、\`"3"\` 保持为文字就够了。它们放在一起形成列表：\`["1", "2", "3"]\`。
+
+### 读懂 \`numbers[::-1]\`
+
+方括号里的切片格式可以写成 \`[开始:结束:步长]\`。只要先记住这一种：\`[::-1]\` 的步长是 -1，意思是从最后一个元素往前走，所以得到倒序的新列表。
+
+| 原列表 | \`numbers[::-1]\` |
+| --- | --- |
+| \`["1", "2", "3", "4"]\` | \`["4", "3", "2", "1"]\` |
+
+### 为什么要 join
+
+直接 \`print(numbers[::-1])\` 会显示 Python 自己的列表写法：方括号、逗号和引号都会出现。题目只要空格分开的数字，所以用 \`" ".join(...)\` 把每一项之间用一个空格连接起来。
+
+> 这里的 \`" "\` 就是一个空格，不是一对空引号。`,
+  'py-s3-p2': `## 字符串不是一整块石头，可以逐个看字符
+
+输入 \`hello\` 后，\`word\` 保存的是一个字符串。\`for char in word\` 会让 char 依次变成 \`h\`、\`e\`、\`l\`、\`l\`、\`o\`，每次循环只处理一个字符。
+
+### 什么时候 count 才加 1
+
+元音字母只有 \`a e i o u\`。\`char in "aeiou"\` 是一个问题：当前字符是否在这五个字符中？答案为真时才执行 \`count += 1\`。
+
+以 \`hello\` 为例：
+
+| 当前 char | 是否在 aeiou 中 | count |
+| --- | --- | --- |
+| h | 否 | 0 |
+| e | 是 | 1 |
+| l | 否 | 1 |
+| l | 否 | 1 |
+| o | 是 | 2 |
+
+### 别把 in 理解成等号
+
+\`char == "aeiou"\` 是“char 是否等于五个字母组成的一整段文字”，几乎永远不对。\`char in "aeiou"\` 才是“char 是否属于其中任何一个”。`,
+  'py-s3-p3': `## 函数：给一段可重复使用的步骤起名字
+
+函数定义并不会马上执行。看到：
+
+\`\`\`python
+def absolute(n):
+    ...
+\`\`\`
+
+Python 只是记住“以后有人叫 absolute 时该做什么”。真正运行是下面的 \`absolute(n)\` 调用发生时。
+
+### return 和 print 的区别
+
+- \`print(12)\`：把 12 显示出来，但不把它交给调用函数的位置。
+- \`return 12\`：把 12 作为函数的答案交回去；外面的 \`print(absolute(n))\` 再负责显示。
+
+### 用 n = -12 追踪
+
+1. 调用 \`absolute(-12)\`，函数里的 n 是 -12。
+2. 条件 \`n < 0\` 成立。
+3. \`return -n\` 把 12 交回去。
+4. 外层 print 收到 12，输出 12。
+
+如果 n 是 7，条件不成立，函数直接走到最后的 \`return n\`，交回 7。
+
+### pass 只是临时占位
+
+Python 不允许空函数体，所以模板里的 \`pass\` 表示“这里以后再写”。完成本题时要用真正的 \`if\` 与 \`return\` 替换它；留着 pass 会让函数返回 \`None\`，不是题目要的数字。`,
+};
+
+for (const [problemId, walkthrough] of Object.entries(THIRD_STAGE_WALKTHROUGHS)) {
+  const problem = PYTHON_STAGES[2].problems.find((item) => item.id === problemId);
+  if (problem) problem.description += `\n\n${walkthrough}`;
+}
+
 // 确保每道后续题都明确告诉零基础学习者：看不懂时该如何开始，而不是只给一道题干。
 for (const stageData of PYTHON_STAGES) {
   for (const problem of stageData.problems) {

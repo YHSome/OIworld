@@ -13,6 +13,7 @@
     "setup:python": "node scripts/copy-python-runtime.mjs",
     "validate:problems": "node scripts/validate-problems.mjs",
     "validate:python": "node scripts/validate-python-problems.mjs",
+    "validate:python-diagnostics": "node scripts/validate-python-diagnostics.mjs",
     "test:e2e": "node scripts/e2e.mjs",
     "test:problem": "node scripts/e2e-problem.mjs"
   },

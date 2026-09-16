@@ -1,0 +1,23 @@
+# 依赖与构建产物
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# npm / pnpm 缓存（放在仓库内，避免写到系统目录）
+.npm-cache/
+.pnpm-store/
+
+# 本地开发用的临时脚本、调试产物
+.tmp/
+test-results/
+*.log
+
+# 编译器工具链（约 95MB，由 `npm run setup:toolchain` 从 node_modules 复制生成）
+public/toolchain/
+
+# 编辑器
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store

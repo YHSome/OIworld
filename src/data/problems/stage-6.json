@@ -1,0 +1,220 @@
+{
+  "stage": 6,
+  "title": "阶段六 · 自定义数据类型",
+  "subtitle": "结构体 struct",
+  "summary": "现实世界里的\"一个学生\"往往同时有姓名、成绩好几项信息。`struct` 可以把不同种类的数据打包成**一个新类型**，再用\"结构体数组\"管理一整班学生，还能把结构体交给函数、按成员排序与查找。",
+  "problems": [
+    {
+      "id": "s6-p1",
+      "title": "学生名片",
+      "difficulty": "入门",
+      "knowledge_point": "struct 定义与成员访问",
+      "description": "### 题目背景\n\n到目前为止，我们学过的变量都是\"单个格子\"：一个 `int` 存一个年龄，一个 `string` 存一个名字。\n\n可现实里的\"一个学生\"通常同时有好几项信息：姓名、成绩……\n\n要是给每个学生都定义一堆零散的变量，很快就乱成一团了。C++ 提供了**结构体**（`struct`，structure 的缩写），它能把**若干个不同类型**的变量打包成一个**新类型**，就像把几样东西装进一个贴着标签的文件袋：\n\n```cpp\nstruct Student {\n    string name;    // 成员变量：姓名\n    int score;      // 成员变量：成绩\n};                  // ← 这个分号千万别漏掉！\n```\n\n花括号里的每一行叫做**成员变量**（简称成员）。有两点要特别注意：\n\n1. 每个成员声明后面都要有分号；\n2. 整个 `struct` 结束时的大括号后面也**必须**有分号。\n\n定义好之后，`Student` 就和 `int`、`string` 一样，成了一个可以拿来声明变量的类型：\n\n```cpp\nStudent s;                  // 声明一个学生\ns.name = \"Tom\";             // 用点号 . 访问成员\ns.score = 95;\n\nStudent t{\"Jerry\", 80};     // 花括号初始化：按顺序一次把成员都填好\n```\n\n### 任务\n\n读入一个学生的姓名和成绩，把它们存进一个 `struct Student` 变量，然后输出一张名片。\n\n### 本关新知识：怎么定义 `struct`，怎么取成员\n\n**结构体像一个\"自定义的表格模板\"**：模板上印着好几栏，每一栏叫一个**成员**，每栏放什么类型由你规定。照着这个模板印出来的每一份表格，就是该结构体类型的一个**变量**。\n\n写结构体永远是两步：**先定模板，再开变量**。\n\n```cpp\n#include <iostream>             // 用 cin / cout\n#include <string>               // 用 string\nusing namespace std;\n\nstruct Student {            // ① 定模板：Student 是新类型的名字（首字母习惯大写）\n    string name;            // 模板第一栏：姓名，类型是 string\n    int score;              // 模板第二栏：成绩，类型是 int\n};                          // ② 整个定义结尾的这个分号必须有！\n\nint main() {\n    Student s;              // ③ 用新类型开一个变量，写法和 int x; 一模一样\n    cin >> s.name >> s.score;   // ④ 用点号 . 把数据读进对应的成员\n    cout << s.name << \" \" << s.score << endl;\n    return 0;\n}\n```\n\n取成员用**点号** `.`，读作\"某个变量的某个成员\"：`s.name` 是\"学生 s 的姓名\"，`s.score` 是\"学生 s 的成绩\"。点号左边写变量名，右边写成员名，顺序别反。\n\n开变量时还可以用**花括号**按定义顺序一次把所有成员填好：\n\n```cpp\nStudent a{\"Tom\", 95};      // name = \"Tom\"，score = 95（顺序必须和定义一致）\ncout << a.name << endl;    // 输出 Tom\ncout << a.score << endl;   // 输出 95\n```\n\n| 要记住的点 | 说明 |\n| --- | --- |\n| 定义末尾的分号 | `};` 里这个分号丢了，从这一行开始后面会跟着报一串错 |\n| 定义写在 `main` 外面 | 结构体定义要放在所有函数前面，`main` 里才认识 `Student` 这个名字 |\n| 每个成员自带分号 | 一行一个成员，写成 `成员类型 成员名;`，最不容易乱 |\n| 取成员用 `.` | 例如 `s.name`；`->` 是给指针用的写法，初学用不到 |\n| 花括号按顺序填 | `Student a{\"Tom\", 95}` 对应定义里成员的书写顺序，写反了类型对不上会报错 |\n\n### 输入格式\n\n一行，一个姓名和一个整数成绩，中间用一个空格分隔。\n\n- 姓名只由英文字母组成，不含空格，长度不超过 20；\n- 成绩是 `0` 到 `100` 之间的整数。\n\n### 输出格式\n\n输出两行：\n\n```\n姓名：<姓名>\n成绩：<成绩>\n```\n\n（冒号是中文全角冒号，直接从题目里复制即可。）\n\n### 样例\n\n**输入**\n\n```\nTom 95\n```\n\n**输出**\n\n```\n姓名：Tom\n成绩：95\n```\n\n### 说明\n\n- 成绩可能是 `0`（考砸了），也可能是 `100`（满分），两种都要正确输出。\n- 姓名长度不固定，一个字母或者一长串字母都要正常输出。\n\n### 小贴士\n\n- `cin >> s.name >> s.score;` 可以直接把数据读进结构体的成员里。\n- 访问成员用点号：`s.name` 就是\"学生 s 的姓名\"。\n- 结构体的定义要写在 `main` 函数**外面（上面）**，这样 `main` 里才认识 `Student` 这个类型。\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| `struct Student { ... }` 结尾漏了分号 | 报 `expected ';' after struct`，而且后面几行会跟着一起报错 | 结尾写成 `};` |\n| 把 `struct Student { ... };` 写在 `main` 里面 | 报错（C++ 不允许在函数里定义新类型） | 整段挪到 `main` 上面 |\n| 取成员写成 `s->name` | 报 `member reference type 'Student' is not a pointer` | 初学一律用点号：`s.name` |\n| 成员名大小写写错，例如 `s.Score` | 报 `no member named 'Score'` | 成员名必须和定义里逐字相同 |\n| 花括号顺序写反：`Student s{95, \"Tom\"}` | 类型对不上，编译报错 | 按定义顺序：先 `name` 后 `score` |\n| 忘了 `#include <string>` | 报 `unknown type name 'string'` | 顶部加上 `#include <string>` |",
+      "starter_code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nstruct Student {\n    string name;\n    int score;\n};\n\nint main() {\n    Student s;\n    cin >> s.name >> s.score;\n    // TODO: 用 cout 输出两行：姓名：<姓名> 和 成绩：<成绩>\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nstruct Student {\n    string name;\n    int score;\n};\n\nint main() {\n    Student s;\n    cin >> s.name >> s.score;\n    cout << \"姓名：\" << s.name << endl;\n    cout << \"成绩：\" << s.score << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "Tom 95\n",
+          "expected_output": "姓名：Tom\n成绩：95\n"
+        },
+        {
+          "input": "Xiaoming 100\n",
+          "expected_output": "姓名：Xiaoming\n成绩：100\n"
+        },
+        {
+          "input": "A 0\n",
+          "expected_output": "姓名：A\n成绩：0\n"
+        },
+        {
+          "input": "Bob 60\n",
+          "expected_output": "姓名：Bob\n成绩：60\n"
+        }
+      ],
+      "hints": [
+        "先把数据读进结构体：`Student s; cin >> s.name >> s.score;`",
+        "取成员用点号：`s.name` 是姓名，`s.score` 是成绩。",
+        "也可以写 `Student s{\"Tom\", 95};`，按定义顺序一次填好所有成员。"
+      ]
+    },
+    {
+      "id": "s6-p2",
+      "title": "班级成绩单",
+      "difficulty": "简单",
+      "knowledge_point": "结构体数组、循环累加",
+      "description": "### 题目背景\n\n一个 `Student` 只装一个学生，那一个班怎么办？\n\n好消息：结构体既然是一个**类型**，就能像 `int` 一样拿来开数组。这种数组叫做**结构体数组**，每个元素都是一个完整的学生：\n\n```cpp\nStudent a[105];             // 105 个学生的位子，下标 0 ~ 104\n\ncin >> a[0].name >> a[0].score;   // 第 1 个学生\na[1].name = \"Jerry\";              // 第 2 个学生的姓名\na[1].score = 80;\n```\n\n注意成员访问的写法：**先写下标，再写点号和成员名**，也就是 `a[i].name`。\n\n配合循环，就能一口气读入一整班学生：\n\n```cpp\nfor (int i = 0; i < n; i++) {\n    cin >> a[i].name >> a[i].score;\n}\n```\n\n### 任务\n\n读入 `n` 个学生的姓名和成绩，算出全班的**总分**和**平均分**。\n\n### 本关新知识：结构体数组怎么用\n\n**结构体数组 = 一叠一模一样的表格。** `int b[105];` 是 105 个整数格子；`Student a[105];` 就是 **105 份学生表格**，每份表格里都自带 `name` 和 `score` 两栏。题目说 `n ≤ 100`，那就开 `105` 个位子：多开几个没坏处，开少了会出事。\n\n```cpp\nStudent a[105];                 // 105 个学生的位子，下标 0 ~ 104\n\ncin >> a[0].name >> a[0].score; // 第 1 位同学（下标从 0 开始！）\ncin >> a[1].name >> a[1].score; // 第 2 位同学\n```\n\n`a[i].name` 要从左往右读两遍：先看 `a[i]`——\"拿出第 i 份表格\"；再看 `.name`——\"取这份表格里的姓名栏\"。所以 `a[i].name` 就是\"第 i 位同学的姓名\"，`a[i].score` 就是\"第 i 位同学的成绩\"。**下标永远写在点号前面**。\n\n人数 `n` 是不固定的，所以读入要用 `for` 循环，一次读一份：\n\n```cpp\nint main() {\n    int n;\n    cin >> n;                            // 先读人数\n    Student a[105];\n    for (int i = 0; i < n; i++) {        // i = 0,1,...,n-1，正好 n 个人\n        cin >> a[i].name >> a[i].score;\n    }\n    return 0;\n}\n```\n\n| 要记住的点 | 说明 |\n| --- | --- |\n| 下标从 `0` 开始 | 第 1 个人是 `a[0]`，第 `n` 个人是 `a[n - 1]` |\n| 循环条件写 `i < n` | 写成 `i <= n` 会多读一位不存在的人，下标越界 |\n| 先下标再点号 | `a[i].name` 才对；`a.name[i]` 是在取\"姓名的第 i 个字母\"，类型对不上 |\n| 数组要开得够大 | 题目给 `n ≤ 100`，开 `105` 稳妥；开小了可能直接崩溃 |\n| 数组元素就是普通变量 | 能读也能改，还能参与运算：`total += a[i].score;` |\n\n### 输入格式\n\n- 第一行一个整数 `n`（`1 ≤ n ≤ 100`），表示学生人数。\n- 接下来 `n` 行，每行一个姓名和一个整数成绩（`0 ≤ 成绩 ≤ 100`），中间用一个空格分隔。姓名只由英文字母组成，不含空格。\n\n### 输出格式\n\n输出两行：\n\n```\n总分：<总分>\n平均分：<平均分>\n```\n\n平均分要**保留 2 位小数**。\n\n### 样例\n\n**输入**\n\n```\n3\nTom 90\nJerry 80\nLucy 70\n```\n\n**输出**\n\n```\n总分：240\n平均分：80.00\n```\n\n### 说明\n\n- 平均分就是\"总分 ÷ 人数\"：样例里 `240 ÷ 3 = 80`，写成两位小数是 `80.00`。\n- `n` 至少是 1，不用担心除以 0。\n\n### 小贴士\n\n- 累加先准备一个空盒子：`int total = 0;`，再在循环里写 `total += a[i].score;`。\n- 保留 2 位小数要 `#include <iomanip>`，然后写 `cout << fixed << setprecision(2) << 平均值;`。\n- 算平均分时别写 `total / n`：两个整数相除会**丢掉小数**。写成 `1.0 * total / n` 就会变成小数除法。\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| 只开 `Student a[100];` 而 `n` 正好等于 100 | `a[100]` 越界，可能崩溃或者答案乱掉 | 开大一点：`Student a[105];` |\n| 循环写成 `for (int i = 0; i <= n; i++)` | 多读一位不存在的学生，下标越界 | 条件写 `i < n` |\n| 成员访问写成 `a.name[i]` | 意思变成\"姓名的第 i 个字母\"，编译报错 | 先下标再点号：`a[i].name` |\n| 平均分写 `total / n` | 整数除法丢掉小数，`428 / 5` 得到 `85` 而不是 `85.6` | 写 `1.0 * total / n` |\n| `int total;` 忘了初始化 | `total` 是随机垃圾值，答案完全不对 | 先写 `int total = 0;` |\n| 忘了 `#include <iomanip>` | 报 `setprecision` 未定义 | 顶部加上 `#include <iomanip>` |",
+      "starter_code": "#include <iostream>\n#include <string>\n#include <iomanip>\nusing namespace std;\n\nstruct Student {\n    string name;\n    int score;\n};\n\nint main() {\n    int n;\n    cin >> n;\n    Student a[105];\n    for (int i = 0; i < n; i++) {\n        cin >> a[i].name >> a[i].score;\n    }\n    // TODO: 定义 total 并初始化为 0，用循环把每位同学的成绩累加到 total 里\n    // TODO: 输出 总分：<总分>\n    // TODO: 输出 平均分：<平均分>，保留 2 位小数（fixed << setprecision(2)）\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\n#include <string>\n#include <iomanip>\nusing namespace std;\n\nstruct Student {\n    string name;\n    int score;\n};\n\nint main() {\n    int n;\n    cin >> n;\n    Student a[105];\n    for (int i = 0; i < n; i++) {\n        cin >> a[i].name >> a[i].score;\n    }\n\n    int total = 0;\n    for (int i = 0; i < n; i++) {\n        total += a[i].score;\n    }\n\n    cout << \"总分：\" << total << endl;\n    cout << \"平均分：\" << fixed << setprecision(2) << 1.0 * total / n << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "3\nTom 90\nJerry 80\nLucy 70\n",
+          "expected_output": "总分：240\n平均分：80.00\n"
+        },
+        {
+          "input": "1\nXiaoming 95\n",
+          "expected_output": "总分：95\n平均分：95.00\n"
+        },
+        {
+          "input": "4\nA 10\nB 10\nC 10\nD 10\n",
+          "expected_output": "总分：40\n平均分：10.00\n"
+        },
+        {
+          "input": "3\nA 100\nB 0\nC 100\n",
+          "expected_output": "总分：200\n平均分：66.67\n"
+        },
+        {
+          "input": "2\nA 1\nB 2\n",
+          "expected_output": "总分：3\n平均分：1.50\n"
+        }
+      ],
+      "hints": [
+        "读入时就把数据存进结构体数组：`cin >> a[i].name >> a[i].score;`。",
+        "成员访问要先写下标：`a[i].score` 是第 i 位同学的成绩。",
+        "平均值写 `1.0 * total / n`，输出前加 `fixed << setprecision(2)` 才是固定两位小数。"
+      ]
+    },
+    {
+      "id": "s6-p3",
+      "title": "长方形计算",
+      "difficulty": "简单",
+      "knowledge_point": "结构体作参数与返回值",
+      "description": "### 题目背景\n\n前面我们用结构体打包数据，这一题换个玩法：让结构体**走进函数**。\n\n结构体既然是一个类型，就可以像 `int` 那样当函数的**参数**，也可以当函数的**返回值**。一个函数因此能一次交回好几样结果——这是过去的 `int` 做不到的。\n\n先把两种结构体定义好：\n\n```cpp\nstruct Rect {          // 一个长方形\n    int w;             // 宽\n    int h;             // 高\n};\n\nstruct Result {        // 计算结果\n    int area;          // 面积\n    int perimeter;     // 周长\n};\n```\n\n再写函数：参数收一个 `Rect`，返回值交出一个 `Result`：\n\n```cpp\nResult calc(Rect r) {\n    Result res;\n    res.area = r.w * r.h;\n    res.perimeter = 2 * (r.w + r.h);\n    return res;        // 把整个结构体一起交回去\n}\n```\n\n在 `main` 里这样用：\n\n```cpp\nRect r;\ncin >> r.w >> r.h;\nResult out = calc(r);      // 用一个 Result 变量接住返回值\ncout << out.area;          // 用点号取出里面的成员\n```\n\n### 任务\n\n读入长方形的宽 `w` 和高 `h`，写一个函数算出它的**面积**和**周长**，然后输出。\n\n本题请使用上面给出的 `struct Rect` 和 `struct Result`（成员名要和题目一致）。\n\n### 本关新知识：结构体当参数、当返回值\n\n**把结构体交给函数，就像把整份填好的表格递过去**；反过来，函数也能**交回一整份表格**。这是 `int` 做不到的事：一个 `int` 一次只能交回一个数，想让函数同时给出面积和周长，就得把这两项打包进一个结构体一起交回来。\n\n写函数的\"四件套\"和以前完全一样，只是类型换成了结构体：\n\n```cpp\nResult calc(Rect r) {                  // 返回类型 Result、函数名 calc、参数表 (Rect r)\n    Result res;                        // 先准备一个 Result 变量装答案\n    res.area = r.w * r.h;              // 用参数 r 的成员算面积\n    res.perimeter = 2 * (r.w + r.h);   // 再算周长，括号别丢\n    return res;                        // 把整个结构体一起交回去\n}\n```\n\n- `Rect r` 是**参数**：调用时把外面的长方形复制一份进来，在函数里改 `r` 不会影响 `main` 里的那个变量；\n- `return res;` 交回的是**一整个结构体**，里面的 `area`、`perimeter` 两个成员都跟着回来了；\n- 函数要写在 `main` **前面**（写在后面的话，`main` 里还不认识 `calc`）。\n\n`main` 里接住它，接收变量的类型必须写成 `Result`，然后照常用点号取成员：\n\n```cpp\nint main() {\n    Rect r;\n    cin >> r.w >> r.h;             // 先读进长方形的宽和高\n    Result out = calc(r);          // 用一个 Result 变量接住整份结果\n    cout << \"面积：\" << out.area << endl;\n    cout << \"周长：\" << out.perimeter << endl;\n    return 0;\n}\n```\n\n| 要记住的点 | 说明 |\n| --- | --- |\n| 参数写 `Rect r` | 结构体作参数直接写\"类型名 + 变量名\"，不用再写 `struct` 前缀 |\n| 返回值类型写 `Result` | 必须和 `return` 出去的东西类型一致 |\n| 接收变量类型要配套 | `Result out = calc(r);`；写成 `int out = calc(r);` 会报错 |\n| 成员名照题目定义 | 输入用 `r.w`、`r.h`；结果存在 `out.area`、`out.perimeter` |\n| 函数里别忘 `return` | 声明了要返回 `Result` 却没有 `return`，会报 `non-void function does not return a value` |\n\n### 输入格式\n\n一行，两个整数 `w` 和 `h`（`1 ≤ w, h ≤ 10000`），表示长方形的宽和高，中间用一个空格分隔。\n\n### 输出格式\n\n输出两行：\n\n```\n面积：<面积>\n周长：<周长>\n```\n\n### 样例\n\n**输入**\n\n```\n3 4\n```\n\n**输出**\n\n```\n面积：12\n周长：14\n```\n\n### 说明\n\n- 面积 = 宽 × 高，周长 = `2 × (宽 + 高)`。样例中 `3 × 4 = 12`，`2 × (3 + 4) = 14`。\n- 边长都是整数，结果也是整数，不用考虑小数精度。\n- 边长最大是 10000，面积最大是 `10000 × 10000 = 100000000`，`int` 装得下。\n- 当 `w` 和 `h` 相等时就是正方形，公式照用，不用特判。\n\n### 小贴士\n\n- 结构体参数写成 `Rect r` 就行：函数里改 `r` 不会影响 `main` 里的那个变量。\n- `return res;` 会把 `res` 的全部成员一起交回去，接收的变量类型也必须写成 `Result`。\n- 函数要写在 `main` 的**前面**（或者在前面先声明一下），否则 `main` 里调用它会报\"未定义\"。\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| 函数里忘了 `return res;` | 报 `non-void function does not return a value` | 算完把 `res` 返回 |\n| 想把面积、周长用两个 `int` 变量分别带回来 | 一次 `return` 只能带回一样东西，拿不到两项 | 定义一个 `Result` 结构体打包返回 |\n| 返回值类型写成 `void` | `Result out = calc(r);` 报错 | 写成 `Result calc(Rect r)` |\n| `calc` 写在 `main` 后面 | 报 `use of undeclared identifier 'calc'` | 移到 `main` 前面 |\n| 在 `main` 里写 `r.area` | 报 `no member named 'area' in 'Rect'` | `Rect` 只有 `w`、`h`；面积在返回的 `Result` 里，写 `out.area` |\n| 周长写成 `r.w + r.h * 2` | 优先级不对，结果算错（`3 4` 会得到 11 而不是 14） | 加括号：`2 * (r.w + r.h)` |",
+      "starter_code": "#include <iostream>\nusing namespace std;\n\nstruct Rect {\n    int w;\n    int h;\n};\n\nstruct Result {\n    int area;\n    int perimeter;\n};\n\n// TODO: 在这里写函数 Result calc(Rect r)：\n//       把 r.w * r.h 存进结果结构体的 area，\n//       把 2 * (r.w + r.h) 存进 perimeter，\n//       最后别忘了 return 回去。\n\nint main() {\n    Rect r;\n    cin >> r.w >> r.h;\n    // TODO: 调用 calc，用 Result 变量接住返回值\n    // TODO: 按格式输出 面积：<面积> 和 周长：<周长>\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\nusing namespace std;\n\nstruct Rect {\n    int w;\n    int h;\n};\n\nstruct Result {\n    int area;\n    int perimeter;\n};\n\nResult calc(Rect r) {\n    Result res;\n    res.area = r.w * r.h;\n    res.perimeter = 2 * (r.w + r.h);\n    return res;\n}\n\nint main() {\n    Rect r;\n    cin >> r.w >> r.h;\n\n    Result out = calc(r);\n\n    cout << \"面积：\" << out.area << endl;\n    cout << \"周长：\" << out.perimeter << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "3 4\n",
+          "expected_output": "面积：12\n周长：14\n"
+        },
+        {
+          "input": "1 1\n",
+          "expected_output": "面积：1\n周长：4\n"
+        },
+        {
+          "input": "5 5\n",
+          "expected_output": "面积：25\n周长：20\n"
+        },
+        {
+          "input": "1 10000\n",
+          "expected_output": "面积：10000\n周长：20002\n"
+        },
+        {
+          "input": "10000 10000\n",
+          "expected_output": "面积：100000000\n周长：40000\n"
+        }
+      ],
+      "hints": [
+        "函数里先定义 `Result res;`，再给 `res.area` 和 `res.perimeter` 分别赋值。",
+        "`return res;` 返回的是整个结构体；在 `main` 里用 `Result out = calc(r);` 接住它。",
+        "取返回值里的成员还是用点号：`out.area`、`out.perimeter`。"
+      ]
+    },
+    {
+      "id": "s6-p4",
+      "title": "按成绩排名",
+      "difficulty": "中等",
+      "knowledge_point": "结构体排序、比较函数",
+      "description": "### 题目背景\n\n老师要按成绩从高到低念名字，这就是**排序**。\n\n结构体数组的排序和普通数组一样，只不过比较的不是数字本身，而是结构体的**某个成员**。常用的办法有两种。\n\n**办法一：手写冒泡排序**，把\"比较大小\"换成\"比较成绩\"，交换时整个结构体一起搬：\n\n```cpp\nfor (int i = 0; i < n - 1; i++) {\n    for (int j = 0; j < n - 1 - i; j++) {\n        if (a[j].score < a[j + 1].score) {   // 前面的分数更小，就该换到后面去\n            Student tmp = a[j];\n            a[j] = a[j + 1];\n            a[j + 1] = tmp;\n        }\n    }\n}\n```\n\n**办法二：用标准库现成的排序工具 `sort`**（需要 `#include <algorithm>`）。\n\n`sort` 会把一段区间排好序，默认从小到大。想按自己的规则排，就再写一个**比较函数**告诉它谁该排在前面：\n\n```cpp\nbool cmp(const Student &x, const Student &y) {\n    if (x.score != y.score) {\n        return x.score > y.score;   // 成绩高的排前面\n    }\n    return x.name < y.name;         // 成绩相同，姓名小的排前面\n}\n\nsort(a, a + n, cmp);   // 把 a[0] ~ a[n-1] 按 cmp 的规则排序\n```\n\n`cmp(x, y)` 返回 `true` 的意思是\"x 应该排在 y 前面\"。两种办法本题都可以用。\n\n### 任务\n\n读入 `n` 个学生的姓名和成绩，按成绩**从高到低**输出；成绩相同时，按**姓名字典序从小到大**输出。\n\n### 本关新知识：`sort` 与自定义比较函数\n\n**排序**就是把一叠表格按规则重新排好。结构体没法直接比大小——编译器不知道你想按姓名还是按成绩比——所以要我们自己写一个**裁判函数**，把规则讲给它听。\n\n标准库的 `sort` 用三个参数说明\"排哪一段 + 按什么规则\"：\n\n| 参数 | 写什么 | 含义 |\n| --- | --- | --- |\n| 第 1 个 | `a` | 从下标 `0` 开始排 |\n| 第 2 个 | `a + n` | 排到下标 `n - 1` 为止。区间右端写的是\"**最后一个位置的下一个**\"，所以是 `a + n`，不是 `a + n - 1` |\n| 第 3 个 | `cmp` | 比较函数的函数名；不写就默认从小到大 |\n\n比较函数返回类型必须是 `bool`，两个参数用 `const Student &` 接收（`&` 表示\"只借用不复制\"，又快又安全）：\n\n```cpp\nbool cmp(const Student &x, const Student &y) {\n    if (x.score != y.score) {\n        return x.score > y.score;   // 返回 true 表示：x 应该排在 y 前面\n    }\n    return x.name < y.name;         // 分数一样时，姓名小的排前面（字典序）\n}\n```\n\n一句话记住：**`cmp(x, y)` 返回 `true`，就是\"x 排在 y 前面\"**。所以\"成绩从高到低\"要写 `x.score > y.score`——分数大的那个返回 `true`、排到前面去。\n\n两个 `string` 直接用 `<` 比较得到的就是**字典序**（翻字典的顺序）：先比第一个字母，字母靠前的更小；前面几个字母完全一样时，短的更小，所以 `An` < `Ann` < `Anna`。\n\n不想用 `sort` 也可以手写冒泡排序，把\"比较大小\"换成\"比较成绩\"，**交换时整个结构体一起搬**：\n\n```cpp\nif (a[j].score < a[j + 1].score) {   // 前面分数更小 → 顺序不对，要换\n    Student tmp = a[j];              // 结构体可以整体赋值，不用一个成员一个成员地换\n    a[j] = a[j + 1];\n    a[j + 1] = tmp;\n}\n```\n\n### 输入格式\n\n- 第一行一个整数 `n`（`1 ≤ n ≤ 100`）。\n- 接下来 `n` 行，每行一个姓名和一个整数成绩（`0 ≤ 成绩 ≤ 100`），中间用一个空格分隔。\n\n姓名只由英文字母组成，首字母大写、其余小写，长度不超过 20，彼此**互不相同**。\n\n### 输出格式\n\n输出 `n` 行，每行一个姓名和一个成绩，中间用一个空格分隔，按题目要求的顺序排列。\n\n### 样例\n\n**输入**\n\n```\n5\nTom 90\nJerry 95\nLucy 88\nAmy 95\nBob 60\n```\n\n**输出**\n\n```\nAmy 95\nJerry 95\nTom 90\nLucy 88\nBob 60\n```\n\n### 说明\n\n- 样例中 Jerry 和 Amy 都是 95 分，按姓名字典序，`Amy` 排在 `Jerry` 前面。\n- **字典序**就是翻字典的顺序：先比第一个字母，字母靠前的排前面；前面几个字母完全一样时，短的排前面（比如 `Ann` 在 `Anna` 前面）。C++ 里两个 `string` 直接用 `<` 比较，得到的就是字典序。\n- 因为姓名互不相同，所以排序结果**唯一确定**，不会有模棱两可的情况。\n\n### 小贴士\n\n- 交换结构体不需要一个一个成员地换，整体搬就行：`Student tmp = a[j]; a[j] = a[j + 1]; a[j + 1] = tmp;`。\n- 用 `sort` 时别忘了 `#include <algorithm>`；比较函数要写在 `main` 前面，而且返回类型是 `bool`。\n- 比较函数里要先判断成绩是否相等：只写 `return x.score > y.score;` 的话，并列时的先后顺序就说不准了。\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| 比较函数里写 `return x.score >= y.score;` | 违反了\"严格弱序\"规则，`sort` 内部可能越界，程序崩溃或者结果乱掉 | 严格用 `>`（要降序）或 `<`（要升序） |\n| 忘了 `#include <algorithm>` | 报 `use of undeclared identifier 'sort'` | 顶部加上 `#include <algorithm>` |\n| 只写 `return x.score > y.score;` | 并列时先后顺序不确定，姓名顺序的用例会挂 | 先判 `!=`，相等再返回 `x.name < y.name` |\n| 写 `sort(a, a + n - 1, cmp);` | 最后一个学生没参加排序 | 右端点写 `a + n` |\n| 比较函数忘写 `bool` 或忘写 `const &` | 返回类型不对会报错；用值传递要多复制一遍结构体，效率低 | `bool cmp(const Student &x, const Student &y)` |\n| 把比较函数写在 `main` 里面 | 报错（C++ 不允许在函数里定义函数） | 挪到 `main` 上面 |\n| 交换时只换成绩不换姓名 | 分数和姓名错位，变成了\"甲的分数配乙的名字\" | 借助 `Student tmp` 把整个结构体换过去 |",
+      "starter_code": "#include <iostream>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nstruct Student {\n    string name;\n    int score;\n};\n\n// TODO: 在这里写比较函数 bool cmp(const Student &x, const Student &y)：\n//       成绩不同时，成绩高的排在前面；\n//       成绩相同时，姓名小的排在前面。\n\nint main() {\n    int n;\n    cin >> n;\n    Student a[105];\n    for (int i = 0; i < n; i++) {\n        cin >> a[i].name >> a[i].score;\n    }\n    // TODO: 调用 sort(a, a + n, cmp); 排序（或者自己手写冒泡排序）\n    // TODO: 按顺序输出 n 行，每行是 \"姓名 成绩\"\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\n#include <string>\n#include <algorithm>\nusing namespace std;\n\nstruct Student {\n    string name;\n    int score;\n};\n\nbool cmp(const Student &x, const Student &y) {\n    if (x.score != y.score) {\n        return x.score > y.score;\n    }\n    return x.name < y.name;\n}\n\nint main() {\n    int n;\n    cin >> n;\n    Student a[105];\n    for (int i = 0; i < n; i++) {\n        cin >> a[i].name >> a[i].score;\n    }\n\n    sort(a, a + n, cmp);\n\n    for (int i = 0; i < n; i++) {\n        cout << a[i].name << \" \" << a[i].score << endl;\n    }\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "5\nTom 90\nJerry 95\nLucy 88\nAmy 95\nBob 60\n",
+          "expected_output": "Amy 95\nJerry 95\nTom 90\nLucy 88\nBob 60\n"
+        },
+        {
+          "input": "1\nSolo 77\n",
+          "expected_output": "Solo 77\n"
+        },
+        {
+          "input": "4\nDavid 80\nAnna 80\nCindy 80\nBob 80\n",
+          "expected_output": "Anna 80\nBob 80\nCindy 80\nDavid 80\n"
+        },
+        {
+          "input": "3\nZoe 0\nAnn 100\nMike 0\n",
+          "expected_output": "Ann 100\nMike 0\nZoe 0\n"
+        },
+        {
+          "input": "3\nAnn 90\nAnna 90\nAn 90\n",
+          "expected_output": "An 90\nAnn 90\nAnna 90\n"
+        }
+      ],
+      "hints": [
+        "比较函数返回 `true` 表示\"第一个参数应该排在前面\"，所以成绩高的要返回 `true`。",
+        "先比较成绩：`if (x.score != y.score) return x.score > y.score;`，剩下的情况再返回 `x.name < y.name`。",
+        "`sort(a, a + n, cmp);` 排的是下标 `0` 到 `n - 1` 这一整段，区间右端是 `a + n` 而不是 `a + n - 1`。"
+      ]
+    },
+    {
+      "id": "s6-p5",
+      "title": "通讯录查找",
+      "difficulty": "简单",
+      "knowledge_point": "结构体数组遍历查找",
+      "description": "### 题目背景\n\n手机通讯录里存着很多联系人，每个联系人有姓名和电话两项信息——这正好是一个结构体：\n\n```cpp\nstruct Person {\n    string name;    // 姓名\n    string phone;   // 电话\n};\n```\n\n注意这里的电话用的是 `string` 而不是整数。原因有两个：电话号码可能很长，而且**开头的 0 是有意义的**（比如 `007700`），要是当成整数存，前面的 0 就丢了。\n\n查找的办法很朴素：从第一个人开始，一个一个往下比，姓名对上了就记住这个位置：\n\n```cpp\nint pos = -1;                    // -1 表示\"还没找到\"\nfor (int i = 0; i < n; i++) {\n    if (a[i].name == target) {\n        pos = i;\n        break;                   // 找到了就不用再往下看\n    }\n}\n```\n\n循环结束后看 `pos`：还是 `-1` 就说明通讯录里没有这个人。\n\n### 任务\n\n读入 `n` 个人的姓名和电话，再读入一个要查找的姓名，输出这个人的信息；如果通讯录里没有这个人，就输出 `Not Found`。\n\n本题请使用上面给出的 `struct Person`（成员名要和题目一致）。\n\n### 本关新知识：遍历查找与\"命中标记\"\n\n**查找**就是拿着目标一栏一栏地比对。比的路上\"到底找到没有\"这个状态，要用一个单独的变量记下来，这个变量叫做**标记**（也可以叫\"哨兵值\"）。本题正好用\"下标\"当标记：\n\n- 初值 `int pos = -1;`：`-1` 不是任何合法下标，正好表示\"**还没找到**\"；\n- 循环里比到姓名相同，就 `pos = i;` 把位置存下来，然后 `break;` 提前收工；\n- 循环结束后只看 `pos`：还是 `-1`，就说明通讯录里没这个人。\n\n```cpp\nstring target;\ncin >> target;                  // 先读要查找的姓名\n\nint pos = -1;                   // -1 表示\"还没找到\"\nfor (int i = 0; i < n; i++) {\n    if (a[i].name == target) {  // string 之间比内容，直接用 ==\n        pos = i;                // 记住是第几位\n        break;                  // 找到了就不用再往下看\n    }\n}\n```\n\n循环结束后，只看标记 `pos` 就能决定输出什么：\n\n```cpp\nif (pos == -1) {                // 没被改过 → 通讯录里没有这个人\n    cout << \"Not Found\" << endl;\n} else {                        // 找到了，用 pos 取出那一份信息\n    cout << \"姓名：\" << a[pos].name << endl;\n    cout << \"电话：\" << a[pos].phone << endl;\n}\n```\n\n电话为什么用 `string` 存？因为**开头的 0 是有意义的**：`007700` 当成整数存就变成了 `7700`，而且 11 位的手机号也超出 `int` 的范围。用 `string` 存，读进来什么样，输出就什么样。\n\n| 要记住的点 | 说明 |\n| --- | --- |\n| 字符串比较用 `==` | `a[i].name == target` 比的是内容；写成 `=` 会把通讯录改坏 |\n| 标记初值用 `-1` | 合法下标都不等于 `-1`，所以\"没被改过\"就等于\"没找到\" |\n| 找到就 `break;` | 提前跳出，最后统一判断输出，结构最清楚 |\n| 用 `pos` 取数据 | 确认找到之后才写 `a[pos].name`、`a[pos].phone` |\n| 找不到时不能乱取元素 | `a[-1]` 越界；`a[0]` 是第一个人的信息，都不是\"没找到\" |\n\n### 输入格式\n\n- 第一行一个整数 `n`（`1 ≤ n ≤ 100`）。\n- 接下来 `n` 行，每行一个姓名和一个电话，中间用一个空格分隔。姓名只由英文字母组成，电话只由数字组成、可能以 `0` 开头，两者长度都不超过 20，都不含空格。姓名彼此**互不相同**。\n- 最后一行一个姓名，表示要查找的人。\n\n### 输出格式\n\n如果找到了，输出两行：\n\n```\n姓名：<姓名>\n电话：<电话>\n```\n\n如果没找到，只输出一行 `Not Found`。\n\n### 样例\n\n**输入**\n\n```\n3\nTom 13800001111\nJerry 13900002222\nLucy 13700003333\nJerry\n```\n\n**输出**\n\n```\n姓名：Jerry\n电话：13900002222\n```\n\n### 说明\n\n- 通讯录里的姓名互不相同，所以最多只有一个人被找到。\n- `Not Found` 是两个单词，中间一个空格，`N` 和 `F` 都是大写。\n- 电话号码可能以 `0` 开头，用 `string` 存就能原样输出，前导的 `0` 不会丢。\n\n### 小贴士\n\n- 判断姓名是否相同用 `==` 就好：`a[i].name == target`。\n- 用一个整数记录找到的下标，初值设成 `-1`；循环结束还是 `-1` 就输出 `Not Found`。\n- 找不到任何人时，绝对不能去访问 `a[0]` 之类的元素——那样输出的是第一个人的信息，不是\"没找到\"。\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| `if (a[i].name = target)` | 这是赋值，只要 `target` 不是空串就永远成立，结果永远是第一个人 | 判断相等要用 `==` |\n| `pos` 初值写 `0` | 没找到时会输出第一位联系人的信息，而不是 `Not Found` | 初值写 `-1` |\n| 没找到还输出 `a[0].phone` | 输出了别人的电话，答案错 | 先判 `if (pos == -1) cout << \"Not Found\" << endl;` |\n| `Not Found` 写成 `Not found` / `not found` | 大小写不一致，评测不通过 | 照抄 `Not Found` |\n| 电话定义成 `int phone;` | `007700` 变成 `7700`，11 位号码还可能溢出 | 用 `string phone;` |\n| 忘了读最后一行要查找的姓名 | `target` 是空的，永远输出 `Not Found` | `cin >> target;` 要写在读入数组的循环之后 |",
+      "starter_code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nstruct Person {\n    string name;\n    string phone;\n};\n\nint main() {\n    int n;\n    cin >> n;\n    Person a[105];\n    for (int i = 0; i < n; i++) {\n        cin >> a[i].name >> a[i].phone;\n    }\n    string target;\n    cin >> target;\n    // TODO: 遍历数组，找出第一个 name 等于 target 的人，把下标记下来（找不到就是 -1）\n    // TODO: 找到了就输出 姓名：<姓名> 和 电话：<电话> 两行\n    // TODO: 一个人都没找到就输出 Not Found\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nstruct Person {\n    string name;\n    string phone;\n};\n\nint main() {\n    int n;\n    cin >> n;\n    Person a[105];\n    for (int i = 0; i < n; i++) {\n        cin >> a[i].name >> a[i].phone;\n    }\n\n    string target;\n    cin >> target;\n\n    int pos = -1;\n    for (int i = 0; i < n; i++) {\n        if (a[i].name == target) {\n            pos = i;\n            break;\n        }\n    }\n\n    if (pos == -1) {\n        cout << \"Not Found\" << endl;\n    } else {\n        cout << \"姓名：\" << a[pos].name << endl;\n        cout << \"电话：\" << a[pos].phone << endl;\n    }\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "3\nTom 13800001111\nJerry 13900002222\nLucy 13700003333\nJerry\n",
+          "expected_output": "姓名：Jerry\n电话：13900002222\n"
+        },
+        {
+          "input": "1\nZoe 555\nZoe\n",
+          "expected_output": "姓名：Zoe\n电话：555\n"
+        },
+        {
+          "input": "2\nA 111\nB 222\nC\n",
+          "expected_output": "Not Found\n"
+        },
+        {
+          "input": "2\nAnn 007700\nBen 10010\nAnn\n",
+          "expected_output": "姓名：Ann\n电话：007700\n"
+        },
+        {
+          "input": "4\nAlexander 10086\nBo 10010\nCindy 12345\nDan 99999\nAmy\n",
+          "expected_output": "Not Found\n"
+        }
+      ],
+      "hints": [
+        "先写 `int pos = -1;`，循环里用 `if (a[i].name == target)` 判断姓名是否相同。",
+        "找到之后把下标存进 `pos` 并 `break;`，循环结束后再统一判断输出。",
+        "电话用 `string` 存，前导的 `0` 才能原样保留。"
+      ]
+    },
+    {
+      "id": "s6-p6",
+      "title": "成绩统计报告",
+      "difficulty": "中等",
+      "knowledge_point": "综合统计、最值与平均分",
+      "description": "### 题目背景\n\n学期末老师要写一份成绩统计报告，里面的内容是：\n\n- 最高分是多少，是谁考的；\n- 最低分是多少，是谁考的；\n- 全班平均分是多少。\n\n找最值的思路在阶段四就学过了，叫做**打擂台**：先让第一个选手当擂主，之后每来一个就比一比。区别是——这次擂主身上带着**姓名**，所以换擂主时要把整个结构体一起换掉：\n\n```cpp\nint mx = 0;                       // mx 记住\"目前最高分\"同学的下标\nfor (int i = 1; i < n; i++) {\n    if (a[i].score > a[mx].score) {\n        mx = i;                   // 换擂主，只是换个下标\n    }\n}\n// 报告里就能同时拿到 a[mx].score 和 a[mx].name\n```\n\n**用下标当擂主**是这一题的小窍门：分数和姓名永远保持配套，不会出现\"分数是甲的、姓名是乙的\"这种错位。\n\n### 任务\n\n读入 `n` 个学生的姓名和成绩，输出一份成绩统计报告。\n\n并列规则：如果有多位同学并列最高分，输出姓名**字典序最小**的那位；最低分同理。\n\n### 本关新知识：用下标\"打擂台\"，并列时再比姓名\n\n**打擂台**：先让第 0 位同学当擂主，之后每来一位就比一比，赢了就换擂主。这一题的关键是**擂主用\"下标\"记，而不是用分数记**：\n\n```cpp\nint mx = 0;                     // mx 记的是\"目前最高分是哪一位\"，是下标不是分数！\nint mn = 0;\nint sum = 0;                    // 总分顺手在同一个循环里累加\nfor (int i = 0; i < n; i++) {\n    sum += a[i].score;\n    if (a[i].score > a[mx].score) mx = i;   // 严格更高，换擂主\n    if (a[i].score < a[mn].score) mn = i;   // 严格更低，也换擂主\n}\n```\n\n擂主是下标，所以报告里的分数和姓名永远配套：`a[mx].score` 和 `a[mx].name` 就是同一位同学的两栏。\n\n**并列怎么办？** 题目已经约定：分数并列时，取姓名**字典序最小**的那位。所以\"换擂主\"的条件要把两种情况写全：\n\n```cpp\nif (a[i].score > a[mx].score ||                              // 情况一：分数更高\n    (a[i].score == a[mx].score && a[i].name < a[mx].name)) {  // 情况二：分数一样但姓名更小\n    mx = i;\n}\n```\n\n`||` 读作\"或者\"，`&&` 读作\"并且\"。**括号千万别丢**：`&&` 的优先级比 `||` 高，不加括号意思就变了。\n\n平均分照旧：写 `1.0 * sum / n`（乘 `1.0` 把整数变成小数，否则整除会丢掉小数部分），输出前加 `fixed << setprecision(2)`。\n\n| 要记住的点 | 说明 |\n| --- | --- |\n| 擂主存下标 | `int mx = 0;` 之后用 `a[mx].score` 和 `a[mx].name`，分数和姓名不会错位 |\n| 先比\"严格\"大小 | 条件里用 `>` 或 `<`；并列的情况交给追加的条件处理 |\n| 并列条件要加括号 | 把\"分数相等 **并且** 姓名更小\"用小括号括成一个整体，再用\"或者\"接到前面 |\n| 输出顺序是\"分数 空格 姓名\" | `a[mx].score` 在前，`a[mx].name` 在后，中间一个空格 |\n| 一趟循环做三件事 | 累加总分、判最高、判最低可以写在同一个 `for` 里 |\n\n### 输入格式\n\n- 第一行一个整数 `n`（`1 ≤ n ≤ 100`）。\n- 接下来 `n` 行，每行一个姓名和一个整数成绩（`0 ≤ 成绩 ≤ 100`），中间用一个空格分隔。\n\n姓名只由英文字母组成，首字母大写、其余小写，长度不超过 20。\n\n### 输出格式\n\n输出三行：\n\n```\n最高分：<分数> <姓名>\n最低分：<分数> <姓名>\n平均分：<平均分>\n```\n\n注意前两行是\"分数 空格 姓名\"的顺序；平均分**保留 2 位小数**。\n\n### 样例\n\n**输入**\n\n```\n5\nTom 90\nJerry 95\nLucy 88\nAmy 95\nBob 60\n```\n\n**输出**\n\n```\n最高分：95 Amy\n最低分：60 Bob\n平均分：85.60\n```\n\n### 说明\n\n- 样例中最高分 95 有两个人（Jerry 和 Amy），按字典序 `Amy` 更小，所以报告里写 `Amy`。\n- 全班总分 `90 + 95 + 88 + 95 + 60 = 428`，平均分 `428 ÷ 5 = 85.6`，写成两位小数是 `85.60`。\n- `n = 1` 时，最高分和最低分是同一个人，两行内容一样，这是正常的。\n- 平均分按\"总分 ÷ 人数\"计算，用 `fixed << setprecision(2)` 输出即可。\n\n### 小贴士\n\n- 用两个下标变量分别记住最高分和最低分的同学，例如 `int mx = 0, mn = 0;`，再从 `i = 1` 开始循环。\n- 判断并列时要加上姓名比较，例如 `a[i].score > a[mx].score || (a[i].score == a[mx].score && a[i].name < a[mx].name)`。\n- 总分可以顺手在同一个循环里累加；算平均分别忘了写 `1.0 * sum / n`，还要 `#include <iomanip>`。\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| 用分数当擂主：`int mx = a[0].score;` | 换擂主后只有分数变了，姓名还是老样子，出现\"分数是甲的、姓名是乙的\" | 用下标记：`int mx = 0;`，比较时写 `a[mx].score` |\n| 并列判据只写 `a[i].score > a[mx].score` | 分数并列时姓名顺序不定，会输出字典序较大的那位 | 补上\"分数相同并且姓名更小\"的条件 |\n| 并列条件忘加括号 | `&&` 的优先级比\"或者\"高，判断的意思整个变了，答案错 | 把 `a[i].score == a[mx].score && a[i].name < a[mx].name` 整体用小括号括起来 |\n| 输出写成\"姓名 分数\" | 顺序和要求相反，评测不通过 | 先分数后姓名：`a[mx].score << \" \" << a[mx].name` |\n| 平均分写 `sum / n` | 整数除法丢小数，`428 / 5` 得到 `85` 而不是 `85.60` | 写 `1.0 * sum / n` 并配 `fixed << setprecision(2)` |\n| `mx`、`mn` 或 `sum` 忘了初始化 | 拿到随机垃圾值，结果完全不对 | 都从 `0` 开始：`int mx = 0, mn = 0, sum = 0;` |",
+      "starter_code": "#include <iostream>\n#include <string>\n#include <iomanip>\nusing namespace std;\n\nstruct Student {\n    string name;\n    int score;\n};\n\nint main() {\n    int n;\n    cin >> n;\n    Student a[105];\n    for (int i = 0; i < n; i++) {\n        cin >> a[i].name >> a[i].score;\n    }\n    // TODO: 用打擂台找出最高分的同学，用下标记住它（并列时取姓名字典序最小的）\n    // TODO: 同样找出最低分的同学\n    // TODO: 顺便把总分累加起来\n    // TODO: 依次输出 最高分：<分数> <姓名> / 最低分：<分数> <姓名> / 平均分：<保留 2 位小数>\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\n#include <string>\n#include <iomanip>\nusing namespace std;\n\nstruct Student {\n    string name;\n    int score;\n};\n\nint main() {\n    int n;\n    cin >> n;\n    Student a[105];\n    for (int i = 0; i < n; i++) {\n        cin >> a[i].name >> a[i].score;\n    }\n\n    int mx = 0;\n    int mn = 0;\n    int sum = 0;\n    for (int i = 0; i < n; i++) {\n        sum += a[i].score;\n\n        if (a[i].score > a[mx].score ||\n            (a[i].score == a[mx].score && a[i].name < a[mx].name)) {\n            mx = i;\n        }\n        if (a[i].score < a[mn].score ||\n            (a[i].score == a[mn].score && a[i].name < a[mn].name)) {\n            mn = i;\n        }\n    }\n\n    cout << \"最高分：\" << a[mx].score << \" \" << a[mx].name << endl;\n    cout << \"最低分：\" << a[mn].score << \" \" << a[mn].name << endl;\n    cout << \"平均分：\" << fixed << setprecision(2) << 1.0 * sum / n << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "5\nTom 90\nJerry 95\nLucy 88\nAmy 95\nBob 60\n",
+          "expected_output": "最高分：95 Amy\n最低分：60 Bob\n平均分：85.60\n"
+        },
+        {
+          "input": "1\nSolo 77\n",
+          "expected_output": "最高分：77 Solo\n最低分：77 Solo\n平均分：77.00\n"
+        },
+        {
+          "input": "3\nA 50\nB 50\nC 50\n",
+          "expected_output": "最高分：50 A\n最低分：50 A\n平均分：50.00\n"
+        },
+        {
+          "input": "4\nZoe 100\nAnn 100\nMike 0\nBen 0\n",
+          "expected_output": "最高分：100 Ann\n最低分：0 Ben\n平均分：50.00\n"
+        },
+        {
+          "input": "3\nA 100\nB 0\nC 100\n",
+          "expected_output": "最高分：100 A\n最低分：0 B\n平均分：66.67\n"
+        }
+      ],
+      "hints": [
+        "让 `mx` 和 `mn` 都从 `0` 开始，表示\"目前最高/最低分的同学是第 0 个\"，再从 `i = 1` 或 `i = 0` 往后比较。",
+        "并列判定写全：先比分数，分数相同再比姓名，例如 `a[i].score > a[mx].score || (a[i].score == a[mx].score && a[i].name < a[mx].name)`。",
+        "输出时先取下标再取成员：`a[mx].score` 和 `a[mx].name`；平均分要写 `1.0 * sum / n` 并配合 `fixed << setprecision(2)`。"
+      ]
+    }
+  ]
+}

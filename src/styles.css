@@ -1,0 +1,492 @@
+/* ------------------------------------------------------------------ */
+/* 全局                                                                */
+/* ------------------------------------------------------------------ */
+
+:root {
+  --oi-border: #e5e7eb;
+  --oi-bg-soft: #f5f7fa;
+  --oi-code-bg: #1e1e1e;
+}
+
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  background: #fff !important;
+  border-bottom: 1px solid var(--oi-border);
+  padding: 0 24px !important;
+  height: 64px;
+  line-height: normal;
+}
+
+.app-header-inner {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.brand-icon {
+  color: #1677ff;
+  font-size: 20px;
+}
+
+.brand-name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.brand-slogan {
+  color: #8c8c8c;
+  font-size: 12px;
+}
+
+.app-menu {
+  flex: 1 1 auto;
+  /* 给导航留出最小宽度：否则 antd 会把所有菜单项折叠进 “…” 里 */
+  min-width: 320px;
+  overflow: hidden;
+  border-bottom: none !important;
+  background: transparent !important;
+}
+
+.app-header-right {
+  flex-shrink: 0;
+}
+
+.header-stat {
+  font-size: 12px;
+  color: #595959;
+}
+
+@media (max-width: 1280px) {
+  .brand-slogan {
+    display: none;
+  }
+}
+
+@media (max-width: 1080px) {
+  .header-stat {
+    display: none;
+  }
+}
+
+.app-content {
+  padding: 20px 24px 8px;
+}
+
+.page {
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.app-footer {
+  text-align: center;
+  background: transparent !important;
+  padding: 12px 24px !important;
+}
+
+/* ------------------------------------------------------------------ */
+/* 首页                                                                */
+/* ------------------------------------------------------------------ */
+
+.hero-card {
+  background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 60%);
+  border: 1px solid #e6f0ff;
+}
+
+.stage-card {
+  height: 100%;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stage-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(22, 119, 255, 0.12);
+}
+
+/* ------------------------------------------------------------------ */
+/* 题目页                                                              */
+/* ------------------------------------------------------------------ */
+
+.problem-page {
+  display: grid;
+  grid-template-columns: minmax(340px, 33%) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+.problem-left {
+  position: sticky;
+  top: 84px;
+  max-height: calc(100vh - 104px);
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.problem-right {
+  min-width: 0;
+}
+
+@media (max-width: 1100px) {
+  .problem-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .problem-left {
+    position: static;
+    max-height: none;
+  }
+}
+
+.editor-wrapper {
+  margin-top: 12px;
+  border: 1px solid #303030;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------------ */
+/* Markdown 渲染                                                       */
+/* ------------------------------------------------------------------ */
+
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: #262626;
+  word-break: break-word;
+}
+
+.markdown-body > *:first-child {
+  margin-top: 0;
+}
+
+.markdown-body h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 20px 0 8px;
+  padding-left: 10px;
+  border-left: 3px solid #1677ff;
+  line-height: 1.4;
+}
+
+.markdown-body h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 16px 0 6px;
+}
+
+.markdown-body p {
+  margin: 8px 0;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  margin: 8px 0;
+  padding-left: 22px;
+}
+
+.markdown-body li {
+  margin: 4px 0;
+}
+
+.markdown-body strong {
+  color: #0958d9;
+}
+
+.markdown-body code {
+  background: #f2f4f7;
+  border: 1px solid #e6e8eb;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  color: #c41d7f;
+}
+
+.markdown-body pre {
+  background: #f7f8fa;
+  border: 1px solid #e6e8eb;
+  border-radius: 8px;
+  padding: 12px 14px;
+  overflow: auto;
+  margin: 10px 0;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #1f1f1f;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid #e6e8eb;
+  padding: 6px 10px;
+  text-align: left;
+}
+
+.markdown-body th {
+  background: #fafafa;
+  font-weight: 600;
+}
+
+.markdown-body blockquote {
+  margin: 10px 0;
+  padding: 6px 12px;
+  border-left: 3px solid #d9d9d9;
+  background: #fafafa;
+  color: #595959;
+}
+
+.markdown-body hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 16px 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* 输出面板                                                            */
+/* ------------------------------------------------------------------ */
+
+.output-panel {
+  min-height: 120px;
+}
+
+.panel-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+}
+
+.output-block {
+  margin-top: 12px;
+}
+
+.output-block-title {
+  font-size: 12px;
+  color: #8c8c8c;
+  margin-bottom: 4px;
+}
+
+.output-pre {
+  background: #fafafa;
+  border: 1px solid var(--oi-border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin: 0;
+  max-height: 260px;
+  overflow: auto;
+  font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.output-pre-error {
+  background: #fff2f0;
+  border-color: #ffccc7;
+  color: #a8071a;
+}
+
+.compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.diagnostic-line {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.diagnostic-line:hover {
+  background: #fff2f0;
+}
+
+.compiler-warnings {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.compiler-warnings summary {
+  cursor: pointer;
+}
+
+.solution-pre {
+  background: #282c34;
+  color: #abb2bf;
+  border-color: #1f2329;
+  max-height: 60vh;
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------------ */
+/* 新手指南                                                            */
+/* ------------------------------------------------------------------ */
+
+.guide-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 16px;
+  align-items: start;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.guide-side {
+  position: sticky;
+  top: 84px;
+}
+
+@media (max-width: 1100px) {
+  .guide-page {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .guide-side {
+    display: none;
+  }
+}
+
+/* 指南正文排版比题目描述更宽松一些 */
+.guide-page .markdown-body {
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.guide-page .markdown-body h2 {
+  font-size: 18px;
+  margin: 28px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eee;
+  scroll-margin-top: 90px;
+}
+
+.guide-page .markdown-body blockquote {
+  border-left: 3px solid #91caff;
+  background: #f0f7ff;
+  color: #3f4b5b;
+}
+
+/* ------------------------------------------------------------------ */
+/* 新手自查提示                                                        */
+/* ------------------------------------------------------------------ */
+
+.beginner-tips {
+  margin-top: 12px;
+  background: #fffbe6;
+  border-color: #ffe58f;
+}
+
+.beginner-tips .ant-card-head {
+  min-height: 40px;
+  border-bottom-color: #ffe58f;
+  color: #874d00;
+  font-weight: 600;
+}
+
+.beginner-tip + .beginner-tip {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #ffe58f;
+}
+
+.beginner-tip-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #874d00;
+}
+
+.beginner-tip-detail {
+  margin: 6px 0 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #614700;
+  white-space: pre-wrap;
+}
+
+/* ------------------------------------------------------------------ */
+/* 开发者面板                                                          */
+/* ------------------------------------------------------------------ */
+
+.developer-panel {
+  border: 1px dashed #d3adf7;
+  background: #fcfaff;
+}
+
+.developer-panel .ant-card-head {
+  min-height: 40px;
+  border-bottom-color: #efdbff;
+  color: #531dab;
+}
+
+.developer-panel .ant-descriptions-item-label {
+  width: 84px;
+  font-size: 12px;
+}
+
+.developer-panel .ant-descriptions-item-content {
+  font-size: 12px;
+}
+
+/* ------------------------------------------------------------------ */
+/* 测试用例面板                                                        */
+/* ------------------------------------------------------------------ */
+
+.testcase-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.case-detail {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  font-size: 12px;
+}
+
+.case-detail .output-pre {
+  max-height: 140px;
+  margin-top: 4px;
+}

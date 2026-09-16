@@ -1,0 +1,40 @@
+{
+  "name": "oiworld",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "纯前端 C++ 基础语法学习靶场（clang 编译为 WebAssembly，浏览器本地编译运行）",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "setup:toolchain": "node scripts/copy-toolchain.mjs",
+    "validate:problems": "node scripts/validate-problems.mjs",
+    "test:e2e": "node scripts/e2e.mjs",
+    "test:problem": "node scripts/e2e-problem.mjs"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.5.2",
+    "@bjorn3/browser_wasi_shim": "^0.3.0",
+    "@monaco-editor/react": "^4.6.0",
+    "antd": "^5.22.5",
+    "browsercc": "^0.1.1",
+    "monaco-editor": "^0.52.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
+    "react-router-dom": "^6.28.0",
+    "remark-gfm": "^4.0.0",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "playwright": "^1.63.0",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}

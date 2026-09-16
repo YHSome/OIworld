@@ -1,0 +1,174 @@
+{
+  "stage": 1,
+  "title": "阶段一 · 让程序开口说话",
+  "subtitle": "输出、变量与输入",
+  "summary": "这是整个课程的第一站。你会认识 C++ 程序的固定框架，学会用 `cout` 在屏幕上打字、用变量保存数据、用 `cin` 读取用户输入。\n\n**完全没有写过代码？** 请先花 10 分钟读一遍[新手指南](/guide)：它会逐行解释下面的代码是什么意思，并告诉你报错该怎么看。",
+  "problems": [
+    {
+      "id": "s1-p1",
+      "title": "你好，世界",
+      "difficulty": "入门",
+      "knowledge_point": "cout 输出、字符串",
+      "description": "### 题目背景\n\n每个程序员的第一行代码，都是让电脑说一句\"你好\"。\n\n这一题只要求你做一件事：**让程序在屏幕上打印一行 `Hello, World!`**。\n\n### 任务\n\n输出一行 `Hello, World!`（注意：逗号后面有一个空格）。\n\n### 本关新知识：先读懂右边那段代码\n\n编辑器里已经有一段代码了，它叫**框架**，是给你准备好的外壳。**你不需要改它**，只要在 `// TODO` 那一行写一句输出语句。\n\n先逐行读懂这个外壳：\n\n```cpp\n#include <iostream>          // ① 把\"输入输出工具箱\"拿进来\nusing namespace std;         // ② 偷懒声明：以后写 cout 就行，不用写 std::cout\nint main() {                 // ③ 程序的入口，电脑从这里开始执行\n    // TODO: 在这里写你的代码    // ④ 这一行是注释，电脑完全无视，它只是给你指路\n    return 0;                // ⑤ 程序结束，把 0 交还系统（0 表示一切正常）\n}                            // ⑥ 和 ③ 里的 { 是一对\n```\n\n| 写法 | 怎么理解 | 作用 |\n| --- | --- | --- |\n| `#include <iostream>` | input-output-stream，输入输出流 | 引入工具箱。里面有负责打印的 `cout`；不写这行，电脑就不认识 `cout` |\n| `using namespace std;` | std = standard，标准库 | 偷懒声明：写 `cout` 就等于写 `std::cout`。**先照抄，记住有这行就行** |\n| `int main() { ... }` | main = 主要的 | 程序的**入口**。电脑永远从 `main` 开始执行，`{ }` 里是要做的步骤 |\n| `// 注释内容` | 以两个斜杠开头 | **注释**：写给人看的，电脑完全无视。`TODO` 是英文\"待办\"的意思 |\n| `return 0;` | return = 返回 | 程序结束，把 0 交还系统。0 表示一切正常 |\n\n**你要写的那一行长这样：**\n\n```cpp\ncout << \"Hello, World!\" << endl;\n```\n\n一个符号一个符号地拆开看：\n\n| 片段 | 读法 | 作用 |\n| --- | --- | --- |\n| `cout` | \"C-out\"（character output） | 输出工具：把东西送到屏幕上 |\n| `<<` | 两个小于号 | 像一个小箭头，把**右边的东西送进左边**（送进 cout，也就是送到屏幕） |\n| `\"Hello, World!\"` | 双引号里的文字叫**字符串** | 要**原样**显示的内容。必须是**英文双引号**，一个字符都不能差 |\n| `endl` | \"end line\" | 换行：让光标移到下一行 |\n| `;` | 分号 | **一句的结束符**，像中文的句号，每句结尾都必须有 |\n\n连起来读就是：**\"把 Hello, World! 送到屏幕上，然后换行。\"**\n\n### 输入格式\n\n本题**没有输入**。右下角\"标准输入\"框留空即可。\n\n### 输出格式\n\n输出一行 `Hello, World!`，末尾要有换行。\n\n### 样例\n\n**输出**\n\n```\nHello, World!\n```\n\n### 常见错误（新手最容易踩的坑）\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| `cout << Hello, World! << endl;` | 报错 `use of undeclared identifier` | 要显示的文字必须放在英文双引号里 |\n| `cout << \"Hello, World!\"` | 报错 `expected ';'` | 结尾漏了分号，补上 `;` |\n| 末尾写中文分号 `；` | 报错（编译器不认识全角符号） | 用英文分号 `;` |\n| `Cout << \"Hello, World!\" << endl;` | 报错 `undeclared identifier 'Cout'` | C++ 区分大小写，必须是全小写的 `cout` |\n| 用中文引号 `“Hello, World!”` | 编译器看不懂 | 用英文双引号 `\"` |\n\n> 编译失败时，右侧\"运行结果\"面板会自动检测**中文标点**并指出在第几行第几列，照它说的改就行。\n\n### 小贴士\n\n- 输出文字必须写在双引号里，例如 `\"Hello\"`。\n- 每条语句结束都要写分号 `;`，这是新手最常漏的东西。\n- 想让输出换行，在末尾加 `<< endl`；也可以写 `<< \"\\n\"`，效果一样。\n- 写完点\"运行\"看结果，点\"提交\"评测全部测试用例；**全部通过**才算完成本题。",
+      "starter_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // TODO: 用 cout 输出 Hello, World!\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"Hello, World!\" << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "",
+          "expected_output": "Hello, World!\n"
+        }
+      ],
+      "hints": [
+        "输出用 `cout << 内容;`，内容可以是字符串、数字或者变量。",
+        "字符串一定要放在**英文双引号**中：`cout << \"Hello, World!\";`",
+        "想让光标换到下一行，在末尾加上 `<< endl` 或 `<< \"\\n\"`。",
+        "忘了怎么写？去「新手指南」第五节看那张拆解表。"
+      ]
+    },
+    {
+      "id": "s1-p2",
+      "title": "打印小旗子",
+      "difficulty": "入门",
+      "knowledge_point": "多行输出",
+      "description": "### 题目背景\n\n程序经常需要输出好几行内容，比如打印一张成绩单或者一个小图案。\n\n### 任务\n\n请输出下面这个由星号组成的小旗子（共 3 行）：\n\n```\n*******\n* C++ *\n*******\n```\n\n### 本关新知识：一次输出多行\n\n上一题你学会了\"一句话 + 分号\"。要输出 3 行，就写 3 句，每句末尾都换行：\n\n```cpp\ncout << \"第一行内容\" << endl;\ncout << \"第二行内容\" << endl;\ncout << \"第三行内容\" << endl;\n```\n\n| 要记住的点 | 说明 |\n| --- | --- |\n| 每一句都要有分号 | 3 行内容 = 3 条语句 = 3 个分号 |\n| 每一句都要换行 | 否则三行内容会挤在同一行 |\n| 语句按顺序执行 | 电脑从上往下、一句一句地执行 |\n| 空格也是内容 | `\"* C++ *\"` 中间的空格会原样输出 |\n\n### 输入格式\n\n本题**没有输入**。\n\n### 输出格式\n\n按顺序输出 3 行内容，每一行末尾都要换行。\n\n### 样例\n\n**输出**\n\n```\n*******\n* C++ *\n*******\n```\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| 只用了 1 条 `cout` | 三行内容挤在一行 | 每行内容写一条 `cout` |\n| 漏写某个 `<< endl` | 两行粘在一起 | 每条语句末尾都要换行 |\n| `\"* C++ *\"` 写成 `\"*C++*\"` | 空格没了，评测不通过 | 空格也要照抄 |\n\n### 小贴士\n\n- 一行写一条 `cout` 语句，一共三条。\n- 数一数星号个数：第一行和第三行各 7 个。\n- 也可以把换行符写在字符串中间一次性输出多行，例如 `cout << \"第一行\\n第二行\\n\";`",
+      "starter_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    // TODO: 输出 3 行星号图案\n    // 第 1 行：*******\n    // 第 2 行：* C++ *\n    // 第 3 行：*******\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    cout << \"*******\" << endl;\n    cout << \"* C++ *\" << endl;\n    cout << \"*******\" << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "",
+          "expected_output": "*******\n* C++ *\n*******\n"
+        }
+      ],
+      "hints": [
+        "一行写一条 `cout` 语句，每条末尾加 `<< endl`。",
+        "`* C++ *` 中间的空格也要一模一样地输出。",
+        "点「运行」后，把结果和题目里的样例逐行比一比，就知道自己有没有写对。"
+      ]
+    },
+    {
+      "id": "s1-p3",
+      "title": "自我介绍",
+      "difficulty": "入门",
+      "knowledge_point": "变量、cin 输入",
+      "description": "### 题目背景\n\n前面两题的程序都是\"自己说自己的话\"。真正的程序要能**接收用户的输入**，再根据输入给出回答。\n\n### 任务\n\n读入一个人的姓名和年龄，然后输出一句自我介绍。\n\n### 本关新知识：变量与输入\n\n**变量**：一个贴着标签的盒子，用来存数据。用之前要先说明它装什么类型：\n\n| 类型 | 装什么 | 例子 |\n| --- | --- | --- |\n| `int` | 整数 | `int age = 18;` |\n| `double` | 小数 | `double score = 95.5;` |\n| `string` | 文字（字符串） | `string name = \"Xiaoming\";` |\n\n**输入**：`cin`（读作 \"C-in\"，character input）负责从键盘读数据，箭头方向和 `cout` 相反：\n\n```cpp\ncin >> age;            // 从键盘读一个整数，装进 age 这个盒子\ncin >> name >> age;    // 一次读两个，中间用空格或回车分开\n```\n\n| 对比 | 作用 | 箭头方向 |\n| --- | --- | --- |\n| `cout <<` | 输出：把数据送**到**屏幕 | 指向 cout（送出去） |\n| `cin >>` | 输入：把数据从键盘**装进**变量 | 指向变量（装进来） |\n\n注意：使用 `string` 需要引入头文件 `#include <string>`，本题的初始代码里已经写好了。\n\n### 输入格式\n\n一行，包含一个姓名（不含空格）和一个整数年龄，用空格分隔。\n\n### 输出格式\n\n输出一行：`我叫<姓名>，今年<年龄>岁。`\n\n### 样例\n\n**输入**\n\n```\nXiaoming 18\n```\n\n**输出**\n\n```\n我叫Xiaoming，今年18岁。\n```\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| 用 `cout >> name` 读数据 | 程序不会读入数据，name 是空的 | 输入用 `cin >>`，输出用 `cout <<` |\n| 中文标点写成英文 `,` 和 `.` | 输出与期望不一致，评测不通过 | 从题目里复制中文标点 `，` 和 `。` |\n| 报错 `unknown type name 'string'` | 忘了头文件 | 顶部要有 `#include <string>` |\n| 忘了输出姓名前的\"我叫\" | 格式不对 | 严格按 `我叫X，今年Y岁。` 输出 |\n\n### 小贴士\n\n- `cin >> name >> age;` 一条语句就能读两个数据，中间的空格会被自动跳过。\n- 输出时可以把文字和变量混在一起：`cout << \"我叫\" << name << \"，今年\" << age << \"岁。\" << endl;`\n- 中文标点是**全角**字符，建议直接从题目里复制，不要用输入法打。",
+      "starter_code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string name;\n    int age;\n    // TODO: 用 cin 读入 name 和 age（提示：一条语句就能读完两个）\n    // TODO: 用 cout 按格式输出：我叫<姓名>，今年<年龄>岁。\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\n#include <string>\nusing namespace std;\n\nint main() {\n    string name;\n    int age;\n    cin >> name >> age;\n    cout << \"我叫\" << name << \"，今年\" << age << \"岁。\" << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "Xiaoming 18\n",
+          "expected_output": "我叫Xiaoming，今年18岁。\n"
+        },
+        {
+          "input": "Alice 7\n",
+          "expected_output": "我叫Alice，今年7岁。\n"
+        },
+        {
+          "input": "Bob 100\n",
+          "expected_output": "我叫Bob，今年100岁。\n"
+        }
+      ],
+      "hints": [
+        "`cin >> name >> age;` 一次读入两个数据，中间用空格隔开即可。",
+        "输出时可以把文字和变量混在一起：`cout << \"我叫\" << name;`",
+        "逗号和句号是中文全角字符，直接从题目里复制更稳妥。",
+        "点「运行」时，在\"标准输入\"框里填上 `Xiaoming 18`，把结果和样例逐字比一比。"
+      ]
+    },
+    {
+      "id": "s1-p4",
+      "title": "两数之和",
+      "difficulty": "入门",
+      "knowledge_point": "整数运算、cin 输入",
+      "description": "### 题目背景\n\n计算机最擅长的就是算数。这一题让你第一次用程序\"算出一个结果\"。\n\n### 任务\n\n读入两个整数，输出它们的和。\n\n### 本关新知识：整数与四则运算\n\nC++ 里的运算符和数学课上差不多：\n\n| 运算符 | 含义 | 例子（设 `int a = 7, b = 2;`） | 结果 |\n| --- | --- | --- | --- |\n| `+` | 加 | `a + b` | 9 |\n| `-` | 减 | `a - b` | 5 |\n| `*` | 乘 | `a * b` | 14 |\n| `/` | 整除 | `a / b` | 3（**整数除法会丢掉小数部分**） |\n| `%` | 取余数 | `a % b` | 1 |\n\n计算顺序和数学一样：先算 `* / %`，再算 `+ -`，有括号先算括号。\n\n把算式的结果输出出来，直接写进 `cout` 就行：\n\n```cpp\ncout << a + b << endl;      // 先算 a+b，再把结果输出\n```\n\n### 输入格式\n\n一行，两个整数 `a` 和 `b`（`-10000 ≤ a, b ≤ 10000`），用空格分隔。\n\n### 输出格式\n\n输出一个整数，表示 `a + b`。\n\n### 样例\n\n**输入**\n\n```\n3 5\n```\n\n**输出**\n\n```\n8\n```\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| `cout << \"a + b\";` | 屏幕上原样打印 `a + b` | 去掉引号：`cout << a + b;` |\n| 只读了 `a` 没读 `b` | `b` 里是垃圾值，结果莫名其妙 | 两个数都要读：`cin >> a >> b;` |\n| 写成 `Int a, b;` | 报错 `unknown type name 'Int'` | C++ 区分大小写，用小写 `int` |\n| 输出的是 `a` 或 `b` | 答案错误 | 输出它们的**和** |\n\n### 小贴士\n\n- 读入用 `cin >> a >> b;`，输出用 `cout << ...;`，两条语句别写反。\n- 也可以先算好再输出：`int sum = a + b; cout << sum << endl;`\n- 记得测试负数：`-7 + 2` 应该等于 `-5`。",
+      "starter_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    cin >> a >> b;\n    // TODO: 输出 a + b 的结果\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    cin >> a >> b;\n    cout << a + b << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "3 5\n",
+          "expected_output": "8\n"
+        },
+        {
+          "input": "0 0\n",
+          "expected_output": "0\n"
+        },
+        {
+          "input": "-7 2\n",
+          "expected_output": "-5\n"
+        },
+        {
+          "input": "10000 10000\n",
+          "expected_output": "20000\n"
+        }
+      ],
+      "hints": [
+        "直接把算式写进 `cout` 里就行：`cout << a + b;`",
+        "也可以先算好再输出：`int sum = a + b; cout << sum;`",
+        "两个整数用空格分隔，`cin >> a >> b;` 一次就能读完。"
+      ]
+    },
+    {
+      "id": "s1-p5",
+      "title": "温度换算",
+      "difficulty": "简单",
+      "knowledge_point": "double 浮点数、表达式",
+      "description": "### 题目背景\n\n摄氏度（°C）和华氏度（°F）的换算公式是：\n\n`F = C × 1.8 + 32`\n\n温度通常带小数，所以这一题要认识一个新类型：`double`。\n\n### 任务\n\n读入一个摄氏温度 `C`，输出换算后的华氏温度。\n\n### 本关新知识：小数与 double\n\n| 类型 | 装什么 | 例子 | 注意 |\n| --- | --- | --- | --- |\n| `int` | 整数 | `int n = 3;` | `7 / 2` 的结果是 **3**，小数部分被丢掉 |\n| `double` | 小数 | `double c = 36.5;` | `7.0 / 2` 的结果是 **3.5** |\n\n**关键区别**：算式中只要出现一个小数（比如 `1.8`），结果就会按小数计算。\n\n```cpp\ndouble c;\ncin >> c;                      // 读入小数要装进 double\ncout << c * 1.8 + 32 << endl;  // 直接算、直接输出\n```\n\nC++ 输出小数时会自动去掉多余的 0：`32.0` 会打印成 `32`，`212.0` 会打印成 `212`。\n所以本题**不需要**做额外的格式化。\n\n### 输入格式\n\n一行，一个数 `C`（`-100 ≤ C ≤ 100`，可能是小数），表示摄氏温度。\n\n### 输出格式\n\n输出换算后的华氏温度（直接输出即可，不用管小数位数）。\n\n### 样例\n\n**输入**\n\n```\n36.5\n```\n\n**输出**\n\n```\n97.7\n```\n\n### 说明\n\n- 输入 `0` 时输出 `32`；输入 `100` 时输出 `212`。\n- 输入 `-40` 时输出 `-40`：因为 -40°C 恰好等于 -40°F，可以拿来自我检查。\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| `int c;` | 输入 36.5 时只读到 36，结果差很多 | 小数要用 `double c;` |\n| 写成 `c * 9 / 5 + 32` 且 `c` 是 `int` | 整数除法丢精度，结果偏小 | 用 `1.8`，或把 `c` 声明为 `double` |\n| 输出时加了多余文字 | 与期望输出不一致 | 只输出数字 |\n\n### 小贴士\n\n- 读入小数用 `double c; cin >> c;`。\n- 把公式直接写进输出语句：`cout << c * 1.8 + 32 << endl;`\n- 想固定小数位（例如两位），可以写 `cout << fixed << setprecision(2) << 数值;`（需要 `#include <iomanip>`），本题用不上。",
+      "starter_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    double c;\n    cin >> c;\n    // TODO: 按公式 F = C * 1.8 + 32 计算并输出\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    double c;\n    cin >> c;\n    cout << c * 1.8 + 32 << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "36.5\n",
+          "expected_output": "97.7\n"
+        },
+        {
+          "input": "0\n",
+          "expected_output": "32\n"
+        },
+        {
+          "input": "100\n",
+          "expected_output": "212\n"
+        },
+        {
+          "input": "-40\n",
+          "expected_output": "-40\n"
+        }
+      ],
+      "hints": [
+        "`double c; cin >> c;` 就能读入小数。",
+        "把公式直接写进输出语句：`cout << c * 1.8 + 32 << endl;`",
+        "注意 -40 度时两个温度恰好相等，可以拿来验证自己的公式。"
+      ]
+    },
+    {
+      "id": "s1-p6",
+      "title": "交换两个数",
+      "difficulty": "简单",
+      "knowledge_point": "变量、赋值、中间变量",
+      "description": "### 题目背景\n\n要把两个盒子里的东西互换，聪明的做法是**先腾出第三个盒子**当临时中转站：\n\n```\n临时 = A 里的东西\nA    = B 里的东西\nB    = 临时里的东西\n```\n\n### 任务\n\n读入两个整数 `a` 和 `b`，把它们交换后再输出。\n\n### 本关新知识：赋值语句\n\n`=` 在程序里不是\"相等\"，而是\"**把右边装进左边**\"：\n\n```cpp\nint a = 3;      // 把 3 装进 a\na = 7;          // 把 7 装进 a（原来的 3 被覆盖，永远丢了）\nint tmp = a;    // 新建 tmp，把 a 现在的内容复制进去\n```\n\n| 写法 | 含义 |\n| --- | --- |\n| `a = b;` | 把 b 的值**复制**给 a。b 自己不变，但 **a 原来的值会消失** |\n| `int tmp = a;` | 新建变量 tmp，把 a 的值复制进去 |\n\n正因为 `a = b;` 会覆盖 a 原来的值，交换必须**先备份**：\n\n```cpp\nint tmp = a;   // ① 备份 a\na = b;         // ② a 变成 b 的值\nb = tmp;       // ③ b 变回原来 a 的值\n```\n\n如果偷懒写成 `a = b; b = a;`，两步之后两个变量都是 b 的值——这是新手经典错误。\n\n### 输入格式\n\n一行，两个整数 `a` 和 `b`，用空格分隔。\n\n### 输出格式\n\n输出一行，两个整数，分别是交换后的 `a` 和 `b`，中间用**一个空格**分隔。\n\n### 样例\n\n**输入**\n\n```\n3 7\n```\n\n**输出**\n\n```\n7 3\n```\n\n### 常见错误\n\n| 你可能写成 | 会发生什么 | 正确写法 |\n| --- | --- | --- |\n| `a = b; b = a;` | 两个变量都变成原来的 b | 先用 `tmp` 备份 a |\n| 忘记输出空格 | 输出 `73` 而不是 `7 3` | `cout << a << \" \" << b << endl;` |\n| 输出顺序写反 | 输出 `3 7`，没有交换 | 交换后按 `a b` 的顺序输出 |\n\n### 小贴士\n\n- 交换必须借助第三个变量，否则前一个值会被覆盖掉。\n- 输出两个数时中间要输出一个空格：`cout << a << \" \" << b << endl;`\n- C++ 提供了现成的 `swap(a, b);`（需要 `#include <algorithm>`），但本题建议先手写一遍，体会\"为什么要用临时变量\"。",
+      "starter_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    cin >> a >> b;\n    // TODO: 交换 a 和 b（想一想：为什么不能直接写 a = b; b = a;）\n    // TODO: 按 \"a b\" 的格式输出结果\n    return 0;\n}\n",
+      "solution_code": "#include <iostream>\nusing namespace std;\n\nint main() {\n    int a, b;\n    cin >> a >> b;\n    int tmp = a;\n    a = b;\n    b = tmp;\n    cout << a << \" \" << b << endl;\n    return 0;\n}\n",
+      "test_cases": [
+        {
+          "input": "3 7\n",
+          "expected_output": "7 3\n"
+        },
+        {
+          "input": "1 1\n",
+          "expected_output": "1 1\n"
+        },
+        {
+          "input": "-5 10\n",
+          "expected_output": "10 -5\n"
+        },
+        {
+          "input": "1000000 -1000000\n",
+          "expected_output": "-1000000 1000000\n"
+        }
+      ],
+      "hints": [
+        "先定义 `int tmp = a;`，再 `a = b;`，最后 `b = tmp;`。",
+        "输出两个数时中间要输出一个空格：`cout << a << \" \" << b << endl;`",
+        "交换也可以不用第三个变量（用加减法），但可读性差，初学阶段不推荐。"
+      ]
+    }
+  ]
+}

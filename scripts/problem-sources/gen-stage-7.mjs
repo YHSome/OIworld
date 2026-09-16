@@ -1,0 +1,1221 @@
+/**
+ * 生成 src/data/problems/stage-7.json
+ * （用脚本生成 JSON 而不是手写，避免 Markdown 里的换行/引号转义出错）
+ *
+ * 阶段七主题：哈希表 map / unordered_map（全课程收尾）。
+ * 允许使用阶段一 ~ 阶段六的全部语法（变量、分支、循环、数组、字符串、
+ * 函数、引用传参、结构体、sort），再加上：
+ *   - map / unordered_map 的定义、m[key]++、m.count(key)、m.find(key)、
+ *     m[key] = x、for (auto &kv : m) 遍历、m.size()
+ *   - pair 与 vector<pair<...>>（把 map 内容转成序列再排序）
+ *   - vector<int> / vector<string> 的基本用法
+ * 不出现 set / unordered_set / class / 指针 / new / delete。
+ *
+ * 确定性要求：unordered_map 的遍历顺序不确定，
+ * 所以凡是需要按顺序输出的题目一律用 map（按 key 升序），
+ * 或者把 key 收进 vector 按输入顺序输出（s7-p2），
+ * 或者输出与遍历顺序无关的结果（s7-p5 只输出下标对）。
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const outDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'src', 'data', 'problems');
+
+/** 按“头文件列表 + main 函数体”拼出完整代码，保证结尾有换行 */
+const code = (headers, body) =>
+  [...headers, 'using namespace std;', '', 'int main() {', body, '    return 0;', '}', ''].join(
+    '\n',
+  );
+
+const stage = {
+  stage: 7,
+  title: '阶段七 · 键值映射',
+  subtitle: '哈希表 map / unordered_map',
+  summary:
+    '最后一块拼图：**映射**。当程序需要"按某个东西找另一个东西"（数字 → 出现次数、姓名 → 成绩）时，数组就不够用了，这时请出 `map` 和 `unordered_map`。本阶段学会用 `m[key]++` 数次数、用 `m.count(key)` 判断有没有、用 `for (auto &kv : m)` 遍历，再配合 `vector` 和 `sort`，解决计数、查表、找第一个唯一字符、两数之和、最高频元素这些经典问题。',
+  problems: [
+    // ---------------------------------------------------------------- s7-p1
+    {
+      id: 's7-p1',
+      title: '数字出现次数',
+      difficulty: '入门',
+      knowledge_point: 'map 计数',
+      description: `### 题目背景
+
+前面我们用数组存数据，靠**下标**来点名：\`a[0]\`、\`a[1]\`……下标只能是 0、1、2 这样连续的小整数。
+
+但很多时候我们要按**别的东西**来找数据：比如"数字 3 出现了几次"、"名字叫 Alice 的同学考了多少分"。
+这种"用一个东西去对应另一个东西"的关系叫做**映射**（mapping），每一对叫一个**键值对**：
+
+- **键**（key）：用来查找的"名字"，比如数字 \`3\`、姓名 \`Alice\`；
+- **值**（value）：和键绑在一起的数据，比如出现次数、成绩。
+
+C++ 里最常用的映射容器叫 \`map\`，可以把它想成一本会自动整理的小字典（\`map\` 需要 \`#include <map>\`）：
+
+\`\`\`cpp
+map<int, int> cnt;      // 尖括号里写两个类型：<键的类型, 值的类型>
+cnt[3]++;               // 数字 3 的次数加 1
+cnt[3]++;               // 又来一个 3，次数变成 2
+cout << cnt[7];         // 数字 7 从没出现过，会得到 0
+\`\`\`
+
+最神奇的一句就是 \`cnt[x]++\`：
+
+- 如果键 \`x\` **还不存在**，\`map\` 会自动把它建出来，值默认是 0，然后加 1 变成 1；
+- 如果已经存在，就直接把原来的值加 1。
+
+而且 \`map\` 会**自动按键从小到大排好序**，所以用 \`for (auto &kv : m)\` 遍历时，拿到的键天然是升序的。
+
+为什么用 \`map\` 比数组省事？假如数字可能取到 100 万，数组就得开 100 万零 1 个格子，大部分还空着；
+而 \`map\` 只装真正出现过的数字，用多少装多少。
+
+### 任务
+
+读入 n 个整数，统计每个数字出现了多少次，然后**按数字从小到大的顺序**输出每个数字和它的次数。
+
+### 本关新知识：用 \`map\` 数次数——建表、\`cnt[x]++\`、遍历
+
+**\`map\` 就像一本会自动整理的小字典。** 查字典时，你不会从第一页一页往后翻着找"苹果"——你会直接按拼音翻到那一页。\`map\` 也是这样：给它一个**键**（查找用的"名字"，比如数字 \`3\`），它立刻告诉你对应的**值**（和这个名字绑在一起的数据，比如出现次数）。键和值凑成一对，叫**键值对**。
+
+先看定义那一行，每个部分都有用：
+
+\`\`\`cpp
+#include <map>              // 用 map 必须带上这个头文件
+
+map<int, int> cnt;          // 尖括号里写 <键的类型, 值的类型>
+                            // 本题键是"数字"、值是"次数"，所以两个都是 int
+                            // 变量名 cnt 自己起，叫 numCount、times 都行
+\`\`\`
+
+本题真正的核心只有一句话：
+
+\`\`\`cpp
+cnt[x]++;                   // 数字 x 的次数加 1
+\`\`\`
+
+**为什么这一句就能计数？** 因为 \`cnt[x]\` 有两个本事：
+
+1. 如果键 \`x\` **已经在字典里**，它把对应的值取出来，\`++\` 让它加 1，再存回去；
+2. 如果键 \`x\` **还从没出现过**，\`map\` 会**自动把这个键建出来，值默认为 0**，然后加 1 变成 1。
+
+第 2 条是 \`map\` 最方便、也最反直觉的地方：你完全不用写"先判断有没有、没有就先设成 0"，一句 \`cnt[x]++\` 就把两件事一起干了。于是整个统计过程就是一个最普通的循环：
+
+\`\`\`cpp
+int n;
+cin >> n;
+map<int, int> cnt;
+for (int i = 0; i < n; i++) {
+    int x;
+    cin >> x;
+    cnt[x]++;               // 读到谁就给谁加一次，别的什么都不用管
+}
+\`\`\`
+
+数完了怎么把结果倒出来？用**范围 for** 逐个访问字典里的条目：
+
+\`\`\`cpp
+for (auto &kv : cnt) {                     // kv 依次代表字典里的每一个键值对
+    cout << kv.first << " " << kv.second;  // first 是键（数字），second 是值（次数）
+    cout << endl;
+}
+\`\`\`
+
+\`kv\` 是一个**键值对**：**\`kv.first\` 是键**（本题里就是那个数字），**\`kv.second\` 是值**（本题里就是次数）。这两个词千万别写反——\`first\` 是"名字"，\`second\` 是"内容"，和字典一样，先有词条、再有解释。
+
+| 要记住的点 | 说明 |
+| --- | --- |
+| \`#include <map>\` | 用 \`map\` 必须写；忘了它就是"未知类型名"的报错 |
+| \`map<int, int> cnt;\` | 尖括号里**先写键的类型、再写值的类型**，中间用逗号隔开 |
+| \`cnt[x]++\` | 键不存在就自动建出来（值从 0 开始），存在就直接加 1 |
+| \`cnt[x]\` 直接读 | 键不存在时也会**顺手创建一个**，再给你 0。本题统计时无所谓，但查"在不在"时千万别这么写 |
+| \`kv.first\` / \`kv.second\` | \`first\` 是键、\`second\` 是值，写反了输出就完全不对 |
+| \`for (auto &kv : cnt)\` | 范围 for 遍历，\`kv\` 自动变成每一个键值对；\`auto\` 让编译器自己推断类型 |
+| \`map\` 自动排序 | 遍历 \`map\` 得到的键**天然从小到大**，本题"按数字从小到大输出"因此不费吹灰之力 |
+| 负数也能当键 | \`map\` 对负数一视同仁，\`-5\` 排在 \`0\` 前面 |
+
+### 输入格式
+
+- 第一行一个整数 \`n\`（\`1 ≤ n ≤ 1000\`），表示数字的个数。
+- 第二行 \`n\` 个整数 \`a_i\`（\`-10000 ≤ a_i ≤ 10000\`），用空格分隔。
+
+### 输出格式
+
+若干行，每行两个整数：先输出数字，再输出它出现的次数，中间用一个空格分隔。
+数字要**从小到大**排列，每个出现过的数字只输出一次。
+
+### 样例
+
+**输入**
+
+\`\`\`
+7
+3 1 3 2 3 1 5
+\`\`\`
+
+**输出**
+
+\`\`\`
+1 2
+2 1
+3 3
+5 1
+\`\`\`
+
+### 说明
+
+- 样例中 \`1\` 出现 2 次、\`2\` 出现 1 次、\`3\` 出现 3 次、\`5\` 出现 1 次；数字 \`4\` 根本没出现，所以不输出。
+- 数据里可能有负数，\`map\` 照样能处理，排在最前面。
+
+### 小贴士
+
+- 遍历 \`map\` 用 \`for (auto &kv : m) { ... }\`。这里的 \`kv\` 是一个键值对：**\`kv.first\` 是键**（数字），**\`kv.second\` 是值**（次数），千万别写反。
+- \`map\` 是自动升序的，所以只要按顺序遍历输出就满足题目要求；如果换成无序的 \`unordered_map\`，输出顺序就不确定了。
+- 定义时别忘了 \`#include <map>\`。
+
+### 常见错误
+
+| 你可能写成 | 会发生什么 | 正确写法 |
+| --- | --- | --- |
+| 忘了 \`#include <map>\` | 报错 \`unknown type name 'map'\` | 顶部加上 \`#include <map>\` |
+| 输出时写成 \`kv.second << " " << kv.first\` | 两个数**反了**，样例对不上 | \`kv.first\` 是数字（键），\`kv.second\` 是次数（值） |
+| 写 \`cout << cnt << endl;\` | 编译不过——整个 \`map\` 不能直接打印 | 用循环一个一个地输出 \`kv.first\` 和 \`kv.second\` |
+| 想改次数却写 \`for (auto kv : cnt)\` | \`kv\` 只是一份**副本**，改它等于白改（本题只读，但习惯要养好） | 要改就写 \`auto &kv\` |
+| 用 \`unordered_map\` 来统计并输出 | 数字顺序随机，和"从小到大"的要求不符 | 本题用 \`map\`，它自带升序 |`,
+      starter_code: code(
+        ['#include <iostream>', '#include <map>'],
+        `    int n;
+    cin >> n;
+
+    map<int, int> cnt;
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        // TODO: 把 x 的出现次数加 1
+    }
+
+    // TODO: 遍历 cnt，按 "数字 次数" 的格式每行输出一组`,
+      ),
+      solution_code: code(
+        ['#include <iostream>', '#include <map>'],
+        `    int n;
+    cin >> n;
+
+    map<int, int> cnt;
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        cnt[x]++;
+    }
+
+    for (auto &kv : cnt) {
+        cout << kv.first << " " << kv.second << endl;
+    }`,
+      ),
+      test_cases: [
+        { input: '7\n3 1 3 2 3 1 5\n', expected_output: '1 2\n2 1\n3 3\n5 1\n' },
+        { input: '1\n-5\n', expected_output: '-5 1\n' },
+        { input: '4\n7 7 7 7\n', expected_output: '7 4\n' },
+        { input: '5\n-2 0 -2 3 0\n', expected_output: '-2 2\n0 2\n3 1\n' },
+        {
+          input: '6\n10000 -10000 0 0 -10000 10000\n',
+          expected_output: '-10000 2\n0 2\n10000 2\n',
+        },
+      ],
+      hints: [
+        '定义 `map<int, int> cnt;` 之后，写 `cnt[x]++;` 就能完成"没见过就建出来、见过就加一"。',
+        '遍历写 `for (auto &kv : cnt) { cout << kv.first << " " << kv.second << endl; }`，`kv.first` 是键、`kv.second` 是值。',
+        '要按数字升序输出就用 `map`（自动排序）；换成 `unordered_map` 顺序就不确定了。',
+      ],
+    },
+    // ---------------------------------------------------------------- s7-p2
+    {
+      id: 's7-p2',
+      title: '单词计数',
+      difficulty: '简单',
+      knowledge_point: '哈希表单词计数',
+      description: `### 题目背景
+
+\`map\` 很好用，但它为了维护"键从小到大有序"，每次插入和查找都要比较、调整，稍微花一点时间。
+
+如果我们**根本不需要顺序**，只想查得快，就可以用 \`unordered_map\`（无序映射，需要 \`#include <unordered_map>\`）。
+它内部用**哈希表**实现：根据键直接算出一个存放位置，一步跳过去，所以查找的平均速度比 \`map\` 还要快。
+
+\`\`\`cpp
+unordered_map<string, int> cnt;   // 键是单词，值是次数
+cnt["apple"]++;                   // 用法和 map 完全一样
+\`\`\`
+
+代价是：**遍历 \`unordered_map\` 时顺序是不确定的**，既不是字母序，也不是插入顺序，同一份数据每次运行都可能不一样。
+所以任何时候都不要直接遍历 \`unordered_map\` 来输出结果。
+
+那如果题目偏偏要求"按单词**第一次出现**的顺序输出"怎么办？办法很简单：另外用一个 \`vector<string>\` 把出现顺序记下来。
+
+\`\`\`cpp
+vector<string> order;             // 记录单词第一次出现的先后
+if (cnt.count(word) == 0) {       // count 返回这个键的个数：0 表示还没有
+    order.push_back(word);        // 第一次见到它，记进顺序表
+}
+cnt[word]++;
+\`\`\`
+
+\`vector\`（向量）可以理解成"能自己变长的数组"：用 \`push_back\` 往末尾添加元素，
+用 \`size()\` 问它现在有几个元素，用 \`v[i]\` 按下标取第 i 个（下标同样从 0 开始）。
+
+### 任务
+
+读入若干单词（数量不定，一直读到输入结束），统计每个单词出现了多少次，
+然后**按每个单词第一次出现的顺序**输出单词和它的次数。
+
+### 本关新知识：\`unordered_map\` 计数 + 用 \`vector\` 记住出现顺序
+
+**先分清两个"字典"。** \`map\` 和 \`unordered_map\` 用起来几乎一模一样（\`cnt[w]++\`、\`cnt.count(w)\` 写法完全相同），区别只在"要不要按顺序"：
+
+| 对比 | \`map\` | \`unordered_map\` |
+| --- | --- | --- |
+| 内部怎么找 | 按键的大小顺序一层层比较 | 按哈希算出一个位置，一步跳过去 |
+| 遍历顺序 | **按键从小到大**，每次都一样 | **完全不确定**，同一份数据每次运行都可能不同 |
+| 速度 | 稍慢一点 | 平均更快 |
+| 什么时候用 | 需要按键的顺序输出结果时 | 只要"查得快"、不关心顺序时 |
+
+**最重要的一句话：绝对不要靠遍历 \`unordered_map\` 来输出结果。** 它的顺序既不是字母序、也不是输入顺序，评测很可能直接判错。本题就属于"需要确定顺序"，所以顺序这件事得我们自己记。
+
+很土但很稳的办法：**另开一个 \`vector\` 当"记事本"，专门记下新单词出现的先后。**
+
+\`vector\` 可以理解成"**能自己变长的数组**"：普通的 \`int a[105];\` 一开始就得想好开多大，而 \`vector\` 用 \`push_back\` 往末尾加元素，元素多了它自己扩容，不用你操心。
+
+\`\`\`cpp
+vector<string> order;              // 记事本：按先后记下每一个"新面孔"单词
+
+string word;
+while (cin >> word) {              // 一个词一个词地读，读到输入结束自动停
+    if (cnt.count(word) == 0) {    // count 返回 0，说明字典里还没有这个词
+        order.push_back(word);     // 第一次见它，把名字记进记事本
+    }
+    cnt[word]++;                   // 不管第几次见，次数都要加一
+}
+\`\`\`
+
+\`count\` 就是"**问一句在不在**"：\`cnt.count(word)\` 返回 **0** 表示字典里没有这个键，返回 **1** 表示有。它**只看不改**，绝不会凭空创建键，所以特别适合用来做判断。
+
+\`vector\` 常用的操作只有几个，记住就够用了：
+
+| 写法 | 含义 |
+| --- | --- |
+| \`vector<string> order;\` | 开一个空的"字符串列表" |
+| \`order.push_back(word);\` | 把 \`word\` 追加到末尾（列表自动变长） |
+| \`order.size()\` | 现在列表里有几个元素 |
+| \`order[i]\` | 第 i 个元素，下标同样**从 0 开始** |
+| \`for (auto &w : order)\` | 范围 for，按放入的先后依次访问每个元素 |
+
+最后**按记事本的顺序**输出，次数去字典里现取：
+
+\`\`\`cpp
+for (auto &w : order) {                    // 按第一次出现的顺序走
+    cout << w << " " << cnt[w] << endl;    // cnt[w] 取出这个单词的次数
+}
+\`\`\`
+
+顺序由 \`order\` 决定、次数由 \`cnt\` 决定——一个管"排队"，一个管"数数"，配合起来结果就完全确定了。
+
+| 要记住的点 | 说明 |
+| --- | --- |
+| \`unordered_map<string, int> cnt;\` | 键是单词、值是次数；用法和 \`map\` 完全一样 |
+| \`cnt.count(word)\` | 返回 0 或 1，表示"在不在"，只看不改 |
+| \`cnt[word]++\` | 计数，不存在就自动建出来（值从 0 开始） |
+| \`while (cin >> word)\` | 读到输入结束（EOF）自动停下，不用先知道有几个词 |
+| \`vector<string> order;\` + \`push_back\` | 记事本：只在新单词第一次出现时记一笔 |
+| **先判断、先记，再 \`cnt[word]++\`** | 顺序反了这个词就永远记不进记事本 |
+| 输出顺序靠 \`order\` | 千万不要直接 \`for (auto &kv : cnt)\` 输出 |
+
+### 输入格式
+
+若干行，每行若干个单词，单词之间用空格或换行分隔，全部由小写字母组成
+（总单词数不超过 1000，每个单词长度不超过 20）。一直读到输入结束（EOF）为止。
+
+### 输出格式
+
+每行一个单词和它出现的次数，中间用一个空格分隔，顺序为这个单词**第一次在输入中出现的顺序**。
+
+### 样例
+
+**输入**
+
+\`\`\`
+apple banana apple
+cherry banana apple
+\`\`\`
+
+**输出**
+
+\`\`\`
+apple 3
+banana 2
+cherry 1
+\`\`\`
+
+### 说明
+
+- 输入一共 6 个单词：\`apple\` 3 次、\`banana\` 2 次、\`cherry\` 1 次。
+- 第一次出现的顺序是 \`apple\` → \`banana\` → \`cherry\`，所以按这个顺序输出。
+- 怎么读到结束？写 \`string w; while (cin >> w) { ... }\` 就行：\`cin >> w\` 读成功时条件为真，读到末尾自动结束循环。
+
+### 小贴士
+
+- \`cin >> w\` 会自动跳过空格和换行，所以单词挤在一行还是分几行写都一样。
+- \`cnt.count(w)\` 用来判断键在不在：返回 \`0\` 表示不在，返回 \`1\` 表示在（\`map\` 和 \`unordered_map\` 都有 \`count\`）。
+- 输出时要按 \`order\` 里记的顺序，用 \`cnt[w]\` 把次数取出来；直接遍历 \`unordered_map\` 顺序会乱。
+
+### 常见错误
+
+| 你可能写成 | 会发生什么 | 正确写法 |
+| --- | --- | --- |
+| 直接 \`for (auto &kv : cnt)\` 输出 | 单词顺序随机，和"第一次出现的顺序"不符，判错 | 按 \`order\` 的顺序输出：\`for (auto &w : order) cout << w << " " << cnt[w] << endl;\` |
+| 先写 \`cnt[word]++;\` 再判断 \`if (cnt.count(word) == 0)\` | 键这时一定已经存在了，\`order\` 永远是空的，一行都输出不出来 | **先 \`count\` 判断、先 \`push_back\`，最后再 \`cnt[word]++\`** |
+| 忘了 \`#include <unordered_map>\` 或 \`#include <vector>\` | 报错 \`unknown type name\` | 两个头文件都要写（用 \`string\` 还要 \`#include <string>\`） |
+| 写成 \`cin >> word;\` 而不是 \`while (cin >> word)\` | 只读到第一个词，后面的全丢了 | 用 \`while (cin >> word) { ... }\` 读到输入结束 |
+| \`order.push_back(cnt[word])\` | 记进记事本的是**次数**不是单词，类型也对不上 | 记单词本身：\`order.push_back(word);\` |`,
+      starter_code: code(
+        [
+          '#include <iostream>',
+          '#include <string>',
+          '#include <unordered_map>',
+          '#include <vector>',
+        ],
+        `    unordered_map<string, int> cnt;
+    vector<string> order;
+
+    string w;
+    while (cin >> w) {
+        // TODO: 如果 w 是第一次出现（cnt.count(w) == 0），把它 push_back 进 order
+        // TODO: 让 w 的次数加 1
+    }
+
+    // TODO: 按 order 里的顺序，输出每个单词和它的次数（次数用 cnt[w] 取出来）`,
+      ),
+      solution_code: code(
+        [
+          '#include <iostream>',
+          '#include <string>',
+          '#include <unordered_map>',
+          '#include <vector>',
+        ],
+        `    unordered_map<string, int> cnt;
+    vector<string> order;
+
+    string word;
+    while (cin >> word) {
+        if (cnt.count(word) == 0) {
+            order.push_back(word);
+        }
+        cnt[word]++;
+    }
+
+    for (auto &w : order) {
+        cout << w << " " << cnt[w] << endl;
+    }`,
+      ),
+      test_cases: [
+        {
+          input: 'apple banana apple\ncherry banana apple\n',
+          expected_output: 'apple 3\nbanana 2\ncherry 1\n',
+        },
+        { input: 'hello\n', expected_output: 'hello 1\n' },
+        { input: 'a a a\n', expected_output: 'a 3\n' },
+        { input: 'x y z\n', expected_output: 'x 1\ny 1\nz 1\n' },
+        {
+          input: 'int char int double char int\n',
+          expected_output: 'int 3\nchar 2\ndouble 1\n',
+        },
+      ],
+      hints: [
+        '用 `while (cin >> word) { ... }` 一个词一个词地读，读到结尾循环会自动结束。',
+        '判断是不是第一次见到：`if (cnt.count(word) == 0) order.push_back(word);`。',
+        '输出要按 `order` 的顺序来：`for (auto &w : order) cout << w << " " << cnt[w] << endl;`。',
+      ],
+    },
+    // ---------------------------------------------------------------- s7-p3
+    {
+      id: 's7-p3',
+      title: '第一个只出现一次的字符',
+      difficulty: '简单',
+      knowledge_point: '字符计数与查找',
+      description: `### 题目背景
+
+\`map\` 的键不一定是数字，也可以是**字符**或者字符串。
+把键的类型写成 \`char\`，就能统计每个字符出现了多少次：
+
+\`\`\`cpp
+map<char, int> cnt;
+cnt['a']++;          // 字符 a 的次数加 1
+cout << cnt['b'];    // b 从来没出现过，得到 0
+\`\`\`
+
+要找出"第一个只出现一次的字符"，分两步走最清楚：
+
+1. **先统计**：从头到尾扫一遍字符串，给每个字符计数；
+2. **再找答案**：**按字符串原来的顺序**从头再看一遍，第一个满足 \`cnt[s[i]] == 1\` 的字符就是答案。
+
+第二步一定要**按原串的顺序**去找，而不是去遍历 \`map\`！
+因为题目要的是"在字符串里最先出现"的那个字符，而遍历 \`map\` 得到的是"编码最小"的字符，两者不是一回事。
+
+### 任务
+
+读入一个字符串，找出**第一个只出现一次的字符**。
+
+### 本关新知识：把 \`char\` 当键，用"两遍扫描"找答案
+
+**键不一定非得是数字。** 上一题的键是 \`int\`，这一题的键换成**字符** \`char\`，用法一模一样，只是尖括号里第一个类型改一下：
+
+\`\`\`cpp
+#include <map>
+
+map<char, int> cnt;      // <键的类型, 值的类型> = <字符, 次数>
+cnt['a']++;              // 字符 a 的次数加一
+cnt['a']++;              // 又一个 a，次数变成 2
+cout << cnt['b'];        // b 没出现过，得到 0（顺手把 b 建了出来）
+\`\`\`
+
+注意字符常量写在**单引号**里：\`'a'\` 是一个字符，\`"a"\` 是一串文字（字符串），两者不能混用。本题的键就是一个个字母。
+
+\`map<char, int>\` 也可以想成"一本按字母排好的计数本"：你只说了"要一本用字母查次数的本子"，\`map\` 自己按需要添格子，并且**天然按字符的编码从小到大排好**（\`'a'\`、\`'b'\`、\`'c'\`……）。
+
+**这一题的关键是"扫两遍"，而不是去遍历 \`map\`：**
+
+\`\`\`cpp
+string s;
+cin >> s;
+int n = s.length();                 // 长度；第 0 个字符是 s[0]，最后一个是 s[n - 1]
+
+map<char, int> cnt;
+for (int i = 0; i < n; i++) {
+    cnt[s[i]]++;                    // 第一遍：纯粹数数，把每个字符的次数记下来
+}
+
+bool found = false;                 // 标记变量：记住"到底找到没有"
+for (int i = 0; i < n; i++) {       // 第二遍：按字符串本来的顺序找
+    if (cnt[s[i]] == 1) {           // 这个字符只出现过一次
+        cout << s[i] << endl;
+        found = true;
+        break;                      // 第一个就是答案，立刻跳出循环
+    }
+}
+
+if (!found) {                       // 一直没找到，说明每个字符都至少出现了两次
+    cout << "none" << endl;
+}
+\`\`\`
+
+**为什么第二遍必须按字符串原顺序走？** 题目要的是"在字符串里**最先**出现的那个"。遍历 \`map\` 拿到的是"字符编码**最小**"的那个，和"在串里最靠前"完全是两回事。举个例子：\`s = "ba"\`，\`b\` 和 \`a\` 都只出现一次，串里最靠前的是 \`b\`，而遍历 \`map\` 会先遇到 \`a\`——遍历 \`map\` 的写法会判错。
+
+\`bool found\` 就是上一阶段学过的**标记变量**：找到时置成 \`true\`，最后 \`if (!found)\` 表示"没找到"（\`!\` 是取反）。
+
+| 要记住的点 | 说明 |
+| --- | --- |
+| \`map<char, int> cnt;\` | 键是**字符**，值是**次数**；键的类型换掉，用法不变 |
+| \`cnt[s[i]]++\` | 把字符串第 i 个字符丢进计数本："没见过的就建、见过的就加" |
+| \`cnt[s[i]] == 1\` | 判断"这个字符只出现一次"，是本题的筛选条件 |
+| 两遍扫描 | 第一遍只管数数，第二遍只管按原顺序挑答案，别把两件事挤在一起 |
+| \`s.length()\` 与 \`s[i]\` | 长度；下标从 0 开始，最后一个字符是 \`s[n - 1]\` |
+| \`break;\` | 找到第一个就跳出，再往后找到的都不是"第一个"了 |
+| 标记变量 | \`bool found = false;\` → 找到时置 \`true\` → 最后 \`if (!found)\` 输出 \`none\` |
+
+### 输入格式
+
+一行，一个不含空格的字符串 \`s\`（长度不超过 1000），只包含小写英文字母。
+
+### 输出格式
+
+如果存在只出现一次的字符，输出这个字符（单独一行）；
+如果所有字符都至少出现了两次，输出 \`none\`。
+
+### 样例
+
+**输入**
+
+\`\`\`
+abacabad
+\`\`\`
+
+**输出**
+
+\`\`\`
+c
+\`\`\`
+
+### 说明
+
+- 样例中 \`a\` 出现 4 次、\`b\` 出现 2 次、\`c\` 出现 1 次、\`d\` 出现 1 次。
+  第一个只出现一次的字符是 \`c\`——虽然 \`d\` 也只出现一次，但它排在 \`c\` 后面。
+- 如果输入是 \`aabb\`，每个字符都出现了两次，答案是 \`none\`。
+
+### 小贴士
+
+- \`s.length()\` 是字符串长度，\`s[i]\` 是第 i 个字符（下标从 0 开始，最后一个字符是 \`s[n - 1]\`）。
+- 统计时写 \`cnt[s[i]]++\` 即可；\`map\` 的键类型是 \`char\`，值类型是 \`int\`。
+- 找答案时用 \`if (cnt[s[i]] == 1)\`，找到就输出并 \`break;\` 跳出循环；循环结束后如果一直没找到，再输出 \`none\`。
+
+### 常见错误
+
+| 你可能写成 | 会发生什么 | 正确写法 |
+| --- | --- | --- |
+| 遍历 \`map\` 找第一个 \`cnt == 1\` 的字符 | 拿到的是"编码最小"的字符，不是"串里最靠前"的，判错 | 按 \`s[0]\` → \`s[n - 1]\` 的顺序扫第二遍 |
+| 键是字符却把常量写成双引号 \`cnt["a"]\` | 类型对不上（\`"a"\` 是字符串不是字符），编译报错 | 单个字符用单引号：\`cnt['a']\` |
+| 输出答案后没写 \`break;\` | 会把所有只出现一次的字符都打印出来，而题目只要第一个 | 输出后立刻 \`break;\` |
+| 没找到时什么都不输出 | 少了 \`none\` 那一行，判错 | 用 \`found\` 标记，最后 \`if (!found) cout << "none" << endl;\` |
+| 忘了 \`#include <map>\` 或 \`#include <string>\` | 报错 \`unknown type name\` | 两个头文件都要写 |`,
+      starter_code: code(
+        ['#include <iostream>', '#include <string>', '#include <map>'],
+        `    string s;
+    cin >> s;
+
+    int n = s.length();
+    map<char, int> cnt;
+    for (int i = 0; i < n; i++) {
+        // TODO: 统计字符 s[i] 出现的次数
+    }
+
+    // TODO: 按字符串原来的顺序再扫一遍，找到第一个 cnt[s[i]] == 1 的字符，输出后跳出循环
+    // TODO: 如果一个都没找到，输出 none`,
+      ),
+      solution_code: code(
+        ['#include <iostream>', '#include <string>', '#include <map>'],
+        `    string s;
+    cin >> s;
+
+    int n = s.length();
+    map<char, int> cnt;
+    for (int i = 0; i < n; i++) {
+        cnt[s[i]]++;
+    }
+
+    bool found = false;
+    for (int i = 0; i < n; i++) {
+        if (cnt[s[i]] == 1) {
+            cout << s[i] << endl;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        cout << "none" << endl;
+    }`,
+      ),
+      test_cases: [
+        { input: 'abacabad\n', expected_output: 'c\n' },
+        { input: 'aabbcc\n', expected_output: 'none\n' },
+        { input: 'a\n', expected_output: 'a\n' },
+        { input: 'aabbc\n', expected_output: 'c\n' },
+        { input: 'zzy\n', expected_output: 'y\n' },
+      ],
+      hints: [
+        '第一遍循环只做统计：`cnt[s[i]]++;`，键是字符、值是次数。',
+        '找答案要**按原串顺序**再扫一遍，用 `if (cnt[s[i]] == 1)`，不能去遍历 `map`。',
+        '用一个 `bool found = false;` 记录有没有找到，找到时改成 `true` 并 `break;`，最后没找到就输出 `none`。',
+      ],
+    },
+    // ---------------------------------------------------------------- s7-p4
+    {
+      id: 's7-p4',
+      title: '成绩查找表',
+      difficulty: '简单',
+      knowledge_point: 'map 查找表',
+      description: `### 题目背景
+
+\`map\` 最常见的用途就是当**查找表**：把姓名当**键**，成绩当**值**，之后拿着姓名一查就能拿到成绩。
+
+\`\`\`cpp
+map<string, int> score;
+score["Alice"] = 95;        // 建立映射：Alice → 95
+cout << score["Alice"];     // 直接取出 95
+\`\`\`
+
+不过这里有个坑：用 \`score[name]\` 去读一个**不存在的**名字时，\`map\` 会悄悄把这个键建出来，值默认是 0。
+这样一来，得到的 0 到底是"真的考了 0 分"还是"根本没这个人"，就分不清了。
+
+所以"查有没有"要用 \`count\`（\`find\` 也可以）：
+
+| 写法 | 含义 |
+| --- | --- |
+| \`score.count(name)\` | 返回这个键的个数：\`0\` 表示不存在，\`1\` 表示存在 |
+| \`score.find(name) != score.end()\` | 找到了就不等于 \`end()\`，也是判断存在的写法 |
+
+本题推荐用 \`count\`，更短更好懂。查询的顺序和建表的顺序没关系，查到谁就输出谁。
+
+### 任务
+
+先用 n 组「姓名 成绩」建立查找表，再回答 m 次查询：每次给出一个姓名，输出他的成绩；
+如果查找表里没有这个人，输出 \`未找到\`。
+
+### 本关新知识：存进去用 \`m[key] = value\`，查"在不在"用 \`count\` / \`find\`
+
+这一题要把 \`map\` 的两种用法分清楚：**建表（往里写）** 和 **查表（往外读）**。它们看起来长得像，行为却不一样。
+
+**第一步，建表。** 本题的键是**姓名**（\`string\`），值是**成绩**（\`int\`）：
+
+\`\`\`cpp
+#include <string>
+#include <map>
+
+map<string, int> score;      // <键的类型, 值的类型> = <姓名, 成绩>
+score["Alice"] = 95;         // 写入：让"Alice"这个名字对应 95
+score["Bob"] = 88;           // 再写一条，字典自动多一个词条
+\`\`\`
+
+\`score["Alice"] = 95;\` 读作"**把 95 存到 Alice 这个名字下面**"。名字原来不在字典里，\`map\` 就自动建出这个键；本来就有，旧值就被覆盖——和普通变量赋值的感觉一样。读入 n 组数据时就是一个循环：
+
+\`\`\`cpp
+int n;
+cin >> n;
+map<string, int> score;
+for (int i = 0; i < n; i++) {
+    string name;
+    int s;                   // 变量名别叫 score，会和 map 重名
+    cin >> name >> s;
+    score[name] = s;         // 建表：姓名 → 成绩
+}
+\`\`\`
+
+**第二步，查表——但先记住一个大坑。** \`score[name]\` 不是单纯的"读"：如果这个名字不在字典里，它会**悄悄建出一个新键，值默认为 0**。于是你查一个不认识的人也会得到一个 0，而且字典里凭空多了一个词条。这样"真的考了 0 分"和"根本没这个人"就分不清了。
+
+所以判断"在不在"要用**只看不改**的两个函数：
+
+| 写法 | 返回什么 | 怎么用 |
+| --- | --- | --- |
+| \`score.count(name)\` | 键的个数：**0** 表示不存在，**1** 表示存在 | \`if (score.count(name) == 1) { ... }\`，最短最常用 |
+| \`score.find(name)\` | 一个"位置指针"：找到了就指向那条记录，没找到就返回 \`score.end()\` | \`if (score.find(name) != score.end()) { ... }\`，效果完全一样 |
+
+\`find\` 里的 \`end()\` 可以理解成"字典最后一页**之后**的那一页"，那是一个**不存在的哨兵位置**。所以"没找到"的表现就是"返回了 \`end()\`"，判断写成 \`!= score.end()\`。
+
+本题的查询部分这样写：
+
+\`\`\`cpp
+int m;
+cin >> m;
+for (int i = 0; i < m; i++) {
+    string name;
+    cin >> name;
+    if (score.count(name) == 1) {     // 先问一句：字典里有这个人吗？
+        cout << score[name] << endl;  // 确认存在了，再放心取值
+    } else {
+        cout << "未找到" << endl;
+    }
+}
+\`\`\`
+
+**顺序很重要：先 \`count\` 判断，再 \`score[name]\` 取值。** 反过来先用 \`score[name]\` 取值，不存在的键就已经被建出来了，之后再 \`count\` 永远返回 1，\`未找到\` 再也不会输出。
+
+| 要记住的点 | 说明 |
+| --- | --- |
+| \`map<string, int> score;\` | 键是 \`string\`（姓名），值是 \`int\`（成绩） |
+| \`score[name] = s;\` | 建表 / 改值：键不存在就新建，存在就覆盖 |
+| \`count\` 返回 0 或 1 | 只看不改，是"在不在"的标准问法 |
+| \`find\` 配合 \`end()\` | \`score.find(x) != score.end()\` 表示找到了 |
+| 不要用 \`score[x]\` 去查询 | 它会把不存在的键**凭空建出来**，还给你一个 0，把结果搞乱 |
+| 不要用"值是不是 0"判断在不在 | 成绩可能是真的 0 分，必须用 \`count\` 判断存在性 |
+| 查询顺序和建表顺序无关 | 查到谁就输出谁，按查询给出的先后输出即可 |
+
+### 输入格式
+
+- 第一行一个整数 \`n\`（\`1 ≤ n ≤ 1000\`），表示学生人数。
+- 接下来 n 行，每行一个姓名（不含空格，只含大小写字母，长度不超过 20）和一个整数成绩
+  （\`0 ≤ 成绩 ≤ 100\`），用空格分隔。姓名互不相同。
+- 接下来一行一个整数 \`m\`（\`1 ≤ m ≤ 1000\`），表示查询次数。
+- 接下来 m 行，每行一个要查询的姓名。
+
+### 输出格式
+
+共 m 行，每行对应一次查询：查到就输出成绩（一个整数），查不到就输出 \`未找到\`。
+
+### 样例
+
+**输入**
+
+\`\`\`
+3
+Alice 95
+Bob 88
+Cindy 72
+4
+Bob
+Alice
+David
+Cindy
+\`\`\`
+
+**输出**
+
+\`\`\`
+88
+95
+未找到
+72
+\`\`\`
+
+### 说明
+
+- 查询 \`Bob\` 得到 88，查询 \`Alice\` 得到 95，查询 \`Cindy\` 得到 72。
+- \`David\` 不在名单里，所以输出 \`未找到\`。
+
+### 小贴士
+
+- 建表：读入姓名和成绩后写 \`score[name] = s;\`（这里的 \`score\` 是变量名，别和成绩变量重名）。
+- 查询：\`if (score.count(name) == 1) cout << score[name] << endl; else cout << "未找到" << endl;\`
+- 成绩可能是 0 分，所以**不能用"结果是不是 0"来判断存不存在**，一定要用 \`count\`。
+
+### 常见错误
+
+| 你可能写成 | 会发生什么 | 正确写法 |
+| --- | --- | --- |
+| 用 \`if (score[name] != 0)\` 判断有没有这个人 | 真的考了 0 分的人会被当成"未找到" | 用 \`if (score.count(name) == 1)\` 判断存在性 |
+| 先 \`cout << score[name]\` 再 \`score.count(name)\` | 键已经被建出来了，\`count\` 恒为 1，\`未找到\` 永远不会输出 | 先 \`count\` 判断，确认存在再取值 |
+| 忘了 \`#include <string>\` 或 \`#include <map>\` | 报错 \`unknown type name\` | 两个头文件都要写 |
+| 把 map 取名 \`score\` 又声明 \`int score;\` 存成绩 | 同一个名字被定义两次，编译报错 | 成绩变量换个名字，比如 \`int s;\` |
+| 查到人却输出 \`未找到\`（判断条件写反） | 全部查询结果都对不上 | 条件成立（\`== 1\`）时才输出成绩，否则输出 \`未找到\` |`,
+      starter_code: code(
+        ['#include <iostream>', '#include <string>', '#include <map>'],
+        `    int n;
+    cin >> n;
+
+    map<string, int> score;
+    for (int i = 0; i < n; i++) {
+        string name;
+        int s;
+        cin >> name >> s;
+        // TODO: 建立 name -> s 的映射
+    }
+
+    int m;
+    cin >> m;
+    for (int i = 0; i < m; i++) {
+        string name;
+        cin >> name;
+        // TODO: 如果 name 在表里，输出成绩；否则输出 未找到
+    }`,
+      ),
+      solution_code: code(
+        ['#include <iostream>', '#include <string>', '#include <map>'],
+        `    int n;
+    cin >> n;
+
+    map<string, int> score;
+    for (int i = 0; i < n; i++) {
+        string name;
+        int s;
+        cin >> name >> s;
+        score[name] = s;
+    }
+
+    int m;
+    cin >> m;
+    for (int i = 0; i < m; i++) {
+        string name;
+        cin >> name;
+        if (score.count(name) == 1) {
+            cout << score[name] << endl;
+        } else {
+            cout << "未找到" << endl;
+        }
+    }`,
+      ),
+      test_cases: [
+        {
+          input: '3\nAlice 95\nBob 88\nCindy 72\n4\nBob\nAlice\nDavid\nCindy\n',
+          expected_output: '88\n95\n未找到\n72\n',
+        },
+        { input: '1\nTom 60\n1\nTom\n', expected_output: '60\n' },
+        { input: '1\nAmy 1\n2\nBen\nAmy\n', expected_output: '未找到\n1\n' },
+        {
+          input: '2\nZed 0\nAmy 100\n3\nZed\nAmy\nZed\n',
+          expected_output: '0\n100\n0\n',
+        },
+        {
+          input: '4\nAAA 1\nBBB 2\nCCC 3\nDDD 4\n4\nDDD\nAAA\nEEE\nBBB\n',
+          expected_output: '4\n1\n未找到\n2\n',
+        },
+      ],
+      hints: [
+        '建表就一句：`score[name] = s;`，键是姓名，值是成绩。',
+        '查询前先判断：`if (score.count(name) == 1)`，成立才用 `score[name]` 取值。',
+        '有人可能考 0 分，所以别用"取出来是不是 0"判断存在与否，要用 `count`。',
+      ],
+    },
+    // ---------------------------------------------------------------- s7-p5
+    {
+      id: 's7-p5',
+      title: '两数之和',
+      difficulty: '中等',
+      knowledge_point: '边读边查两数之和',
+      description: `### 题目背景
+
+最朴素的找法是"两两配对"：先挑一个数，再挑一个数，看它们的和是不是目标值。
+n 个数要比大约 n² / 2 次，n 一大就慢得让人着急。
+
+用 \`map\` / \`unordered_map\` 可以**边读边查**，把"找一个数"变成"查一次表"：
+
+从左往右读入每个数字 \`x\` 时，在心里问一句："在我**之前**读到的数里，有没有 \`target - x\`？"
+之前读到过的数都记在一张表里（**数字 → 它第一次出现的位置**），所以这一问就是一次查表，非常快。
+
+因为表里只装了"已经读过的数"，查出来的位置一定在当前数字**前面**，天然满足 \`i < j\`，
+同一个位置也就不会被用两次。
+
+如果有多组下标对都满足条件呢？本题规定：
+
+> 在所有答案中，先让 **j 尽量小**（也就是"后面那个数"的位置越靠前越好）；
+> 如果 j 相同，再让 **i 尽量小**（"前面那个数"取它**第一次出现**的位置）。
+
+按这个规则，从左往右边读边查，**第一次查到的**那一对就是答案。
+
+### 任务
+
+读入 n 个整数和一个目标值 \`target\`，判断是否存在两个数之和恰好等于 \`target\`。
+
+### 本关新知识：边读边查——用 \`unordered_map\` 记住"已经读过的数"
+
+**先说清"两两配对"为什么慢，以及怎么变快。** 朴素的找法是每个数都去和后面每个数配一次，大约要 n² / 2 次加法，n = 1000 就有 50 万次。
+换个思路：从左往右读，**每读到一个新数 \`x\`，只问一个问题——"我之前读到过的数里，有没有 \`target - x\`？"**
+把"之前读到过的数"提前记进一张表，这一问就从"翻遍所有数"变成"查一次表"，快得不讲道理。
+
+这张表的键是**数字**，值是**它第一次出现的位置**（题目要求输出下标，所以位置要跟着一起存）：
+
+\`\`\`cpp
+unordered_map<int, int> pos;    // <键, 值> = <数字, 第一次出现的下标>
+pos[7] = 2;                     // 表示：数字 7 最早出现在第 2 个位置
+\`\`\`
+
+本题不需要任何"按顺序输出"，只要查得快，所以用 \`unordered_map\` 正合适（最后只输出两个下标，结果和遍历顺序无关）。
+
+**循环体里的顺序是本题的灵魂：先查、后存。**
+
+\`\`\`cpp
+bool found = false;                     // 找到没有
+int ansI = 0, ansJ = 0;                 // 记下答案的两个下标
+
+for (int i = 1; i <= n; i++) {          // 下标从 1 开始，正好和题目要求一致
+    int x;
+    cin >> x;
+
+    if (!found) {                       // 还没找到才继续找，找到后不再更新
+        int need = target - x;          // 还差多少才凑成 target
+        if (pos.count(need) == 1) {     // 查表：need 之前出现过吗？（只看不改）
+            found = true;
+            ansI = pos[need];           // 前面那个数的位置 → i
+            ansJ = i;                   // 现在这个数的位置 → j
+        }
+    }
+
+    if (pos.count(x) == 0) {            // 只记"第一次出现的位置"
+        pos[x] = i;                     // 存进去，留给后面读到的数查
+    }
+}
+\`\`\`
+
+\`count\` 还是老用法：返回 **0** 表示表里没有这个键，**1** 表示有，而且它**只看不改**，不会凭空创建键。
+所以查"有没有 \`need\`"必须写 \`pos.count(need)\`，**不能写 \`pos[need]\`**——那样会把不存在的键建出来、值默认 0，你就分不清"真的在第 0 个位置"和"根本没出现过"了。
+
+**为什么必须"先查后存"？** 假设输入 \`3 3\`、\`target = 6\`：
+读第一个 \`3\` 时先查 \`need = 3\`，表还是空的，查不到；接着把 \`pos[3] = 1\` 存下。
+读第二个 \`3\` 时先查 \`need = 3\`，这次查到位置 1，于是得到答案 \`1 2\`。
+如果反成"先存后查"，第一个 \`3\` 在查的时候就会撞上自己，输出 \`1 1\`——**同一个位置被用了两次**，这是本题最常见的错误。
+
+**为什么查出来的 \`i < j\` 一定成立？** 因为表里装的只有"**已经读过的**数"，它们的下标都小于当前的 \`i\`，所以 \`pos[need]\` 必然在 \`i\` 前面。
+
+最后按有没有找到来输出：
+
+\`\`\`cpp
+if (found) {
+    cout << ansI << " " << ansJ << endl;
+} else {
+    cout << "NO" << endl;
+}
+\`\`\`
+
+| 要记住的点 | 说明 |
+| --- | --- |
+| \`unordered_map<int, int> pos;\` | 键是数字，值是它**第一次出现的下标** |
+| \`int need = target - x;\` | "还差多少才凑成目标值" |
+| \`pos.count(need) == 1\` | 查"之前见过 need 吗"，只看不改 |
+| **先查后存** | 先查 \`need\`、再存 \`x\`，顺序反了同一个位置会被用两次 |
+| \`if (pos.count(x) == 0) pos[x] = i;\` | 只记**第一次**出现的位置（题目并列规则要求 i 尽量小） |
+| 下标从 1 开始 | 循环写 \`for (int i = 1; i <= n; i++)\`，别写成 \`i = 0\` |
+| \`found\` 标记 | 找到后不再更新，保证留下的是**第一次查到**的那一对，正好满足"j 尽量小、再 i 尽量小" |
+| 输入要读完 | 找到答案也继续把 n 个数读完，用 \`found\` 记住结果即可 |
+
+### 输入格式
+
+- 第一行两个整数 \`n\` 和 \`target\`（\`1 ≤ n ≤ 1000\`，\`-20000 ≤ target ≤ 20000\`），用空格分隔。
+- 第二行 \`n\` 个整数 \`a_i\`（\`-10000 ≤ a_i ≤ 10000\`），用空格分隔。
+
+### 输出格式
+
+- 如果存在，输出一行两个整数 \`i\` 和 \`j\`（\`i < j\`，**下标从 1 开始**），中间用一个空格分隔，满足 \`a_i + a_j = target\`；
+- 如果不存在，输出一行 \`NO\`。
+
+### 样例
+
+**输入**
+
+\`\`\`
+5 13
+2 7 11 15 6
+\`\`\`
+
+**输出**
+
+\`\`\`
+1 3
+\`\`\`
+
+### 说明
+
+- 样例里 \`2 + 11 = 13\`（第 1、3 个），\`7 + 6 = 13\`（第 2、5 个）。
+  两组答案中"后面那个数"的位置分别是 3 和 5，取小的，所以输出 \`1 3\`。
+- 同一个位置不能用两次：如果输入是 \`1 4\`、\`target = 4\`、数据只有一个 \`2\`，答案是 \`NO\`。
+- 数据里可能有负数，表的键是 \`int\`，负数和正数一样处理。
+
+### 常见错误
+
+| 你可能写成 | 会发生什么 | 正确写法 |
+| --- | --- | --- |
+| 先 \`pos[x] = i;\` 再查 \`need\` | 同一个位置被用两次，比如输入 \`3 3\`、\`target = 6\` 会输出 \`1 1\` | 先查 \`need\`、后存 \`x\`（先查后存） |
+| 用 \`if (pos[need])\` 判断有没有 | 不存在的键被凭空建出来、值默认 0，判断不出"不存在" | 用 \`if (pos.count(need) == 1)\` |
+| 循环写 \`for (int i = 0; i < n; i++)\` | 输出的是从 0 起算的下标，比正确答案小 1 | 题目要求下标从 1 开始，写 \`for (int i = 1; i <= n; i++)\` |
+| 每次都写 \`pos[x] = i;\`（不加 \`count\` 判断） | 位置被后面重复出现的数字覆盖，不再是"第一次出现"的位置，并列规则失效 | 只在 \`pos.count(x) == 0\` 时才写入 |
+| 不存在时忘记输出 \`NO\` | 少了一行输出，判错 | \`if (found) ... else cout << "NO" << endl;\` |`,
+      starter_code: code(
+        ['#include <iostream>', '#include <unordered_map>'],
+        `    int n, target;
+    cin >> n >> target;
+
+    unordered_map<int, int> pos;   // 数字 -> 它第一次出现的位置（从 1 开始）
+    // TODO: 准备 found（bool）、ansI、ansJ 三个变量
+    for (int i = 1; i <= n; i++) {
+        int x;
+        cin >> x;
+        // TODO: 先算 need = target - x，如果 pos 里有 need，就记下答案（i 是新的 j）
+        // TODO: 如果 pos 里还没有 x，就把 pos[x] 设为 i（只记第一次出现的位置）
+    }
+
+    // TODO: 找到答案就输出 ansI 和 ansJ，否则输出 NO`,
+      ),
+      solution_code: code(
+        ['#include <iostream>', '#include <unordered_map>'],
+        `    int n, target;
+    cin >> n >> target;
+
+    unordered_map<int, int> pos;   // 数字 -> 它第一次出现的位置（从 1 开始）
+    bool found = false;
+    int ansI = 0;
+    int ansJ = 0;
+
+    for (int i = 1; i <= n; i++) {
+        int x;
+        cin >> x;
+
+        if (!found) {
+            int need = target - x;
+            if (pos.count(need) == 1) {
+                found = true;
+                ansI = pos[need];
+                ansJ = i;
+            }
+        }
+
+        if (pos.count(x) == 0) {
+            pos[x] = i;
+        }
+    }
+
+    if (found) {
+        cout << ansI << " " << ansJ << endl;
+    } else {
+        cout << "NO" << endl;
+    }`,
+      ),
+      test_cases: [
+        { input: '5 13\n2 7 11 15 6\n', expected_output: '1 3\n' },
+        { input: '4 100\n1 2 3 4\n', expected_output: 'NO\n' },
+        { input: '1 8\n5\n', expected_output: 'NO\n' },
+        { input: '4 6\n3 3 4 4\n', expected_output: '1 2\n' },
+        { input: '5 2\n-1 -2 3 4 3\n', expected_output: '1 3\n' },
+      ],
+      hints: [
+        '表用 `unordered_map<int, int> pos;`，含义是"这个数第一次出现在第几个位置"。',
+        '每读入 `x`：先算 `need = target - x`，用 `pos.count(need) == 1` 查有没有；**查完之后**再判断 `if (pos.count(x) == 0) pos[x] = i;`。',
+        '顺序很关键：先查后存，才能保证不会把一个位置用两次；找到答案后不用急着跳出循环，用 `found` 记住够了。',
+      ],
+    },
+    // ---------------------------------------------------------------- s7-p6
+    {
+      id: 's7-p6',
+      title: '出现最多的数字',
+      difficulty: '中等',
+      knowledge_point: '最高频元素统计',
+      description: `### 题目背景
+
+这是本课程的最后一题，把前面学过的东西串起来用一遍：循环读入、\`map\` 计数、遍历比较。
+
+"谁出现得最多"这类问题，\`map\` 天生就是干这个的——计数一遍扫描就够（\`cnt[x]++\`）。
+而"并列时取最小的那个数字"这个要求，也几乎白送：因为遍历 \`map\` 时，键本来就是**从小到大**的。
+
+所以只要按顺序遍历，用两个变量记住"目前的最好成绩"，规则是：
+
+- 当前数字的次数 **大于** 记录的最好成绩 → 更新答案；
+- 当前数字的次数 **等于** 记录的最好成绩 → **不更新**（先遇到的一定更小，保留它正好满足"并列取最小"）。
+
+注意这里必须是**严格大于** \`>\`；如果写成 \`>=\`，并列时答案就会被后面那个更大的数字抢走。
+
+### 任务
+
+读入 n 个整数，找出其中出现次数最多的数字；
+如果出现次数最多的数字有多个，输出其中**最小的**那个。
+
+### 本关新知识：打擂台找最大次数 + 并列时取最小
+
+这道题分两步：**先数数，再挑冠军。**
+
+**第一步**在阶段七第一题已经学过：\`map<int, int> cnt;\` 配 \`cnt[x]++\`，每个数字出现了几次就都统计好了。
+
+**第二步是"打擂台"**（阶段四学过的老办法，这次擂台上记两样东西）。想象一场比赛：先立一个擂主，之后每个选手上台挑战，赢了就换擂主。这里有两位信息要一起记——**擂主是谁（哪个数字）** 和 **他有多强（出现次数）**：
+
+\`\`\`cpp
+int bestNum = 0;                    // 擂主：目前出现次数最多的那个数字
+int bestCnt = 0;                    // 擂主成绩：它的出现次数（先设 0，谁都打得败它）
+
+for (auto &kv : cnt) {              // 按数字从小到大，一个个上台挑战
+    if (kv.second > bestCnt) {      // 严格大于，才换擂主！
+        bestCnt = kv.second;        // 先更新成绩
+        bestNum = kv.first;         // 再换上擂主（kv.first 是数字）
+    }
+}
+\`\`\`
+
+两个变量永远是**配套**的：换擂主时，成绩和数字必须**一起更新**；只改一个，就会出现"数字是甲、次数是乙"的错位。
+
+**"并列取最小"为什么自然就满足了？** 因为 \`map\` 遍历时键本来就是**从小到大**的。按上面的顺序走一遍：如果后面遇到一个次数**相等**的数字，\`>\` 不成立，于是**不换擂主**——擂主还是先前那个**更小**的数字。这正是题目要的规则。
+
+反过来说：如果把 \`>\` 写成 \`>=\`，遇到并列就会换成后面那个更大的数字，答案就错了。所以这里必须是**严格大于**。
+
+\`bestCnt\` 取初值 \`0\` 有个小前提：\`map\` 里每个键都是**真正出现过**的，次数至少是 1；再加上 \`n ≥ 1\` 保证至少有一个数字，所以第一个上台的选手一定能打败 0 当上擂主，擂台不会一直空着。
+
+最后把擂主的数字和成绩一起输出：
+
+\`\`\`cpp
+cout << bestNum << " " << bestCnt << endl;   // 先数字，再次数，中间一个空格
+\`\`\`
+
+| 要记住的点 | 说明 |
+| --- | --- |
+| \`map<int, int> cnt;\` + \`cnt[x]++\` | 第一步：把每个数字的次数数出来 |
+| \`for (auto &kv : cnt)\` | 第二步：按键**从小到大**挨个挑战；\`kv.first\` 是数字、\`kv.second\` 是次数 |
+| \`if (kv.second > bestCnt)\` | **严格大于**才更新；写成 \`>=\` 并列时会选错 |
+| \`bestNum\` 和 \`bestCnt\` 一起改 | 换擂主必须同步更新，否则数字和次数对不上 |
+| 初值 \`bestCnt = 0\` | 次数至少是 1，所以第一个选手必定当上擂主 |
+| 并列自动取最小 | 靠的是"升序遍历 + 并列不更新"，不需要额外写判断 |
+| 输出顺序 | 先输出数字（\`bestNum\`），再输出次数（\`bestCnt\`） |
+
+### 输入格式
+
+- 第一行一个整数 \`n\`（\`1 ≤ n ≤ 1000\`），表示数字的个数。
+- 第二行 \`n\` 个整数 \`a_i\`（\`-10000 ≤ a_i ≤ 10000\`），用空格分隔。
+
+### 输出格式
+
+输出一行两个整数：出现次数最多的数字，以及它出现的次数，中间用一个空格分隔。
+
+### 样例
+
+**输入**
+
+\`\`\`
+8
+3 1 3 2 3 1 5 1
+\`\`\`
+
+**输出**
+
+\`\`\`
+1 3
+\`\`\`
+
+### 说明
+
+- 样例中 \`1\` 出现 3 次，\`3\` 也出现 3 次，两者并列第一；
+  按"并列取最小"的规则，输出 \`1 3\`。
+- 如果每个数字都只出现一次（比如 \`9 2 5 1\`），那么最小的那个数字就是答案，次数为 1。
+
+### 小贴士
+
+- 第一步照旧：\`map<int, int> cnt;\` 配合 \`cnt[x]++\` 把次数统计出来。
+- 遍历时 \`kv.first\` 是数字、\`kv.second\` 是次数；准备 \`int bestNum = 0, bestCnt = 0;\` 保存目前的最好成绩。
+- 循环体写 \`if (kv.second > bestCnt) { bestCnt = kv.second; bestNum = kv.first; }\`，注意是 \`>\` 而不是 \`>=\`。
+
+### 常见错误
+
+| 你可能写成 | 会发生什么 | 正确写法 |
+| --- | --- | --- |
+| 条件写成 \`if (kv.second >= bestCnt)\` | 并列时会换成后面更大的数字，输出错的答案 | 用严格大于 \`>\` |
+| 只写 \`bestCnt = kv.second;\` 忘了 \`bestNum\` | 次数是对的、数字还是旧的，输出错位 | 两行一起写：\`bestCnt = kv.second; bestNum = kv.first;\` |
+| \`kv.first\` 和 \`kv.second\` 写反 | 把次数当成数字输出 | \`first\` 是键（数字），\`second\` 是值（次数） |
+| 用 \`unordered_map\` 来计数 | 遍历顺序不确定，"并列取最小"失效，答案可能变 | 本题必须用 \`map\`，它保证按键升序遍历 |
+| 忘了 \`#include <map>\` | 报错 \`unknown type name 'map'\` | 顶部加上 \`#include <map>\` |`,
+      starter_code: code(
+        ['#include <iostream>', '#include <map>'],
+        `    int n;
+    cin >> n;
+
+    map<int, int> cnt;
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        // TODO: 统计 x 出现的次数
+    }
+
+    // TODO: 定义 bestNum 和 bestCnt，遍历 cnt 找出出现次数最多的数字
+    // 提示：map 是按数字升序遍历的，所以并列时"不更新"就能留下最小的那个
+    // TODO: 输出 bestNum 和 bestCnt`,
+      ),
+      solution_code: code(
+        ['#include <iostream>', '#include <map>'],
+        `    int n;
+    cin >> n;
+
+    map<int, int> cnt;
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        cnt[x]++;
+    }
+
+    int bestNum = 0;
+    int bestCnt = 0;
+    for (auto &kv : cnt) {
+        if (kv.second > bestCnt) {
+            bestCnt = kv.second;
+            bestNum = kv.first;
+        }
+    }
+
+    cout << bestNum << " " << bestCnt << endl;`,
+      ),
+      test_cases: [
+        { input: '8\n3 1 3 2 3 1 5 1\n', expected_output: '1 3\n' },
+        { input: '1\n42\n', expected_output: '42 1\n' },
+        { input: '5\n-7 -7 -7 -7 -7\n', expected_output: '-7 5\n' },
+        { input: '4\n9 2 5 1\n', expected_output: '1 1\n' },
+        { input: '6\n-5 -5 -3 -3 -1 -1\n', expected_output: '-5 2\n' },
+      ],
+      hints: [
+        '先用 `map<int, int> cnt;` 和 `cnt[x]++;` 把每个数字的次数统计出来。',
+        '遍历时 `kv.first` 是数字、`kv.second` 是次数，用 `if (kv.second > bestCnt)` 更新 `bestCnt` 和 `bestNum`。',
+        '`map` 的键是升序遍历的，所以并列时只要"不更新"，答案自然就是最小的那个数字。',
+      ],
+    },
+  ],
+};
+
+fs.mkdirSync(outDir, { recursive: true });
+const target = path.join(outDir, 'stage-7.json');
+fs.writeFileSync(target, `${JSON.stringify(stage, null, 2)}\n`, 'utf8');
+console.log('written:', target, `${stage.problems.length} problems`);

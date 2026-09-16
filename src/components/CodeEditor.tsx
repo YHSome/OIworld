@@ -14,7 +14,7 @@ interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
   /** Monaco 语法高亮语言；题目页默认仍是 C++。 */
-  language?: 'cpp' | 'python';
+  language?: 'cpp' | 'python' | 'java';
   height?: number | string;
   diagnostics?: Diagnostic[];
   readOnly?: boolean;

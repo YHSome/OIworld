@@ -15,6 +15,7 @@ import { PythonHomePage } from './pages/PythonHomePage';
 import { PythonStagePage } from './pages/PythonStagePage';
 import { PythonProblemPage } from './pages/PythonProblemPage';
 import { PythonProgressPage } from './pages/PythonProgressPage';
+import { JavaArenaPage } from './pages/JavaArenaPage';
 import { useProgressStore } from './store/useProgressStore';
 import { getOverallStats } from './data';
 import { ToolchainAlert } from './components/ToolchainAlert';
@@ -40,10 +41,13 @@ export default function App() {
   const overall = getOverallStats(completed, attempted);
   const pythonOverall = getPythonStats(pythonCompleted, pythonAttempted);
   const pythonRoute = location.pathname.startsWith('/python');
+  const javaRoute = location.pathname.startsWith('/java');
   const visibleOverall = pythonRoute ? pythonOverall : overall;
 
   const selectedKey = location.pathname.startsWith('/progress') || location.pathname.endsWith('/progress')
     ? 'progress'
+    : javaRoute
+      ? 'java'
     : location.pathname.endsWith('/guide') || location.pathname === '/guide'
       ? 'guide'
       : location.pathname.includes('/stage/')
@@ -57,7 +61,7 @@ export default function App() {
           <div className="brand" onClick={() => navigate(pythonRoute ? '/python' : '/')} role="presentation">
             <CodeOutlined className="brand-icon" />
             <span className="brand-name">OIworld</span>
-            <Text className="brand-slogan">{pythonRoute ? 'Python 基础语法靶场 · 浏览器本地运行' : 'C++ 基础语法靶场 · 浏览器本地编译'}</Text>
+            <Text className="brand-slogan">{javaRoute ? 'Java 基础语法靶场 · 浏览器本地运行' : pythonRoute ? 'Python 基础语法靶场 · 浏览器本地运行' : 'C++ 基础语法靶场 · 浏览器本地编译'}</Text>
           </div>
 
           <Menu
@@ -70,6 +74,7 @@ export default function App() {
                 icon: <CodeOutlined />,
                 label: <Link to={pythonRoute ? '/python/stage/1' : '/stage/1'}>学习阶段</Link>,
               },
+              { key: 'java', icon: <CodeOutlined />, label: <Link to="/java">Java 靶场</Link> },
               {
                 key: 'guide',
                 icon: <ReadOutlined />,
@@ -146,6 +151,7 @@ export default function App() {
           <Route path="/python/stage/:stageNumber" element={<PythonStagePage />} />
           <Route path="/python/problem/:problemId" element={<PythonProblemPage />} />
           <Route path="/python/progress" element={<PythonProgressPage />} />
+          <Route path="/java" element={<JavaArenaPage />} />
           <Route path="/stage/:stageNumber" element={<StagePage />} />
           <Route path="/problem/:problemId" element={<ProblemPage />} />
           <Route path="/progress" element={<ProgressPage />} />
@@ -156,10 +162,10 @@ export default function App() {
       <Footer className="app-footer">
         <Space split="·" wrap>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {pythonRoute ? 'OIworld · 从 0 开始的 Python 学习靶场' : 'OIworld · YHSome的从0开始的C++ 学习靶场'}
+            {javaRoute ? 'OIworld · 从 0 开始的 Java 学习靶场（Beta）' : pythonRoute ? 'OIworld · 从 0 开始的 Python 学习靶场' : 'OIworld · YHSome的从0开始的C++ 学习靶场'}
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {pythonRoute ? '代码在你的浏览器中由 Python（Pyodide / WebAssembly）本地运行，不会被上传' : '代码在你的浏览器中由 clang（WebAssembly 版）本地编译，不会被上传'}
+            {javaRoute ? '代码在你的浏览器中由 Doppio JVM（JavaScript）本地编译运行，不会被上传' : pythonRoute ? '代码在你的浏览器中由 Python（Pyodide / WebAssembly）本地运行，不会被上传' : '代码在你的浏览器中由 clang（WebAssembly 版）本地编译，不会被上传'}
           </Text>
           <Tag color="default" style={{ fontSize: 11 }}>
             无文件读写 / 无网络 / 仅标准输入输出

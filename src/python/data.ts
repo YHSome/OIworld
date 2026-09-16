@@ -339,6 +339,81 @@ for (const stageData of PYTHON_STAGES.slice(0, 3)) {
   }
 }
 
+/** 第一阶段的每个新概念都拆到“可以照着操作”的粒度。 */
+const FIRST_STAGE_WALKTHROUGHS: Record<string, string> = {
+  'py-s1-p4': `## 这一关到底难在哪里：文字和数字不能直接粘在一起
+
+姓名是文字，例如 \`"小明"\`；年龄是整数，例如 \`12\`。Python 不允许直接写 \`"年龄：" + 12\`，因为左边是文字、右边是数字。你必须先写 \`str(age)\`，把数字临时变成文字 \`"12"\`，才能用 \`+\` 拼接。
+
+把输出语句从左到右读：
+
+\`\`\`python
+"你好，" + name + "！你今年 " + str(age) + " 岁。"
+\`\`\`
+
+它像把五张纸条首尾相接：固定文字 → 名字 → 固定文字 → 年龄文字 → 固定文字。\`print(...)\` 再把拼好的整句话输出。
+
+### 两行输入为什么要写两次 input
+
+题目输入有两行：第一行姓名、第二行年龄。所以要先写 \`name = input()\`，再写 \`age = int(input())\`。程序按顺序读，不能颠倒。\`int\` 只包住年龄那一次，因为姓名不能变成整数。
+
+### 自查清单
+
+- 固定文字是否放在英文双引号里？
+- 年龄前是否写了 \`str(age)\`？
+- 中文标点、空格和题目要求完全一致吗？
+- 没有把样例里的“小明”和 12 写死吗？`,
+  'py-s1-p5': `## 小数是什么，为什么要用 float
+
+\`int\` 只能存整数，例如 \`3\`、\`-8\`；\`float\` 可以存带小数点的数，例如 \`36.5\`。温度可能有小数，所以这题用 \`float(input())\` 读取。
+
+### 一步一步算样例
+
+输入 \`0\` 时：\`c\` 是 \`0.0\`；先算 \`0.0 * 9\` 得 \`0.0\`，再除以 \`5\` 得 \`0.0\`，最后加 \`32\` 得 \`32.0\`。因此输出里出现 \`.0\` 是正常的，不是错误。
+
+### 公式怎样写进代码
+
+数学里的 \`×\` 和 \`÷\` 要分别写成 \`*\`、\`/\`。把公式右边完整照抄到等号后：
+
+\`\`\`python
+f = c * 9 / 5 + 32
+\`\`\`
+
+Python 会先乘除、后加减，所以不必额外加括号。最后 \`print(f)\`。
+
+### 常见困惑
+
+- \`/\` 得到小数；\`//\` 才是“去掉小数部分”的整除，这题不能用。
+- 不要把 \`c\` 写成字母 \`C\`：大小写不同。
+- 不要把公式写在 \`print("...")\` 的引号里，带引号就不会计算。`,
+  'py-s1-p6': `## 为什么普通交换会失败
+
+假设开始时 \`a = 3\`、\`b = 5\`。如果先写 \`a = b\`，a 变成 5；再写 \`b = a\` 时，a 已经是 5 了，所以 b 也变 5。原来的 3 丢失了。
+
+Python 有一种专门的同时赋值写法：
+
+\`\`\`python
+a, b = b, a
+\`\`\`
+
+等号右边会先整体记住“旧 b、旧 a”，然后再一次性放回左边。因此 3 和 5 能安全互换。
+
+### 用样例亲手追踪
+
+| 时刻 | a | b |
+| --- | --- | --- |
+| 刚读入 \`3 5\` | 3 | 5 |
+| 执行 \`a, b = b, a\` 后 | 5 | 3 |
+| 执行 \`print(a, b)\` | 输出 5 3 | |
+
+\`print(a, b)\` 里逗号不是加法；它表示“依次输出两个内容”，Python 会自动在中间放一个空格。`,
+};
+
+for (const [problemId, walkthrough] of Object.entries(FIRST_STAGE_WALKTHROUGHS)) {
+  const problem = PYTHON_STAGES[0].problems.find((item) => item.id === problemId);
+  if (problem) problem.description += `\n\n${walkthrough}`;
+}
+
 export interface PythonProblemEntry { problem: Problem; stage: StageData; indexInStage: number; globalIndex: number }
 export const PYTHON_PROBLEMS: PythonProblemEntry[] = PYTHON_STAGES.flatMap((item) => item.problems.map((problem, indexInStage) => ({ problem, stage: item, indexInStage, globalIndex: 0 })));
 PYTHON_PROBLEMS.forEach((entry, globalIndex) => { entry.globalIndex = globalIndex; });

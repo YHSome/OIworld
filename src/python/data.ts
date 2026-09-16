@@ -267,7 +267,7 @@ length * width
 | \`print(lenght * width)\` | \`length\` 拼错了，Python 会说找不到名字。 | 仔细对照变量名的每个字母。 |
 | 写 \`print(length * width);\` | 分号通常不报错，但 Python 不需要它。 | 每行直接结束即可。 |`,
       starter_code: '# TODO: 读入长和宽，输出面积\n', solution_code: 'length, width = map(int, input().split())\nprint(length * width)\n',
-      test_cases: [{ input: '4 6\n', expected_output: '24\n' }, { input: '1 99\n', expected_output: '99\n' }], hints: ['面积等于长乘宽，乘号是 `*`。'],
+      test_cases: [{ input: '4 6\n', expected_output: '24\n' }, { input: '1 99\n', expected_output: '99\n' }, { input: '0 8\n', expected_output: '0\n' }, { input: '123 456\n', expected_output: '56088\n' }], hints: ['面积等于长乘宽，乘号是 `*`。'],
     },
   ]),
   stage(2, '第二阶段：让程序会思考', '判断与循环', '用 `if` 做选择，用 `for` 重复执行；注意 Python 用缩进表示代码块。', [
@@ -342,9 +342,9 @@ const existingLessonNotes: Record<string, { knowledge: string; mistake: string }
 
 // 第一阶段补足 6 题：输出 → 输入 → 数值计算 → 赋值。
 PYTHON_STAGES[0].problems.push(
-  lesson('py-s1-p4', '自我介绍', '字符串输入与拼接', '现在让程序认识一个人的名字和年龄：输入姓名与年龄，输出 `你好，小明！你今年 12 岁。` 这种完整句子。', '第一行一个姓名（不含空格）；第二行一个整数年龄。', '输出一行自我介绍，标点必须与样例一致。', 'name = input()\nage = int(input())\n# TODO: 输出一行自我介绍\n', 'name = input()\nage = int(input())\nprint("你好，" + name + "！你今年 " + str(age) + " 岁。")\n', [{ input: '小明\n12\n', expected_output: '你好，小明！你今年 12 岁。\n' }, { input: 'Alice\n8\n', expected_output: '你好，Alice！你今年 8 岁。\n' }], '文字和数字不能直接用 `+` 相加；先用 `str(age)` 把数字变成文字。', '不要漏掉 `str(age)`；题目要求的中文逗号、感叹号和空格都属于输出的一部分。', ['可以把固定文字、name 和 str(age) 用 `+` 连起来。'], '入门'),
-  lesson('py-s1-p5', '温度换算', 'float 小数与表达式', '气象站给出摄氏温度 c，请换算为华氏温度：`f = c * 9 / 5 + 32`。', '一行一个整数或小数 c。', '输出换算后的华氏温度。Python 会把整数形式的小数显示为 `32.0`。', 'c = float(input())\n# TODO: 计算并输出 f\n', 'c = float(input())\nf = c * 9 / 5 + 32\nprint(f)\n', [{ input: '0\n', expected_output: '32.0\n' }, { input: '100\n', expected_output: '212.0\n' }, { input: '-40\n', expected_output: '-40.0\n' }], '`float()` 能读取带小数点的数据；Python 的 `/` 是小数除法。', '公式的乘除先算、加法后算；不要误写成 `9 / (5 + 32)`。', ['先把公式完整写在一行，Python 会按正确的运算优先级计算。'], '入门'),
-  lesson('py-s1-p6', '交换两个数', '赋值与多重赋值', '盒子 a 里有一个数，盒子 b 里有另一个数。请交换它们，并按 `a b` 的顺序输出交换后的结果。', '一行两个整数 a、b。', '一行两个整数，中间一个空格。', 'a, b = map(int, input().split())\n# TODO: 交换 a 和 b\nprint(a, b)\n', 'a, b = map(int, input().split())\na, b = b, a\nprint(a, b)\n', [{ input: '3 5\n', expected_output: '5 3\n' }, { input: '-1 9\n', expected_output: '9 -1\n' }], 'Python 的 `a, b = b, a` 会同时完成交换，不需要临时变量。', '不要连续写 `a = b`、`b = a`，这样两个变量都会变成原来的 b。', ['把等号右边的 b、a 调换位置即可。'], '入门'),
+  lesson('py-s1-p4', '自我介绍', '字符串输入与拼接', '现在让程序认识一个人的名字和年龄：输入姓名与年龄，输出 `你好，小明！你今年 12 岁。` 这种完整句子。', '第一行一个姓名（不含空格）；第二行一个整数年龄。', '输出一行自我介绍，标点必须与样例一致。', 'name = input()\nage = int(input())\n# TODO: 输出一行自我介绍\n', 'name = input()\nage = int(input())\nprint("你好，" + name + "！你今年 " + str(age) + " 岁。")\n', [{ input: '小明\n12\n', expected_output: '你好，小明！你今年 12 岁。\n' }, { input: 'Alice\n8\n', expected_output: '你好，Alice！你今年 8 岁。\n' }, { input: 'Bob\n0\n', expected_output: '你好，Bob！你今年 0 岁。\n' }, { input: '小红\n100\n', expected_output: '你好，小红！你今年 100 岁。\n' }], '文字和数字不能直接用 `+` 相加；先用 `str(age)` 把数字变成文字。', '不要漏掉 `str(age)`；题目要求的中文逗号、感叹号和空格都属于输出的一部分。', ['可以把固定文字、name 和 str(age) 用 `+` 连起来。'], '入门'),
+  lesson('py-s1-p5', '温度换算', 'float 小数与表达式', '气象站给出摄氏温度 c，请换算为华氏温度：`f = c * 9 / 5 + 32`。', '一行一个整数或小数 c。', '输出换算后的华氏温度。Python 会把整数形式的小数显示为 `32.0`。', 'c = float(input())\n# TODO: 计算并输出 f\n', 'c = float(input())\nf = c * 9 / 5 + 32\nprint(f)\n', [{ input: '0\n', expected_output: '32.0\n' }, { input: '100\n', expected_output: '212.0\n' }, { input: '-40\n', expected_output: '-40.0\n' }, { input: '36.5\n', expected_output: '97.7\n' }], '`float()` 能读取带小数点的数据；Python 的 `/` 是小数除法。', '公式的乘除先算、加法后算；不要误写成 `9 / (5 + 32)`。', ['先把公式完整写在一行，Python 会按正确的运算优先级计算。'], '入门'),
+  lesson('py-s1-p6', '交换两个数', '赋值与多重赋值', '盒子 a 里有一个数，盒子 b 里有另一个数。请交换它们，并按 `a b` 的顺序输出交换后的结果。', '一行两个整数 a、b。', '一行两个整数，中间一个空格。', 'a, b = map(int, input().split())\n# TODO: 交换 a 和 b\nprint(a, b)\n', 'a, b = map(int, input().split())\na, b = b, a\nprint(a, b)\n', [{ input: '3 5\n', expected_output: '5 3\n' }, { input: '-1 9\n', expected_output: '9 -1\n' }, { input: '0 0\n', expected_output: '0 0\n' }, { input: '123 -456\n', expected_output: '-456 123\n' }], 'Python 的 `a, b = b, a` 会同时完成交换，不需要临时变量。', '不要连续写 `a = b`、`b = a`，这样两个变量都会变成原来的 b。', ['把等号右边的 b、a 调换位置即可。'], '入门'),
 );
 
 // 第二阶段补足条件题；每题只增加一个判断层级。

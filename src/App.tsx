@@ -88,7 +88,7 @@ export default function App() {
             <Space.Compact className="language-switch">
               <Button
                 icon={<CodeOutlined />}
-                type={pythonRoute ? 'default' : 'primary'}
+                type={pythonRoute || javaRoute ? 'default' : 'primary'}
                 onClick={() => navigate('/')}
               >
                 C++ 靶场

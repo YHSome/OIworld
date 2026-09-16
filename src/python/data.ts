@@ -414,6 +414,97 @@ for (const [problemId, walkthrough] of Object.entries(FIRST_STAGE_WALKTHROUGHS))
   if (problem) problem.description += `\n\n${walkthrough}`;
 }
 
+const SECOND_STAGE_WALKTHROUGHS: Record<string, string> = {
+  'py-s2-p1': `## 程序第一次做选择：if
+
+到目前为止，程序总是从上到下执行。\`if\` 让它可以根据一个问题的答案走不同的路。
+
+\`\`\`python
+if n % 2 == 0:
+    print("even")
+else:
+    print("odd")
+\`\`\`
+
+把它读成中文：**如果 n 除以 2 的余数等于 0，就输出 even；否则输出 odd。**
+
+### 什么是取余 %
+
+| 表达式 | 结果 | 原因 |
+| --- | --- | --- |
+| \`8 % 2\` | \`0\` | 8 正好能分成 2 一组，没有剩下。 |
+| \`7 % 2\` | \`1\` | 7 分成 2 一组后剩 1。 |
+| \`-3 % 2\` | \`1\` | 余数不是 0，所以仍是奇数。 |
+
+因此余数是 0 的数叫偶数，其余都是奇数。
+
+### 两个等号和一个等号完全不同
+
+- \`n = 8\`：把 8 放进 n，叫**赋值**。
+- \`n == 8\`：问“n 是否等于 8”，结果只会是 \`True\` 或 \`False\`，叫**比较**。
+
+if 后面需要的是一个问题，所以必须用 \`==\`。条件行末的英文冒号 \`:\` 也不能漏。
+
+### 缩进不是装饰
+
+\`print("even")\` 前面的四个空格表示它属于 if；\`print("odd")\` 前面的四个空格表示它属于 else。Python 靠缩进判断代码块，不使用 C++ 的大括号。建议每层固定按一次 Tab（编辑器会插入四个空格），绝不混用手打空格和 Tab。`,
+  'py-s2-p2': `## 循环不是“跳来跳去”，而是重复同一件事
+
+我们要算 1 到 n 的所有数相加。以 \`n = 5\` 为例，手算是 \`1 + 2 + 3 + 4 + 5\`。程序需要一个记账变量 \`total\`，每次把当前数字加进去。
+
+\`\`\`python
+total = 0
+for i in range(1, n + 1):
+    total += i
+\`\`\`
+
+### 逐轮推演 n = 5
+
+| 第几轮 | i 的值 | 执行后 total |
+| --- | --- | --- |
+| 开始前 | — | 0 |
+| 1 | 1 | 1 |
+| 2 | 2 | 3 |
+| 3 | 3 | 6 |
+| 4 | 4 | 10 |
+| 5 | 5 | 15 |
+
+循环结束后才输出 total，所以结果是 15。
+
+### range 的最大坑：终点不包含
+
+\`range(1, 6)\` 给出 1、2、3、4、5，**不会给 6**。所以想让 i 走到 n，必须写 \`range(1, n + 1)\`。如果写成 \`range(1, n)\`，最后一个 n 会漏掉。
+
+### += 是什么
+
+\`total += i\` 是 \`total = total + i\` 的简写。不是“只把 i 放进 total”，而是在原来 total 的基础上继续加。累加变量必须从 0 开始；若从 1 开始，所有答案都会多 1。`,
+  'py-s2-p3': `## 一批数字要先装进列表
+
+这题的输入分两行。第一行 n 告诉你“接下来有几个数”；第二行才是实际数字，例如 \`1 9 4\`。\`list(map(int, input().split()))\` 会得到一个列表：\`[1, 9, 4]\`。
+
+列表可以理解成一排按顺序编号的小盒子：第一个盒子放 1，第二个放 9，第三个放 4。这里不必手写循环，Python 自带 \`max(numbers)\`，能从整排盒子中找出最大值。
+
+### 别把 n 和最大值搞混
+
+输入：
+
+\`\`\`text
+3
+1 9 4
+\`\`\`
+
+\`n\` 是 3，意思是“有三个数”；它不是题目要求的最大数。\`numbers\` 才是 \`[1, 9, 4]\`，\`max(numbers)\` 才是 9。
+
+### 常见错误
+
+- 写 \`max(n)\`：n 是单个整数，不是一批数据。\n- 忘记 \`list(...)\`：初学时请先保留完整固定写法，确保 numbers 真的是列表。\n- 用 \`print(numbers)\`：会输出方括号与逗号，不是最大值。`,
+};
+
+for (const [problemId, walkthrough] of Object.entries(SECOND_STAGE_WALKTHROUGHS)) {
+  const problem = PYTHON_STAGES[1].problems.find((item) => item.id === problemId);
+  if (problem) problem.description += `\n\n${walkthrough.replace(/\\n/g, '\n')}`;
+}
+
 export interface PythonProblemEntry { problem: Problem; stage: StageData; indexInStage: number; globalIndex: number }
 export const PYTHON_PROBLEMS: PythonProblemEntry[] = PYTHON_STAGES.flatMap((item) => item.problems.map((problem, indexInStage) => ({ problem, stage: item, indexInStage, globalIndex: 0 })));
 PYTHON_PROBLEMS.forEach((entry, globalIndex) => { entry.globalIndex = globalIndex; });

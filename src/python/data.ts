@@ -572,6 +572,15 @@ for (const [problemId, walkthrough] of Object.entries(SECOND_STAGE_WALKTHROUGHS)
   if (problem) problem.description += `\n\n${walkthrough.replace(/\\n/g, '\n')}`;
 }
 
+// 确保每道后续题都明确告诉零基础学习者：看不懂时该如何开始，而不是只给一道题干。
+for (const stageData of PYTHON_STAGES) {
+  for (const problem of stageData.problems) {
+    if (!problem.description.includes('零基础')) {
+      problem.description += `\n\n## 零基础先这样做\n\n不要急着从头凭空写程序。先保留编辑器已有的读入代码和函数外壳，只修改 \`# TODO\` 附近；用第一个样例运行一次，观察输入如何变成输出。报错时先看最后一行的错误类型和行号，再回到对应行逐个检查括号、引号、冒号、缩进和变量拼写。`;
+    }
+  }
+}
+
 export interface PythonProblemEntry { problem: Problem; stage: StageData; indexInStage: number; globalIndex: number }
 export const PYTHON_PROBLEMS: PythonProblemEntry[] = PYTHON_STAGES.flatMap((item) => item.problems.map((problem, indexInStage) => ({ problem, stage: item, indexInStage, globalIndex: 0 })));
 PYTHON_PROBLEMS.forEach((entry, globalIndex) => { entry.globalIndex = globalIndex; });

@@ -9,6 +9,18 @@
 
 **Java 基础语法靶场（Beta）**（`/java`）现已开放首批入门关卡：使用 Doppio JVM 与 Java 8 类库在浏览器本地编译、运行和评测 Java 代码。首次使用需要加载约 100MB 类库，可能需要 1～3 分钟；运行时由浏览器缓存，后续加载会更快。Beta 阶段优先保证真实编译运行链路，题库会持续扩展。
 
+三个靶场是**同一套页面结构**，用顶栏右上角的 `C++ / Python / Java 靶场` 按钮切换（各自的进度互相独立）：
+
+```
+首页（阶段卡片 + 进度统计 + 搜索筛选）
+  └─ 阶段页（阶段简介 + 题目列表：状态 / 难度 / 知识点 / 测试点数）
+       └─ 题目页（左侧题目描述 + 提示 + 题解 ｜ 右侧编辑器 + 标准输入 / 运行结果 + 测试用例）
+            └─ 进度页（统计 + 各阶段完成情况）   ·   指南页（零基础语法速查）
+```
+
+Java 靶场同样支持：顺序解锁与开发者模式、`写到哪？`（光标跳到 `// TODO`）、
+中文标点与 javac 报错的中文自查提示、每题的本关新知识与常见错误。
+
 **在线试玩**：<https://yhsome.github.io/OIworld/>（GitHub Pages 自动部署，推送到 `main` 即发布）
 
 ```
@@ -208,21 +220,23 @@ npm run build               # dist 产物会自带编译器，运行时不再访
 
 ```
 src/
-├─ compiler/
-│  ├─ client.ts          编译服务：调度 Worker、编排「编译一次 + 跑 N 个用例」
-│  ├─ compile.worker.ts  编译器 Worker（clang + wasm-ld）
-│  ├─ run.worker.ts      执行 Worker（WASI 沙箱，每用例一个）
-│  ├─ toolchain.ts       工具链定位、预加载与下载进度
-│  ├─ diagnostics.ts     clang 诊断解析（→ Monaco 标记）
-│  ├─ judge.ts           输出比对（忽略行尾空格与末尾空行）
-│  └─ protocol.ts        Worker 消息协议
+├─ compiler/            C++ 编译与运行链路：client.ts（编译服务）、compile.worker.ts（clang）、
+│                      run.worker.ts（WASI 沙箱）、toolchain.ts（工具链定位与预加载）、
+│                      diagnostics.ts（clang 诊断 + 中文标点检测）、judge.ts（输出比对）
+├─ python/              Python 靶场：data.ts（阶段与题库）、compiler.ts（Pyodide）、
+│                      diagnostics.ts（报错自查提示）、usePythonProgressStore.ts
+├─ java/                Java 靶场：data.ts（阶段与题库）、service.ts（Doppio JVM）、
+│                      diagnostics.ts（javac 报错自查提示）、useJavaProgressStore.ts、
+│                      runtimeInfo.ts（运行时文案）
 ├─ data/
-│  ├─ index.ts           题目加载、搜索筛选、解锁规则、统计
+│  ├─ index.ts           题库加载、搜索筛选、解锁规则、统计
+│  ├─ guide.md           C++ 新手指南（第零课）
+│  ├─ java-guide.md      Java 入门指南
 │  └─ problems/stage-1..7.json   题库（阶段一 ~ 阶段七）
 ├─ store/useProgressStore.ts     进度 + 代码草稿 + 开发者模式（localStorage）
-├─ pages/                首页 / 阶段页 / 题目页 / 进度页
-├─ components/           编辑器、输出面板、测试用例面板、Markdown 等
-├─ hooks/useCompiler.ts  编译器状态的 React 绑定
+├─ pages/                三个靶场各一套页面（Home / Stage / Problem / Progress / Guide）
+├─ components/           编辑器、输出面板、测试用例面板、Markdown、题目表格等
+├─ hooks/                useCompiler（C++ 编译器状态）、useDeveloperMode（开发者模式）
 └─ editor/monaco.ts      Monaco 本地化配置（Worker 由 Vite 打包）
 
 scripts/
@@ -364,6 +378,8 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
 | `node scripts/e2e-beginner.mjs <url>` | 零基础路径验收（指南 / 跳转 TODO / 中文标点提示） |
 | `node scripts/e2e-devmode.mjs <url>` | 开发者模式验收（解锁 / 免通过看题解 / 快捷键 / 面板） |
 | `node scripts/e2e-static.mjs <base>` | 静态部署验收（hash 路由 / 深链刷新 / base 子路径），本地与线上站点都能跑 |
+| `node scripts/e2e-java.mjs <url> [hash]` | Java 靶场验收（首页/阶段/题目/进度/指南/闯关解锁，并真实编译运行提交一道题） |
+| `npm run validate:java` | 用本机 JDK 校验 Java 参考题解（5 题 / 5 个测试点） |
 
 ---
 
@@ -385,6 +401,11 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
   首屏 2.9s → 7 阶段 42 题正常渲染 → 点进题目 → 工具链从 jsDelivr 下载 45.7s 后就绪 →
   浏览器本地编译并运行成功 40.4s → 提交通过 → **刷新深链仍在题目页（hash 路由）** →
   `#/guide` 与 `?dev=1` 深链均可用，**控制台零报错、零 404 请求**
+- Java 靶场验收（本地与**线上**各跑一遍，`scripts/e2e-java.mjs`）：首页 2 个阶段卡片 / 5 道题 →
+  顶栏三个靶场切换按钮且 Java 高亮 → 阶段页 3 道题 → 题目页左右分栏、工具栏与测试用例齐全 →
+  运行环境就绪 → 把 `// TODO` 改成输出语句 → **提交通过并弹出「恭喜通过」** →
+  进度页计入 1 题 → 指南页可读 → 未通过时按顺序锁定、`?dev=1` 可直达，控制台零报错
+- Java 题库：`npm run validate:java` → **5 道题 / 5 个测试点通过**（本机 JDK 24 编译运行比对）
 
 ---
 

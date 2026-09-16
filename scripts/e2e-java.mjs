@@ -2,7 +2,8 @@
  * Java 靶场验收：确认它已经和 C++ / Python 靶场一样是多页结构
  * （首页 → 阶段页 → 题目页 → 进度页 → 指南页），并且能真的跑通一道题。
  *
- *   node scripts/e2e-java.mjs http://localhost:4173
+ *   node scripts/e2e-java.mjs http://localhost:4173            # 本地（BrowserRouter）
+ *   node scripts/e2e-java.mjs https://yhsome.github.io/OIworld hash   # 线上（HashRouter）
  */
 
 import fs from 'node:fs';
@@ -10,6 +11,13 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 
 const base = (process.argv[2] ?? 'http://localhost:4173').replace(/\/$/, '');
+/** 部署到静态托管时用 hash 路由，路由形如 <base>/#/java/... */
+const hashRouter = process.argv[3] === 'hash';
+const url = (routePath) => `${base}${hashRouter ? '/#' : ''}${routePath}`;
+/** 带查询参数的地址：hash 模式下 ?dev=1 必须在 # 之前 */
+const urlWithQuery = (routePath, query) =>
+  hashRouter ? `${base}/?${query}#${routePath}` : `${base}${routePath}?${query}`;
+
 const shotDir = path.join(process.cwd(), 'test-results');
 fs.mkdirSync(shotDir, { recursive: true });
 
@@ -35,7 +43,7 @@ const buttonByText = (text) =>
 
 try {
   step('Java 首页 /java');
-  await page.goto(`${base}/java`, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+  await page.goto(url('/java'), { waitUntil: 'domcontentloaded', timeout: 90_000 });
   await page.waitForSelector('.stage-card', { timeout: 60_000 });
   const stageCards = await page.locator('.stage-card').count();
   check(`阶段卡片数量为 2（阶段一/阶段二）`, stageCards === 2, `实际 ${stageCards}`);
@@ -137,7 +145,7 @@ try {
   await page.keyboard.press('Escape');
 
   step('进度页 /java/progress');
-  await page.goto(`${base}/java/progress`, { waitUntil: 'domcontentloaded' });
+  await page.goto(url('/java/progress'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.ant-statistic', { timeout: 30_000 });
   const progress = await page.locator('body').innerText();
   check('进度页显示 Java 学习进度', progress.includes('我的 Java 学习进度'));
@@ -146,7 +154,7 @@ try {
   await page.screenshot({ path: path.join(shotDir, 'java-5-progress.png'), fullPage: true });
 
   step('指南页 /java/guide');
-  await page.goto(`${base}/java/guide`, { waitUntil: 'domcontentloaded' });
+  await page.goto(url('/java/guide'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.guide-page', { timeout: 30_000 });
   const guide = await page.locator('.guide-page').innerText();
   check('指南页包含类与 main 方法', guide.includes('main'));
@@ -155,11 +163,11 @@ try {
   check('指南右侧目录可用', (await page.locator('.guide-side a').count()) > 5);
 
   step('闯关与解锁：直接访问第 3 题应被拦截，开发者模式可解锁');
-  await page.goto(`${base}/java/problem/java-3`, { waitUntil: 'domcontentloaded' });
+  await page.goto(url('/java/problem/java-3'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.ant-card', { timeout: 30_000 });
   const locked = await page.locator('body').innerText();
   check('未通过的题按顺序锁住', locked.includes('这道题还没有解锁'));
-  await page.goto(`${base}/java/problem/java-3?dev=1`, { waitUntil: 'domcontentloaded' });
+  await page.goto(urlWithQuery('/java/problem/java-3', 'dev=1'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.problem-page', { timeout: 30_000 });
   check('开发者模式可直达', (await page.locator('.problem-page').count()) === 1);
 

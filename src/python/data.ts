@@ -321,10 +321,31 @@ function lesson(
   output: string, starterCode: string, solutionCode: string, testCases: Problem['test_cases'],
   newKnowledge: string, commonMistake: string, hints: string[], difficulty: Difficulty = '简单',
 ): Problem {
-  return {
+  const problem: Problem = {
     id, title, difficulty, knowledge_point: knowledgePoint,
     description: `## 题目背景\n${task}\n\n## 本关新知识\n${newKnowledge}\n\n> 这一关只要求学会**一个核心动作**。不要试图一次记住所有新写法：先照着下面的步骤运行成功，再回来看每一个符号。\n\n## 题目已经帮你准备了什么\n\n右侧编辑器不是空白的。它已经有一段“代码外壳”：\n\n\`\`\`python\n${starterCode.trim()}\n\`\`\`\n\n- 以 \`#\` 开头的是**注释**，只给人看，Python 不会执行它。\n- \`# TODO\` 的意思是“待完成”：通常只需要在它附近补代码。\n- 不要把题目中的样例数字直接写死在代码里；评测会换不同的数据来测试。\n\n## 任务\n\n请只在代码里的 \`# TODO\` 附近补全代码。除非题目要求，否则不要输出“请输入……”这类提示文字。\n\n## 输入格式\n${input}\n\n## 输出格式\n${output}\n\n## 写代码前，先按顺序想\n\n1. **读入：** 输入是文字还是数字？若需要计算，是否要用 \`int()\` 或 \`float()\`？\n2. **处理：** 这题是计算、判断、重复处理，还是把一批数据逐个查看？\n3. **输出：** 最后只要输出哪个结果？数字之间、文字前后有没有空格或标点？\n4. **缩进：** 如果写了 \`if\`、\`for\` 或 \`def\`，冒号下一行必须统一缩进四个空格。\n\n## 推荐的练习方法\n\n1. 先只用第一个样例点击“运行”，确认你看懂输入和输出。\n2. 遇到报错时先读**最后一行**：它会告诉你错误种类；再看提示中的行号。\n3. “运行”成功不表示完成；请点“提交”，让所有测试用例帮你检查边界情况。\n4. 通过后，不看题解重写一次，才能真正记住。\n\n## 常见错误\n${commonMistake}`,
     starter_code: starterCode, solution_code: solutionCode, test_cases: testCases, hints,
+  };
+  const sample = testCases[0];
+  return {
+    ...problem,
+    description: `${problem.description}
+
+## 先用第一个样例检查理解
+
+把下面的内容原样填进右侧的“标准输入”框：
+
+\`\`\`text
+${sample?.input.trim() || '（本题没有输入）'}
+\`\`\`
+
+点击“运行”后，应该得到：
+
+\`\`\`text
+${sample?.expected_output.trim() || '（没有输出）'}
+\`\`\`
+
+如果结果不同，先不要急着提交。逐项检查：你是否读对了输入、计算过程是否写在循环或判断的正确缩进内、以及输出是否多了提示文字或少了空格。`,
   };
 }
 

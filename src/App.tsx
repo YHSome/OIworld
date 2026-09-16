@@ -127,7 +127,7 @@ export default function App() {
       <Footer className="app-footer">
         <Space split="·" wrap>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            OIworld · 纯前端 C++ 学习靶场
+            OIworld · YHSome的从0开始的C++ 学习靶场
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
             代码在你的浏览器中由 clang（WebAssembly 版）本地编译，不会被上传

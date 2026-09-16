@@ -28,6 +28,8 @@ interface OutputPanelProps {
   /** 编辑器里的代码，用于生成新手自查提示（例如中文标点检测） */
   code?: string;
   onJumpToLine?: (line: number) => void;
+  /** Python 使用解释器，因此避免把语法错误称作“编译错误”。 */
+  language?: 'cpp' | 'python';
 }
 
 /** 新手自查提示：把 clang 的报错翻译成人话 */
@@ -106,6 +108,7 @@ export function OutputPanel({
   mode,
   code = '',
   onJumpToLine,
+  language = 'cpp',
 }: OutputPanelProps) {
   if (busy) {
     return (
@@ -127,6 +130,7 @@ export function OutputPanel({
           code={code}
           diagnostics={submission.diagnostics}
           onJumpToLine={onJumpToLine}
+          language={language}
         />
       );
     }
@@ -205,12 +209,15 @@ export function OutputPanel({
         code={code}
         diagnostics={outcome.diagnostics}
         onJumpToLine={onJumpToLine}
+        language={language}
       />
     );
   }
 
   const isError = outcome.status !== 'passed';
-  const metrics = `编译 ${Math.round(outcome.compileMs)} ms · 运行 ${Math.round(outcome.runMs)} ms`;
+  const metrics = language === 'python'
+    ? `解释器执行 ${Math.round(outcome.runMs)} ms`
+    : `编译 ${Math.round(outcome.compileMs)} ms · 运行 ${Math.round(outcome.runMs)} ms`;
   /** 代码里还留着 // TODO，说明用户可能还没动手写 */
   const hasUnfinishedTodo = /\/\/\s*TODO/i.test(code);
 
@@ -268,22 +275,24 @@ function CompileErrorPanel({
   code,
   diagnostics,
   onJumpToLine,
+  language = 'cpp',
 }: {
   code: string;
   diagnostics: string;
   onJumpToLine?: (line: number) => void;
+  language?: 'cpp' | 'python';
 }) {
   const parsed = parseDiagnostics(diagnostics).filter(
     (item) => item.severity === 'error',
   );
-  const tips = beginnerTips(code, diagnostics);
+  const tips = language === 'cpp' ? beginnerTips(code, diagnostics) : [];
   return (
     <div className="output-panel">
       <Alert
         type="error"
         showIcon
-        message="编译失败（代码没有通过编译器的检查）"
-        description="别担心，这是写代码时最平常的事。先看下面的「自查提示」，再看编译器原文。"
+        message={language === 'python' ? '代码无法执行（请检查 Python 语法）' : '编译失败（代码没有通过编译器的检查）'}
+        description={language === 'python' ? '别担心，先查看报错的最后几行；它通常会指出错误类型与位置。' : '别担心，这是写代码时最平常的事。先看下面的「自查提示」，再看编译器原文。'}
       />
       <BeginnerTipList tips={tips} onJumpToLine={onJumpToLine} />
       {parsed.length > 0 && (
@@ -309,7 +318,7 @@ function CompileErrorPanel({
         </div>
       )}
       <OutputBlock
-        title="编译器完整输出"
+        title={language === 'python' ? 'Python 错误输出' : '编译器完整输出'}
         content={cleanCompilerOutput(diagnostics) || '（没有更多信息）'}
         tone="error"
       />

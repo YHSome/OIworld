@@ -29,12 +29,18 @@ function toolchainDevServer(): Plugin {
   let outDir = path.resolve(process.cwd(), 'dist');
   let basePath = '/';
   let command: 'build' | 'serve' = 'serve';
+  let pythonDir = '';
   try {
     const pkgPath = require.resolve('browsercc/package.json');
     distDir = path.join(path.dirname(pkgPath), 'dist');
     version = (require('browsercc/package.json') as { version: string }).version;
   } catch {
     distDir = '';
+  }
+  try {
+    pythonDir = path.dirname(require.resolve('pyodide/package.json'));
+  } catch {
+    pythonDir = '';
   }
 
   const manifest = JSON.stringify(
@@ -60,6 +66,21 @@ function toolchainDevServer(): Plugin {
     const url = basePath !== '/' && raw.startsWith(basePath)
       ? `/${raw.slice(basePath.length)}`
       : raw;
+    if (url.startsWith('/python-runtime/')) {
+      if (fs.existsSync(path.join(publicDir, 'python-runtime', 'pyodide.asm.wasm'))) {
+        next();
+        return;
+      }
+      const rel = decodeURIComponent(url.slice('/python-runtime/'.length));
+      const file = path.resolve(pythonDir, rel);
+      if (!pythonDir || !file.startsWith(pythonDir) || !fs.existsSync(file) || !fs.statSync(file).isFile()) {
+        next();
+        return;
+      }
+      res.setHeader('Content-Type', MIME_TYPES[path.extname(file)] ?? 'application/octet-stream');
+      fs.createReadStream(file).pipe(res);
+      return;
+    }
     if (!url.startsWith('/toolchain/')) {
       next();
       return;
@@ -220,6 +241,9 @@ export default defineConfig(({ command }) => {
           },
         },
       },
+    },
+    worker: {
+      format: 'es',
     },
   };
 });

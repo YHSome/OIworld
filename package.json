@@ -6,10 +6,11 @@
   "description": "纯前端 C++ 基础语法学习靶场（clang 编译为 WebAssembly，浏览器本地编译运行）",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "npm run setup:python && tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "setup:toolchain": "node scripts/copy-toolchain.mjs",
+    "setup:python": "node scripts/copy-python-runtime.mjs",
     "validate:problems": "node scripts/validate-problems.mjs",
     "test:e2e": "node scripts/e2e.mjs",
     "test:problem": "node scripts/e2e-problem.mjs"
@@ -21,6 +22,7 @@
     "antd": "^5.22.5",
     "browsercc": "^0.1.1",
     "monaco-editor": "^0.52.2",
+    "pyodide": "^0.27.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.1",

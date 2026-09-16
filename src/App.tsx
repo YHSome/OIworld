@@ -1,7 +1,6 @@
-import { Layout, Menu, Progress, Space, Tag, Tooltip, Typography } from 'antd';
+import { Button, Layout, Menu, Progress, Space, Tag, Tooltip, Typography } from 'antd';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import {
-  BookOutlined,
   CodeOutlined,
   ReadOutlined,
   RiseOutlined,
@@ -11,11 +10,18 @@ import { StagePage } from './pages/StagePage';
 import { ProblemPage } from './pages/ProblemPage';
 import { ProgressPage } from './pages/ProgressPage';
 import { GuidePage } from './pages/GuidePage';
+import { PythonGuidePage } from './pages/PythonGuidePage';
+import { PythonHomePage } from './pages/PythonHomePage';
+import { PythonStagePage } from './pages/PythonStagePage';
+import { PythonProblemPage } from './pages/PythonProblemPage';
+import { PythonProgressPage } from './pages/PythonProgressPage';
 import { useProgressStore } from './store/useProgressStore';
 import { getOverallStats } from './data';
 import { ToolchainAlert } from './components/ToolchainAlert';
 import { useCompilerStatus, warmUpCompiler } from './hooks/useCompiler';
 import { useDeveloperMode } from './hooks/useDeveloperMode';
+import { usePythonProgressStore } from './python/usePythonProgressStore';
+import { getPythonStats } from './python/data';
 
 const { Header, Content, Footer } = Layout;
 const { Text } = Typography;
@@ -25,29 +31,33 @@ export default function App() {
   const navigate = useNavigate();
   const completed = useProgressStore((state) => state.completedProblems);
   const attempted = useProgressStore((state) => state.attemptedProblems);
+  const pythonCompleted = usePythonProgressStore((state) => state.completedProblems);
+  const pythonAttempted = usePythonProgressStore((state) => state.attemptedProblems);
   // 在这里调用一次：安装 ?dev=1 解析与 Ctrl+Shift+D 快捷键
   const { developerMode } = useDeveloperMode();
   const compilerStatus = useCompilerStatus();
 
   const overall = getOverallStats(completed, attempted);
+  const pythonOverall = getPythonStats(pythonCompleted, pythonAttempted);
+  const pythonRoute = location.pathname.startsWith('/python');
+  const visibleOverall = pythonRoute ? pythonOverall : overall;
 
-  const selectedKey = location.pathname.startsWith('/progress')
+  const selectedKey = location.pathname.startsWith('/progress') || location.pathname.endsWith('/progress')
     ? 'progress'
-    : location.pathname.startsWith('/guide')
+    : location.pathname.endsWith('/guide') || location.pathname === '/guide'
       ? 'guide'
-      : location.pathname.startsWith('/problem') ||
-          location.pathname.startsWith('/stage')
+      : location.pathname.includes('/stage/')
         ? 'problems'
-        : 'home';
+        : '';
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
       <Header className="app-header">
         <div className="app-header-inner">
-          <div className="brand" onClick={() => navigate('/')} role="presentation">
+          <div className="brand" onClick={() => navigate(pythonRoute ? '/python' : '/')} role="presentation">
             <CodeOutlined className="brand-icon" />
             <span className="brand-name">OIworld</span>
-            <Text className="brand-slogan">C++ 基础语法靶场 · 浏览器本地编译</Text>
+            <Text className="brand-slogan">{pythonRoute ? 'Python 基础语法靶场 · 浏览器本地运行' : 'C++ 基础语法靶场 · 浏览器本地编译'}</Text>
           </div>
 
           <Menu
@@ -56,38 +66,50 @@ export default function App() {
             className="app-menu"
             items={[
               {
-                key: 'guide',
-                icon: <ReadOutlined />,
-                label: <Link to="/guide">新手指南</Link>,
-              },
-              { key: 'home', icon: <BookOutlined />, label: <Link to="/">全部题目</Link> },
-              {
                 key: 'problems',
                 icon: <CodeOutlined />,
-                label: <Link to="/stage/1">按阶段练习</Link>,
+                label: <Link to={pythonRoute ? '/python/stage/1' : '/stage/1'}>学习阶段</Link>,
               },
               {
-                key: 'progress',
-                icon: <RiseOutlined />,
-                label: <Link to="/progress">我的进度</Link>,
+                key: 'guide',
+                icon: <ReadOutlined />,
+                label: <Link to={pythonRoute ? '/python/guide' : '/guide'}>{pythonRoute ? 'Python 指南' : '新手指南'}</Link>,
               },
+              { key: 'progress', icon: <RiseOutlined />, label: <Link to={pythonRoute ? '/python/progress' : '/progress'}>我的进度</Link> },
             ]}
           />
 
           <Space size={16} className="app-header-right">
+            <Space.Compact className="language-switch">
+              <Button
+                icon={<CodeOutlined />}
+                type={pythonRoute ? 'default' : 'primary'}
+                onClick={() => navigate('/')}
+              >
+                C++ 靶场
+              </Button>
+              <Button
+                icon={<CodeOutlined />}
+                type={pythonRoute ? 'primary' : 'default'}
+                className={pythonRoute ? 'python-switch-active' : undefined}
+                onClick={() => navigate('/python')}
+              >
+                Python 靶场
+              </Button>
+            </Space.Compact>
             <Tooltip title="进度保存在本机浏览器，不会上传">
               <Space size={8}>
                 <Progress
                   type="circle"
                   size={36}
-                  percent={overall.percent}
-                  strokeColor="#1677ff"
+                  percent={visibleOverall.percent}
+                  strokeColor={pythonRoute ? '#722ed1' : '#1677ff'}
                   format={(percent) => (
                     <span style={{ fontSize: 11 }}>{percent}%</span>
                   )}
                 />
                 <Text className="header-stat">
-                  {overall.passed}/{overall.total}
+                  {visibleOverall.passed}/{visibleOverall.total}
                 </Text>
               </Space>
             </Tooltip>
@@ -98,17 +120,19 @@ export default function App() {
                 </Tag>
               </Tooltip>
             )}
-            <Tooltip title="编译器加载状态">
-              <span>
-                <ToolchainAlert
-                  compact
-                  status={compilerStatus}
-                  onRetry={() => {
-                    void warmUpCompiler().catch(() => undefined);
-                  }}
-                />
-              </span>
-            </Tooltip>
+            {!pythonRoute && (
+              <Tooltip title="编译器加载状态">
+                <span>
+                  <ToolchainAlert
+                    compact
+                    status={compilerStatus}
+                    onRetry={() => {
+                      void warmUpCompiler().catch(() => undefined);
+                    }}
+                  />
+                </span>
+              </Tooltip>
+            )}
           </Space>
         </div>
       </Header>
@@ -117,6 +141,11 @@ export default function App() {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/guide" element={<GuidePage />} />
+          <Route path="/python" element={<PythonHomePage />} />
+          <Route path="/python/guide" element={<PythonGuidePage />} />
+          <Route path="/python/stage/:stageNumber" element={<PythonStagePage />} />
+          <Route path="/python/problem/:problemId" element={<PythonProblemPage />} />
+          <Route path="/python/progress" element={<PythonProgressPage />} />
           <Route path="/stage/:stageNumber" element={<StagePage />} />
           <Route path="/problem/:problemId" element={<ProblemPage />} />
           <Route path="/progress" element={<ProgressPage />} />
@@ -127,10 +156,10 @@ export default function App() {
       <Footer className="app-footer">
         <Space split="·" wrap>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            OIworld · YHSome的从0开始的C++ 学习靶场
+            {pythonRoute ? 'OIworld · 从 0 开始的 Python 学习靶场' : 'OIworld · YHSome的从0开始的C++ 学习靶场'}
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            代码在你的浏览器中由 clang（WebAssembly 版）本地编译，不会被上传
+            {pythonRoute ? '代码在你的浏览器中由 Python（Pyodide / WebAssembly）本地运行，不会被上传' : '代码在你的浏览器中由 clang（WebAssembly 版）本地编译，不会被上传'}
           </Text>
           <Tag color="default" style={{ fontSize: 11 }}>
             无文件读写 / 无网络 / 仅标准输入输出

@@ -67,6 +67,18 @@
   flex-shrink: 0;
 }
 
+.language-switch .python-switch-active {
+  background: #722ed1;
+  border-color: #722ed1;
+  box-shadow: none;
+}
+
+.language-switch .python-switch-active:hover,
+.language-switch .python-switch-active:focus {
+  background: #531dab !important;
+  border-color: #531dab !important;
+}
+
 .header-stat {
   font-size: 12px;
   color: #595959;
@@ -81,6 +93,13 @@
 @media (max-width: 1080px) {
   .header-stat {
     display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .language-switch .ant-btn {
+    padding-inline: 8px;
+    font-size: 12px;
   }
 }
 
@@ -106,6 +125,244 @@
 .hero-card {
   background: linear-gradient(135deg, #f0f7ff 0%, #ffffff 60%);
   border: 1px solid #e6f0ff;
+}
+
+.python-hero-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 18%, rgba(250, 173, 20, 0.17), transparent 25%),
+    radial-gradient(circle at 76% 104%, rgba(114, 46, 209, 0.13), transparent 34%),
+    linear-gradient(135deg, #f8f5ff 0%, #fff 65%);
+  border: 1px solid #e7dcff;
+  box-shadow: 0 12px 30px rgba(82, 32, 164, 0.07);
+}
+
+.python-hero-card::after {
+  content: 'Py';
+  position: absolute;
+  right: 28px;
+  bottom: -42px;
+  color: rgba(114, 46, 209, 0.06);
+  font-family: Georgia, serif;
+  font-size: 170px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.python-eyebrow {
+  display: block;
+  margin-bottom: 7px;
+  color: #722ed1;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+}
+
+.python-hero-card .ant-typography,
+.python-hero-card .ant-row {
+  position: relative;
+  z-index: 1;
+}
+
+.python-hero-stats {
+  padding: 14px 16px 10px;
+  border: 1px solid rgba(114, 46, 209, 0.11);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.67);
+  backdrop-filter: blur(4px);
+}
+
+.python-hero-stats .ant-statistic-title {
+  color: #7a6d88;
+  font-size: 12px;
+}
+
+.python-hero-stats .ant-statistic-content {
+  font-size: 25px;
+}
+
+.python-progress-caption {
+  display: block;
+  margin-top: 5px;
+  color: #8c7a9e;
+  font-size: 12px;
+}
+
+.python-section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 26px 0 14px;
+}
+
+.python-section-heading .python-eyebrow {
+  margin-bottom: 2px;
+}
+
+.python-section-heading .ant-typography {
+  margin: 0;
+}
+
+.python-stage-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 218px;
+  border-color: #ece8f4;
+  background: linear-gradient(160deg, #fff 0%, #fcfbff 100%);
+}
+
+.python-stage-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #722ed1, #b37feb 56%, #ffd666);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.python-stage-card:hover::before {
+  opacity: 1;
+}
+
+.python-stage-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 28px;
+  border-radius: 8px;
+  background: #f1ebff;
+  color: #722ed1;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.python-stage-title {
+  display: block;
+  margin-top: 13px;
+  font-size: 16px;
+}
+
+.python-stage-subtitle {
+  margin: 4px 0 8px !important;
+  min-height: auto !important;
+}
+
+.python-stage-focus {
+  display: block;
+  min-height: 38px;
+  margin-bottom: 11px;
+  color: #80758d;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+/* ------------------------------------------------------------------ */
+/* Python 阶段页                                                       */
+/* ------------------------------------------------------------------ */
+
+.python-stage-hero {
+  border: 1px solid #e7dcff;
+  background: linear-gradient(120deg, #faf7ff, #fff 64%);
+}
+
+.python-stage-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #7a6d88;
+  font-size: 12px;
+}
+
+.python-problem-list {
+  border: 1px solid #eeebf3;
+  background: #fdfcff;
+}
+
+.python-problem-row {
+  position: relative;
+  overflow: hidden;
+  border-color: #eeebf3;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.python-problem-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: #d3adf7;
+  opacity: 0;
+}
+
+.python-problem-row.is-unlocked:hover {
+  border-color: #d3adf7;
+  box-shadow: 0 6px 16px rgba(82, 32, 164, 0.08);
+}
+
+.python-problem-row.is-unlocked:hover::before {
+  opacity: 1;
+}
+
+.python-problem-index {
+  color: #9a8bab;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ */
+/* Python 题目页                                                       */
+/* ------------------------------------------------------------------ */
+
+.python-problem-page .problem-desc-card {
+  border-top: 3px solid #9254de;
+}
+
+.python-problem-page .problem-desc-card .ant-typography h2 {
+  color: #531dab;
+}
+
+.python-problem-page .problem-right > .ant-alert:first-child {
+  border-color: #d3adf7;
+  background: #faf7ff;
+}
+
+.python-problem-page .editor-wrapper {
+  border-color: #3b3150;
+  box-shadow: 0 6px 18px rgba(31, 24, 45, 0.11);
+}
+
+.python-problem-page .testcase-panel .ant-table-thead > tr > th {
+  background: #faf7ff;
+  color: #59436c;
+}
+
+@media (max-width: 768px) {
+  .python-section-heading {
+    align-items: start;
+    flex-direction: column;
+    margin-top: 22px;
+  }
+
+  .python-hero-stats {
+    padding: 12px;
+  }
+
+  .python-stage-card {
+    min-height: 0;
+  }
 }
 
 .stage-card {

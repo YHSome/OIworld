@@ -13,6 +13,8 @@ import type { Diagnostic } from '../compiler/diagnostics';
 interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
+  /** Monaco 语法高亮语言；题目页默认仍是 C++。 */
+  language?: 'cpp' | 'python';
   height?: number | string;
   diagnostics?: Diagnostic[];
   readOnly?: boolean;
@@ -34,7 +36,7 @@ const SEVERITY: Record<Diagnostic['severity'], monaco.MarkerSeverity> = {
 
 export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
   function CodeEditor(
-    { value, onChange, height = 420, diagnostics = [], readOnly = false },
+    { value, onChange, language = 'cpp', height = 420, diagnostics = [], readOnly = false },
     ref,
   ) {
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -94,7 +96,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(
     return (
       <Editor
         height={height}
-        language="cpp"
+        language={language}
         theme="vs-dark"
         value={value}
         onChange={(next) => onChange(next ?? '')}

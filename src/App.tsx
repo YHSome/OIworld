@@ -98,7 +98,7 @@ export default function App() {
               </Button>
             </Space.Compact>
             <Tooltip title="进度保存在本机浏览器，不会上传">
-              <Space size={8}>
+              <Space size={8} className="header-progress">
                 <Progress
                   type="circle"
                   size={36}

@@ -747,3 +747,163 @@
   max-height: 140px;
   margin-top: 4px;
 }
+
+/* ------------------------------------------------------------------ */
+/* 手机适配                                                            */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 600px) {
+  .app-header {
+    height: 56px;
+    padding: 0 12px !important;
+  }
+
+  .app-header-inner {
+    gap: 8px;
+  }
+
+  .brand {
+    gap: 5px;
+  }
+
+  .brand-icon {
+    font-size: 17px;
+  }
+
+  .brand-name {
+    font-size: 17px;
+  }
+
+  .app-menu,
+  .header-progress,
+  .brand-slogan {
+    display: none;
+  }
+
+  .app-header-right {
+    margin-left: auto;
+  }
+
+  .language-switch .ant-btn {
+    height: 30px;
+    padding-inline: 7px;
+    font-size: 11px;
+  }
+
+  .app-content {
+    padding: 12px 12px 6px;
+  }
+
+  .app-footer {
+    padding: 12px !important;
+  }
+
+  .app-footer .ant-space {
+    justify-content: center;
+  }
+
+  .hero-card .ant-card-body {
+    padding: 20px;
+  }
+
+  .hero-card h2 {
+    font-size: 24px;
+    line-height: 1.35;
+    word-break: normal;
+  }
+
+  .hero-card .ant-typography {
+    font-size: 14px !important;
+  }
+
+  .hero-card .ant-btn {
+    margin-bottom: 2px;
+  }
+
+  .hero-card .ant-statistic-content {
+    font-size: 22px;
+  }
+
+  .page > .ant-card .ant-input-affix-wrapper {
+    width: 100% !important;
+  }
+
+  .page > .ant-card .ant-select {
+    width: 140px !important;
+  }
+
+  .stage-card {
+    min-height: 0;
+  }
+
+  .problem-page {
+    gap: 12px;
+  }
+
+  .problem-left {
+    padding-right: 0;
+  }
+
+  .problem-desc-card .ant-card-body {
+    padding: 18px;
+  }
+
+  .problem-desc-card .ant-typography h2 {
+    font-size: 17px;
+  }
+
+  .editor-toolbar {
+    gap: 8px !important;
+  }
+
+  .editor-toolbar > .ant-space-item {
+    max-width: 100%;
+  }
+
+  .editor-toolbar .ant-btn {
+    padding-inline: 6px;
+    font-size: 12px;
+  }
+
+  .editor-toolbar .ant-space {
+    gap: 5px !important;
+  }
+
+  .editor-wrapper > div {
+    height: 300px !important;
+  }
+
+  .panel-placeholder {
+    min-height: 140px;
+    padding: 0 12px;
+    text-align: center;
+  }
+
+  .testcase-panel .ant-table-wrapper,
+  .page .ant-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .testcase-panel .ant-table,
+  .page .ant-table {
+    min-width: 680px;
+  }
+
+  .testcase-panel .ant-table-cell,
+  .page .ant-table-cell {
+    white-space: nowrap;
+  }
+
+  .case-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-page .ant-card-body {
+    padding: 18px;
+  }
+
+  .guide-page .markdown-body {
+    font-size: 14px;
+  }
+}

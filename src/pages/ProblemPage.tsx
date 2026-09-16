@@ -448,6 +448,7 @@ export function ProblemPage() {
 
         <Card variant="borderless" styles={{ body: { padding: 12 } }}>
           <Space
+            className="editor-toolbar"
             style={{ width: '100%', justifyContent: 'space-between' }}
             wrap
           >

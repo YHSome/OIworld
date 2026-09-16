@@ -8,6 +8,7 @@ import type {
   ToolchainPhase,
 } from './protocol';
 import {
+  cdnToolchainLocation,
   preloadToolchain,
   resolveToolchainBase,
   type DownloadProgress,
@@ -150,9 +151,43 @@ export class CompilerService {
   private async doEnsureReady(): Promise<void> {
     if (this.status.phase === 'ready') return;
 
-    this.setStatus({ phase: 'downloading', message: '正在定位编译器资源…' });
-    const { base, source, version } = await resolveToolchainBase();
-    this.setStatus({ base, source, version });
+    const location = resolveToolchainBase();
+    try {
+      await this.initWith(location);
+    } catch (error) {
+      // 同源工具链不可用（例如构建时 public/toolchain 存在、部署时却没带上）
+      // 时自动回退到 CDN，避免整个站点不可用。
+      if (location.source === 'local') {
+        const fallback = cdnToolchainLocation();
+        this.setStatus({
+          phase: 'downloading',
+          message: '本地编译器不可用，正在切换到 CDN…',
+          base: fallback.base,
+          source: fallback.source,
+          version: fallback.version,
+        });
+        this.worker?.terminate();
+        this.worker = null;
+        await this.initWith(fallback);
+        return;
+      }
+      throw error;
+    }
+  }
+
+  private async initWith(location: {
+    base: string;
+    source: 'env' | 'local' | 'cdn';
+    version?: string;
+  }): Promise<void> {
+    const { base, source, version } = location;
+    this.setStatus({
+      phase: 'downloading',
+      message: '正在定位编译器资源…',
+      base,
+      source,
+      version,
+    });
 
     await preloadToolchain(base, (download) => {
       this.setStatus({

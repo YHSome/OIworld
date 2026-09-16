@@ -32,7 +32,11 @@ const check = (label, condition, extra = '') => {
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 const consoleErrors = [];
+const notFoundUrls = new Set();
 page.on('pageerror', (error) => consoleErrors.push(error.message));
+page.on('response', (response) => {
+  if (response.status() === 404) notFoundUrls.add(response.url());
+});
 page.on('console', (msg) => {
   if (msg.type() === 'error') consoleErrors.push(msg.text());
 });
@@ -137,10 +141,19 @@ try {
     (await page.locator('.ant-tag:has-text("DEV")').count()) > 0,
   );
 
+  if (notFoundUrls.size > 0) {
+    console.log('\n  出现 404 的请求：');
+    for (const url of notFoundUrls) console.log(`    ${url}`);
+  }
   check(
     '全程无控制台错误',
     consoleErrors.length === 0,
     consoleErrors.slice(0, 2).join(' | '),
+  );
+  check(
+    '没有任何 404 请求（本地工具链探测不应产生 404）',
+    notFoundUrls.size === 0,
+    [...notFoundUrls].join(' | '),
   );
 } catch (error) {
   check('脚本执行', false, error instanceof Error ? error.message : String(error));

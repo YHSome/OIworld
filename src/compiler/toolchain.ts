@@ -11,8 +11,9 @@ export const CDN_TOOLCHAIN_BASE =
   'https://cdn.jsdelivr.net/npm/browsercc@0.1.1/dist';
 
 /**
- * 同源工具链目录。用 BASE_URL 拼接，
- * 这样部署到 GitHub Pages 这类子路径站点（/OIworld/）时能正确指向 /OIworld/toolchain。
+ * 同源工具链目录（仅用于展示与文档说明）。
+ * 实际是否使用由构建期注入的 __OIWORLD_LOCAL_TOOLCHAIN__ 决定，
+ * 见 resolveToolchainBase()。
  */
 export const LOCAL_TOOLCHAIN_BASE = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/toolchain`;
 
@@ -31,44 +32,59 @@ export const TOOLCHAIN_TOTAL_BYTES = TOOLCHAIN_FILES.reduce(
   0,
 );
 
-interface ToolchainManifest {
-  name: string;
-  version?: string;
-  files?: string[];
-}
+/** 构建期注入：同源工具链地址（没有则为空字符串，表示直接用 CDN） */
+declare const __OIWORLD_LOCAL_TOOLCHAIN__: string;
+declare const __OIWORLD_TOOLCHAIN_VERSION__: string;
 
-async function fetchManifest(base: string): Promise<ToolchainManifest | null> {
-  try {
-    const res = await fetch(`${base}/manifest.json`, { cache: 'no-store' });
-    if (!res.ok) return null;
-    const ct = res.headers.get('content-type') ?? '';
-    if (!ct.includes('json')) return null;
-    const data = (await res.json()) as ToolchainManifest;
-    if (data && data.name === 'browsercc') return data;
-    return null;
-  } catch {
-    return null;
+/** dev / preview 时由 Vite 插件注入的运行时值（静态部署时不存在） */
+declare global {
+  interface Window {
+    __OIWORLD_LOCAL_TOOLCHAIN__?: string;
   }
 }
 
-/** 解析最终使用的工具链基地址 */
-export async function resolveToolchainBase(): Promise<{
+export interface ToolchainLocation {
   base: string;
   source: 'env' | 'local' | 'cdn';
   version?: string;
-}> {
+}
+
+/**
+ * 解析工具链基地址（纯同步，不做任何探测）。
+ *
+ * 优先级：VITE_TOOLCHAIN_BASE > dev/preview 注入 > 构建期常量 > CDN
+ *
+ * 为什么不做运行时探测：在 GitHub Pages 这类静态托管上，
+ * 探测 /toolchain/manifest.json 会 404，浏览器控制台会留下一条错误。
+ * 现在「有没有同源工具链」在构建期就定下来了。
+ */
+export function resolveToolchainBase(): ToolchainLocation {
   const fromEnv = import.meta.env.VITE_TOOLCHAIN_BASE as string | undefined;
   if (fromEnv) {
     return { base: fromEnv.replace(/\/$/, ''), source: 'env' };
   }
-  const local = await fetchManifest(LOCAL_TOOLCHAIN_BASE);
-  if (local) {
+
+  // dev / preview：插件在 index.html 里注入了同源地址
+  const injected =
+    typeof window !== 'undefined' ? window.__OIWORLD_LOCAL_TOOLCHAIN__ : undefined;
+  if (injected) {
+    return { base: injected.replace(/\/$/, ''), source: 'local' };
+  }
+
+  // 构建产物：只有当 public/toolchain 存在时才写入了非空常量
+  if (__OIWORLD_LOCAL_TOOLCHAIN__) {
     return {
-      base: LOCAL_TOOLCHAIN_BASE,
+      base: __OIWORLD_LOCAL_TOOLCHAIN__.replace(/\/$/, ''),
       source: 'local',
-      version: local.version,
+      version: __OIWORLD_TOOLCHAIN_VERSION__ || undefined,
     };
   }
+
+  return { base: CDN_TOOLCHAIN_BASE, source: 'cdn', version: '0.1.1' };
+}
+
+/** CDN 兜底地址（同源工具链加载失败时使用） */
+export function cdnToolchainLocation(): ToolchainLocation {
   return { base: CDN_TOOLCHAIN_BASE, source: 'cdn', version: '0.1.1' };
 }
 

@@ -26,7 +26,9 @@ function toolchainDevServer(): Plugin {
   let distDir = '';
   let version = '0.0.0';
   let publicDir = path.resolve(process.cwd(), 'public');
+  let outDir = path.resolve(process.cwd(), 'dist');
   let basePath = '/';
+  let command: 'build' | 'serve' = 'serve';
   try {
     const pkgPath = require.resolve('browsercc/package.json');
     distDir = path.join(path.dirname(pkgPath), 'dist');
@@ -97,16 +99,51 @@ function toolchainDevServer(): Plugin {
     fs.createReadStream(file).pipe(res);
   };
 
+  /** 生成注入脚本的 HTML 片段 */
+  const injectScript = (html: string): string => {
+    const localBase = `${basePath.replace(/\/$/, '')}/toolchain`;
+    const snippet = `<script>window.__OIWORLD_LOCAL_TOOLCHAIN__=${JSON.stringify(localBase)};</script>`;
+    return html.replace('</head>', `  ${snippet}\n  </head>`);
+  };
+
   return {
     name: 'oiworld-toolchain-dev-server',
     configResolved(config) {
       publicDir = config.publicDir || publicDir;
       basePath = config.base || '/';
+      command = config.command;
+      outDir = config.build.outDir || outDir;
+    },
+    /**
+     * dev 模式：往 index.html 注入「同源工具链地址」。
+     * （preview 不会执行这个钩子，所以下面单独处理。）
+     */
+    transformIndexHtml(html) {
+      if (command === 'build') return html;
+      return injectScript(html);
     },
     configureServer(server) {
       server.middlewares.use(handler);
     },
     configurePreviewServer(server) {
+      // preview 直接读磁盘上的 dist/index.html，不会走 transformIndexHtml，
+      // 所以这里自己注入一次，保证 `npm run preview` 用同源工具链（不下载 CDN）。
+      server.middlewares.use((req, res, next) => {
+        const url = (req.url ?? '').split('?')[0];
+        const indexPath = basePath.endsWith('/') ? basePath : `${basePath}/`;
+        if (url !== indexPath && url !== `${indexPath}index.html`) {
+          next();
+          return;
+        }
+        const file = path.join(outDir, 'index.html');
+        if (!fs.existsSync(file)) {
+          next();
+          return;
+        }
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Cache-Control', 'no-store');
+        res.end(injectScript(fs.readFileSync(file, 'utf8')));
+      });
       server.middlewares.use(handler);
     },
   };
@@ -120,30 +157,69 @@ function toolchainDevServer(): Plugin {
  */
 const base = process.env.VITE_BASE || '/';
 
-export default defineConfig({
-  base,
-  plugins: [react(), toolchainDevServer()],
-  optimizeDeps: {
-    // run.worker.ts 只在“第一次运行”时才被浏览器加载，
-    // 若此时 Vite 才去预构建这个依赖，会触发依赖重优化并强制刷新页面，
-    // 导致这一次运行永远拿不到结果。这里提前把它加入预构建。
-    include: ['@bjorn3/browser_wasi_shim'],
-  },
-  server: {
-    port: 5173,
-    open: false,
-  },
-  build: {
-    // monaco-editor 体积较大，放宽警告阈值
-    chunkSizeWarningLimit: 4000,
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          monaco: ['monaco-editor'],
-          antd: ['antd', '@ant-design/icons'],
-          react: ['react', 'react-dom', 'react-router-dom'],
+/**
+ * 同源工具链是否存在，在**构建期**就定下来，注入成常量。
+ * 这样运行时不需要 fetch 一个 manifest.json 去探测 —— 在 GitHub Pages 这类
+ * 静态托管上，那次探测会 404 并在浏览器控制台留下一条错误。
+ *
+ *  - 开发 / 预览（vite serve）：中间件始终提供 <base>/toolchain，直接走同源
+ *  - 构建：public/toolchain/manifest.json 存在才算有（npm run setup:toolchain 生成）
+ */
+function resolveLocalToolchain(command: 'build' | 'serve') {
+  if (command === 'serve') {
+    return { base: `${base.replace(/\/$/, '')}/toolchain`, version: '' };
+  }
+  const manifestPath = path.resolve(
+    process.cwd(),
+    'public',
+    'toolchain',
+    'manifest.json',
+  );
+  if (!fs.existsSync(manifestPath)) return { base: '', version: '' };
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8')) as {
+      version?: string;
+    };
+    return {
+      base: `${base.replace(/\/$/, '')}/toolchain`,
+      version: manifest.version ?? '',
+    };
+  } catch {
+    return { base: '', version: '' };
+  }
+}
+
+export default defineConfig(({ command }) => {
+  const localToolchain = resolveLocalToolchain(command);
+  return {
+    base,
+    define: {
+      __OIWORLD_LOCAL_TOOLCHAIN__: JSON.stringify(localToolchain.base),
+      __OIWORLD_TOOLCHAIN_VERSION__: JSON.stringify(localToolchain.version),
+    },
+    plugins: [react(), toolchainDevServer()],
+    optimizeDeps: {
+      // run.worker.ts 只在“第一次运行”时才被浏览器加载，
+      // 若此时 Vite 才去预构建这个依赖，会触发依赖重优化并强制刷新页面，
+      // 导致这一次运行永远拿不到结果。这里提前把它加入预构建。
+      include: ['@bjorn3/browser_wasi_shim'],
+    },
+    server: {
+      port: 5173,
+      open: false,
+    },
+    build: {
+      // monaco-editor 体积较大，放宽警告阈值
+      chunkSizeWarningLimit: 4000,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            monaco: ['monaco-editor'],
+            antd: ['antd', '@ant-design/icons'],
+            react: ['react', 'react-dom', 'react-router-dom'],
+          },
         },
       },
     },
-  },
+  };
 });

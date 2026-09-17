@@ -40,6 +40,18 @@ page.on('console', (msg) => {
 const buttonByText = (text, scope = page) =>
   scope.locator('button').filter({ hasText: new RegExp(`^${text}$`) });
 
+/** 等待 C++ 编译器就绪：题目页右侧的编译器提示条消失即表示已就绪 */
+async function waitCompilerReady(page, timeout = 300_000) {
+  await page.waitForFunction(
+    () =>
+      !Array.from(document.querySelectorAll('.problem-right .ant-alert-message')).some(
+        (node) => /准备|加载|正在/.test(node.textContent ?? ''),
+      ),
+    undefined,
+    { timeout },
+  );
+}
+
 try {
   step('打开新手指南 /guide');
   await page.goto(`${base}/guide`, { waitUntil: 'networkidle' });
@@ -109,9 +121,7 @@ try {
   await page.screenshot({ path: path.join(shotDir, 'beginner-problem.png'), fullPage: true });
 
   step('等待编译器就绪');
-  await page.waitForSelector('.ant-tag:has-text("编译器就绪")', {
-    timeout: 300_000,
-  });
+  await waitCompilerReady(page);
   check('编译器就绪', true);
 
   step('先按一次「运行」但不写任何代码（新手最常见的第一反应）');

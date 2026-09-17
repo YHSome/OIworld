@@ -35,6 +35,17 @@ const check = (label, condition, extra = '') => {
   );
 };
 
+/** 等待 C++ 编译器就绪：题目页右侧的编译器提示条消失即表示已就绪 */
+async function waitCompilerReady(page, timeout = 300_000) {
+  await page.waitForFunction(
+    () =>
+      !Array.from(document.querySelectorAll('.problem-right .ant-alert-message')).some(
+        (node) => /准备|加载|正在/.test(node.textContent ?? ''),
+      ),
+    undefined,
+    { timeout },
+  );
+}
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 const consoleErrors = [];
@@ -109,9 +120,7 @@ try {
     `页面 ${rows} 行 / JSON ${problem.test_cases.length} 个`,
   );
 
-  await page.waitForSelector('.ant-tag:has-text("编译器就绪")', {
-    timeout: 300_000,
-  });
+  await waitCompilerReady(page);
 
   // ---- 用参考题解提交 ----
   await page.locator('.monaco-editor').click();

@@ -1,9 +1,12 @@
 /**
  * 编译器状态提示条：首次进入题目页会加载约 90MB 的 clang/lld WebAssembly 工具链，
  * 这里把加载过程可视化，避免用户以为页面卡死。
+ *
+ * 只在题目页使用（顶栏不再显示状态标签：未进入题目时编译器本来就还没开始加载，
+ * 常驻一个"加载中"的标签只会让人困惑）。
  */
 
-import { Alert, Button, Progress, Space, Tag, Tooltip, Typography } from 'antd';
+import { Alert, Button, Progress, Space, Typography } from 'antd';
 import type { CompilerStatus } from '../compiler/client';
 import { isToolchainReady } from '../hooks/useCompiler';
 
@@ -19,48 +22,9 @@ const SOURCE_TEXT: Record<CompilerStatus['source'], string> = {
 interface ToolchainAlertProps {
   status: CompilerStatus;
   onRetry: () => void;
-  /** 紧凑模式（用于顶部状态栏）：任何阶段都只渲染一个小标签，不会撑开顶栏 */
-  compact?: boolean;
 }
 
-export function ToolchainAlert({ status, onRetry, compact }: ToolchainAlertProps) {
-  if (compact) {
-    if (isToolchainReady(status.phase)) {
-      return (
-        <Tooltip title={`C++ 编译器就绪（来源：${SOURCE_TEXT[status.source]}）`}>
-          <Tag color="success" style={{ marginInlineEnd: 0 }}>
-            编译器就绪
-          </Tag>
-        </Tooltip>
-      );
-    }
-    if (status.phase === 'failed') {
-      return (
-        <Tooltip title={`${status.message}（点击重试）`}>
-          <Tag
-            color="error"
-            style={{ marginInlineEnd: 0, cursor: 'pointer' }}
-            onClick={onRetry}
-          >
-            编译器加载失败
-          </Tag>
-        </Tooltip>
-      );
-    }
-    const downloading = status.download?.percent;
-    return (
-      <Tooltip
-        title={`正在准备 C++ 编译器${
-          downloading !== undefined ? `（${downloading}%）` : ''
-        }：首次约 90MB，之后走浏览器缓存`}
-      >
-        <Tag color="processing" style={{ marginInlineEnd: 0 }}>
-          编译器加载中{downloading !== undefined ? ` ${downloading}%` : '…'}
-        </Tag>
-      </Tooltip>
-    );
-  }
-
+export function ToolchainAlert({ status, onRetry }: ToolchainAlertProps) {
   if (isToolchainReady(status.phase)) {
     return null;
   }

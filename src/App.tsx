@@ -22,8 +22,6 @@ import { JavaProgressPage } from './pages/JavaProgressPage';
 import { JavaGuidePage } from './pages/JavaGuidePage';
 import { useProgressStore } from './store/useProgressStore';
 import { getOverallStats } from './data';
-import { ToolchainAlert } from './components/ToolchainAlert';
-import { useCompilerStatus, warmUpCompiler } from './hooks/useCompiler';
 import { useDeveloperMode } from './hooks/useDeveloperMode';
 import { usePythonProgressStore } from './python/usePythonProgressStore';
 import { getPythonStats } from './python/data';
@@ -45,7 +43,6 @@ export default function App() {
   const javaAttempted = useJavaProgressStore((state) => state.attemptedProblems);
   // 在这里调用一次：安装 ?dev=1 解析与 Ctrl+Shift+D 快捷键
   const { developerMode } = useDeveloperMode();
-  const compilerStatus = useCompilerStatus();
 
   const overall = getOverallStats(completed, attempted);
   const pythonOverall = getPythonStats(pythonCompleted, pythonAttempted);
@@ -172,19 +169,6 @@ export default function App() {
                 <Tag color="purple" style={{ marginInlineEnd: 0 }}>
                   DEV
                 </Tag>
-              </Tooltip>
-            )}
-            {cppRoute && (
-              <Tooltip title="编译器加载状态">
-                <span>
-                  <ToolchainAlert
-                    compact
-                    status={compilerStatus}
-                    onRetry={() => {
-                      void warmUpCompiler().catch(() => undefined);
-                    }}
-                  />
-                </span>
               </Tooltip>
             )}
           </Space>

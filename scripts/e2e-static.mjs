@@ -41,6 +41,17 @@ page.on('console', (msg) => {
   if (msg.type() === 'error') consoleErrors.push(msg.text());
 });
 
+/** 等待 C++ 编译器就绪：题目页右侧的编译器提示条消失即表示已就绪 */
+async function waitCompilerReady(page, timeout = 300_000) {
+  await page.waitForFunction(
+    () =>
+      !Array.from(document.querySelectorAll('.problem-right .ant-alert-message')).some(
+        (node) => /准备|加载|正在/.test(node.textContent ?? ''),
+      ),
+    undefined,
+    { timeout },
+  );
+}
 const buttonByText = (text) =>
   page.locator('button').filter({ hasText: new RegExp(`^${text}$`) });
 
@@ -71,13 +82,11 @@ try {
 
   step('等待编译器就绪（静态托管下从 CDN 下载工具链）');
   const readyAt = Date.now();
-  await page.waitForSelector('.ant-tag:has-text("编译器就绪")', {
-    timeout: 600_000,
-  });
+  await waitCompilerReady(page, 600_000);
   const readySeconds = ((Date.now() - readyAt) / 1000).toFixed(1);
   check(`编译器就绪（${readySeconds}s）`, true);
-  const headerText = await page.locator('.app-header').innerText();
-  check('顶栏显示编译器来源', headerText.includes('编译器就绪'), headerText.replace(/\n/g, ' '));
+  const panelText = await page.locator('.problem-right').innerText();
+  check('题目页不再显示编译器加载提示', !/准备|加载|正在/.test(panelText), panelText.split('\n')[0].slice(0, 60));
 
   step('编写并运行 Hello World');
   await page.locator('.monaco-editor').click();

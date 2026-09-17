@@ -51,6 +51,17 @@ const readDevMode = (page) =>
     return raw ? JSON.parse(raw).state.developerMode === true : false;
   });
 
+/** 等待 C++ 编译器就绪：题目页右侧的编译器提示条消失即表示已就绪 */
+async function waitCompilerReady(page, timeout = 300_000) {
+  await page.waitForFunction(
+    () =>
+      !Array.from(document.querySelectorAll('.problem-right .ant-alert-message')).some(
+        (node) => /准备|加载|正在/.test(node.textContent ?? ''),
+      ),
+    undefined,
+    { timeout },
+  );
+}
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 const consoleErrors = [];
@@ -108,7 +119,7 @@ try {
   step('一键填入参考题解并提交');
   await page.locator('button').filter({ hasText: /^把参考题解填进编辑器$/ }).click();
   await page.waitForTimeout(400);
-  await page.waitForSelector('.ant-tag:has-text("编译器就绪")', { timeout: 300_000 });
+  await waitCompilerReady(page);
   await page.locator('button').filter({ hasText: /^提交$/ }).click();
   await page.waitForSelector('.ant-modal-content, .ant-alert-error', { timeout: 180_000 });
   const modal = await page.locator('.ant-modal-content').first().innerText();

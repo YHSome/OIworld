@@ -46,9 +46,9 @@ try {
   await page.goto(url('/java'), { waitUntil: 'domcontentloaded', timeout: 90_000 });
   await page.waitForSelector('.stage-card', { timeout: 60_000 });
   const stageCards = await page.locator('.stage-card').count();
-  check(`阶段卡片数量为 2（阶段一/阶段二）`, stageCards === 2, `实际 ${stageCards}`);
+  check('阶段卡片数量为 7（阶段一 ~ 阶段七）', stageCards === 7, `实际 ${stageCards}`);
   const home = await page.locator('body').innerText();
-  check('首页显示题目总数 5', /题目总数\s*5/.test(home), '');
+  check('首页显示题目总数 42', /题目总数\s*42/.test(home), '');
   check('首页显示 Java 靶场标题', home.includes('Java 基础语法靶场'));
   check('首页有 Java 指南入口', home.includes('Java 指南') || home.includes('先看 Java 指南'));
   check('首页有搜索与筛选', home.includes('搜索题目名称') || home.includes('全部难度'));
@@ -64,7 +64,7 @@ try {
   check('Java 按钮处于激活样式', (await page.locator('.java-switch-active').count()) === 1);
   check(
     '顶栏进度显示 Java 靶场的进度',
-    /0\/5/.test(await page.locator('.app-header-right').innerText()),
+    /0\/42/.test(await page.locator('.app-header-right').innerText()),
   );
 
   step('阶段页 /java/stage/1');
@@ -72,11 +72,11 @@ try {
   await page.waitForSelector('table tbody tr', { timeout: 30_000 });
   const stagePage = await page.locator('body').innerText();
   check('阶段页显示阶段标题', stagePage.includes('阶段一'));
-  check('阶段页列出 3 道题', (await page.locator('table tbody tr').count()) === 3);
+  check('阶段页列出 6 道题', (await page.locator('table tbody tr').count()) === 6);
   check('阶段页有上一/下一阶段导航', stagePage.includes('下一阶段'));
   await page.screenshot({ path: path.join(shotDir, 'java-2-stage.png'), fullPage: true });
 
-  step('题目页 /java/problem/java-1');
+  step('题目页（阶段一第一题）');
   await page.locator('table tbody tr').first().click();
   await page.waitForSelector('.problem-page', { timeout: 30_000 });
   await page.waitForSelector('.monaco-editor', { timeout: 90_000 });
@@ -163,11 +163,11 @@ try {
   check('指南右侧目录可用', (await page.locator('.guide-side a').count()) > 5);
 
   step('闯关与解锁：直接访问第 3 题应被拦截，开发者模式可解锁');
-  await page.goto(url('/java/problem/java-3'), { waitUntil: 'domcontentloaded' });
+  await page.goto(url('/java/problem/j1-3'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.ant-card', { timeout: 30_000 });
   const locked = await page.locator('body').innerText();
   check('未通过的题按顺序锁住', locked.includes('这道题还没有解锁'));
-  await page.goto(urlWithQuery('/java/problem/java-3', 'dev=1'), { waitUntil: 'domcontentloaded' });
+  await page.goto(urlWithQuery('/java/problem/j1-3', 'dev=1'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.problem-page', { timeout: 30_000 });
   check('开发者模式可直达', (await page.locator('.problem-page').count()) === 1);
 

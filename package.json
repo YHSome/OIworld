@@ -16,8 +16,11 @@
     "validate:python": "node scripts/validate-python-problems.mjs",
     "validate:python-diagnostics": "node scripts/validate-python-diagnostics.mjs",
     "validate:java": "node scripts/validate-java-problems.mjs",
+    "fix:java-lessons": "node scripts/fix-java-lessons.mjs",
     "test:e2e": "node scripts/e2e.mjs",
-    "test:problem": "node scripts/e2e-problem.mjs"
+    "test:problem": "node scripts/e2e-problem.mjs",
+    "test:java": "node scripts/e2e-java.mjs",
+    "test:java-problem": "node scripts/e2e-java-problem.mjs"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",

@@ -271,6 +271,16 @@ export function JavaProblemPage() {
     );
   };
 
+  /** 开发者模式：把参考题解直接放进编辑器（用于快速验证题目与判题数据） */
+  const fillSolution = () => {
+    setCode(problem.solution_code);
+    setDraft(problem.id, problem.solution_code);
+    setOutcome(null);
+    setSubmission(null);
+    setResults(null);
+    messageApi.success('已填入参考题解，点「提交」即可验证这道题');
+  };
+
   return (
     <div className="problem-page">
       {/* ---------------- 左侧：题目描述 ---------------- */}
@@ -350,6 +360,16 @@ export function JavaProblemPage() {
                 ? '查看参考题解'
                 : '通过本题后可查看参考题解'}
             </Button>
+            {developerMode && (
+              <Button
+                block
+                style={{ marginTop: 8 }}
+                icon={<ExperimentOutlined />}
+                onClick={fillSolution}
+              >
+                填入参考题解并评测（开发者）
+              </Button>
+            )}
           </div>
 
           <Divider />

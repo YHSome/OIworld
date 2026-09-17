@@ -113,11 +113,20 @@ export function OutputPanel({
   language = 'cpp',
 }: OutputPanelProps) {
   if (busy) {
+    // Java 运行时是纯 JavaScript 实现的 Doppio JVM，编译与每个测试用例都要几十秒，
+    // 这里把预期说清楚，避免用户以为程序卡死而反复点击。
+    const slowHint =
+      language === 'java'
+        ? mode === 'submit'
+          ? '正在评测所有测试用例…Java 运行在 JavaScript 里，编译约 1~2 分钟、每个测试用例约 1 分钟，请耐心等待（不要重复点击）'
+          : '正在编译并运行…Java 运行在 JavaScript 里，首次编译约 1~2 分钟，请耐心等待'
+        : null;
     return (
       <div className="panel-placeholder">
         <Spin />
         <Text type="secondary" style={{ marginLeft: 12 }}>
-          {mode === 'submit' ? '正在评测所有测试用例…' : '正在编译并运行…'}
+          {slowHint ??
+            (mode === 'submit' ? '正在评测所有测试用例…' : '正在编译并运行…')}
         </Text>
       </div>
     );

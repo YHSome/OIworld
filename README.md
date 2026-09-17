@@ -7,7 +7,25 @@
 
 另有独立的 **Python 基础语法靶场**（`/python`）：包含 7 个学习阶段、42 道可运行与提交评测的练习题，覆盖输出、输入、变量、判断、循环、列表、字符串、函数与字典。每题均包含本关新知识、动手前思考、常见错误与提示。Python 由 Pyodide（WebAssembly）在浏览器本地运行，题目进度与 C++ 靶场分开保存；`/python/guide` 还提供零基础语法指南。
 
-**Java 基础语法靶场（Beta）**（`/java`）现已开放首批入门关卡：使用 Doppio JVM 与 Java 8 类库在浏览器本地编译、运行和评测 Java 代码。首次使用需要加载约 100MB 类库，可能需要 1～3 分钟；运行时由浏览器缓存，后续加载会更快。Beta 阶段优先保证真实编译运行链路，题库会持续扩展。
+**Java 基础语法靶场**（`/java`）：同样 **7 个阶段、42 道题**，使用 Doppio JVM 与 Java 8 类库在浏览器本地编译、运行和评测 Java 代码——从类与 `main`、`System.out.println`、变量与 `Scanner` 输入，一路到判断、循环、数组与字符串、方法与递归、类与对象、`HashMap` 集合。
+
+| 阶段 | 主题 | 知识点 |
+| --- | --- | --- |
+| 一 | 类与 main | `System.out.println`、变量、`Scanner` 输入、`double` |
+| 二 | 运算符与判断 | 算术 / 关系 / 逻辑运算、`if / else`、`switch` |
+| 三 | 循环 | `for`、`while`、嵌套循环、`break`、标志变量 |
+| 四 | 数组与字符串 | 数组遍历与最值、`String.length()` / `charAt()`、回文判断 |
+| 五 | 方法 | 定义与调用、`static`、数组参数、值传递、递归、重载 |
+| 六 | 类与对象 | 定义类、字段、构造方法、对象数组、冒泡排序 |
+| 七 | 集合与哈希表 | `ArrayList`、`HashMap` 计数与查找、按顺序输出 |
+
+Java 靶场同样支持：顺序解锁与开发者模式、`写到哪？`（光标跳到 `// TODO`）、
+javac 报错与中文标点的中文自查提示（`src/java/diagnostics.ts`）、每道题统一的
+「题目背景 → 任务 → 本关新知识 → 输入格式 → 输出格式 → 样例 → 常见错误 → 小贴士」讲解结构，
+以及 `/java/guide` 入门指南。
+
+> 浏览器里的 Java 运行时是纯 JavaScript 实现的 Doppio JVM，**第一次编译约需 1~2 分钟**（之后同一会话内更快）；
+> 因此题库里的程序都刻意保持轻量：循环几千次以内、输出几十行以内。
 
 三个靶场是**同一套页面结构**，用顶栏右上角的 `C++ / Python / Java 靶场` 按钮切换（各自的进度互相独立）：
 
@@ -378,8 +396,10 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
 | `node scripts/e2e-beginner.mjs <url>` | 零基础路径验收（指南 / 跳转 TODO / 中文标点提示） |
 | `node scripts/e2e-devmode.mjs <url>` | 开发者模式验收（解锁 / 免通过看题解 / 快捷键 / 面板） |
 | `node scripts/e2e-static.mjs <base>` | 静态部署验收（hash 路由 / 深链刷新 / base 子路径），本地与线上站点都能跑 |
-| `node scripts/e2e-java.mjs <url> [hash]` | Java 靶场验收（首页/阶段/题目/进度/指南/闯关解锁，并真实编译运行提交一道题） |
-| `npm run validate:java` | 用本机 JDK 校验 Java 参考题解（5 题 / 5 个测试点） |
+| `node scripts/e2e-java.mjs <url> [hash]` | Java 靶场验收（首页 / 阶段 / 题目 / 进度 / 指南 / 闯关解锁，并真实编译运行提交一道题） |
+| `node scripts/e2e-java-problem.mjs <url> <id> [hash]` | Java 单题抽查：开发者模式下「填入参考题解 → 提交」，用真实 Doppio JVM 验证某道题 |
+| `npm run validate:java` | 用本机 JDK 校验 Java 题库：结构 + `javac --release 8` 编译题解与初始代码 + 逐用例运行比对（42 题 / 161 个测试点） |
+| `npm run fix:java-lessons` | 修正 Java 题面模板字符串里忘记转义的反引号（写题时的一个常见坑） |
 
 ---
 
@@ -401,11 +421,20 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
   首屏 2.9s → 7 阶段 42 题正常渲染 → 点进题目 → 工具链从 jsDelivr 下载 45.7s 后就绪 →
   浏览器本地编译并运行成功 40.4s → 提交通过 → **刷新深链仍在题目页（hash 路由）** →
   `#/guide` 与 `?dev=1` 深链均可用，**控制台零报错、零 404 请求**
-- Java 靶场验收（本地与**线上**各跑一遍，`scripts/e2e-java.mjs`）：首页 2 个阶段卡片 / 5 道题 →
-  顶栏三个靶场切换按钮且 Java 高亮 → 阶段页 3 道题 → 题目页左右分栏、工具栏与测试用例齐全 →
+- Java 靶场验收（本地与**线上**各跑一遍，`scripts/e2e-java.mjs`）：首页 7 个阶段卡片 / 42 道题 →
+  顶栏三个靶场切换按钮且 Java 高亮 → 阶段页 6 道题 → 题目页左右分栏、工具栏与测试用例齐全 →
   运行环境就绪 → 把 `// TODO` 改成输出语句 → **提交通过并弹出「恭喜通过」** →
-  进度页计入 1 题 → 指南页可读 → 未通过时按顺序锁定、`?dev=1` 可直达，控制台零报错
-- Java 题库：`npm run validate:java` → **5 道题 / 5 个测试点通过**（本机 JDK 24 编译运行比对）
+  进度页计入 → 指南页可读 → 未通过时按顺序锁定、`?dev=1` 可直达，控制台零报错
+- Java 题库：`npm run validate:java` → **42 道题 / 161 个测试点通过**
+  （结构检查 + `javac --release 8` 编译题解与初始代码 + 逐用例运行比对，
+  用 `--release 8` 是为了和浏览器里的 Java 8 运行时对齐，任何 Java 9+ 写法都会被拦下）
+- Java 浏览器抽查（`scripts/e2e-java-problem.mjs`，真实 Doppio JVM 里逐题「填入参考题解 → 提交」）：
+  **9/9 通过**，覆盖 `println` 打印小数（`32.0`）、`switch` + `char`、嵌套循环打印、`String.charAt`、
+  递归（`long` 阶乘）、`printf("%.2f")`、类 + 手写冒泡排序 + `compareTo`、`HashMap` 计数 +
+  `Collections.sort`、`TreeMap` 有序输出
+- Java 性能实测（同一浏览器会话）：**首次编译约 2 分钟，每个测试用例约 1 分钟**，
+  一道题提交（4 个用例）约 5.5 分钟——这是 Doppio JVM 跑在 JavaScript 里的固有代价。
+  题库因此刻意保持轻量（循环几千次以内、输出几十行以内），UI 在等待时也会提示预计耗时
 
 ---
 
@@ -413,6 +442,10 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
 
 - 首次使用需下载约 90MB 编译器（之后走缓存）；`npm run setup:toolchain` 可改为同源加载。
 - 每次编译约 2 秒（clang 实例化 + 标准库写入虚拟文件系统），这是 Wasm 运行真实编译器的固有成本。
+- **Java 靶场较慢**：Doppio JVM 是一个用 JavaScript 实现的 Java 虚拟机，首次编译约 2 分钟、
+  每个测试用例约 1 分钟（一道题提交约 5.5 分钟）。题库已按这个约束写得非常轻量，
+  等待期间结果面板会提示预计耗时；后续若要提速，可以考虑换用仓库里已有的
+  `public/java-runtime`（B-JVM + 编译成 Wasm 的 TeaVM 编译器）。
 - Monaco 与 Ant Design 体积较大，生产产物首屏 JS 约 4.4MB（gzip 约 1.2MB），
   适合局域网 / 教学场景；如需更小，可只引入 `editor.api` 与 C++ 语言包。
 - 编译器未启用 C++ 异常，题库与用户代码不要依赖 `try / catch`。

@@ -42,17 +42,29 @@ javac 报错与中文标点的中文自查提示（`src/java/diagnostics.ts`）�
 
 Pro 题目的讲解结构是「题目背景 → 任务 → **思路与知识点** → 输入格式 → 输出格式 → 样例 → 常见错误 → 小贴士」，
 重点是**算法思路、复杂度分析与边界处理**（而不是基础语法）。每道题还会给出
-**洛谷同类型题目的跳转链接**。
+**洛谷同类型题目的跳转链接**，并且可以直接**把代码远程提交到洛谷**（见下一节）。
 
-> **关于洛谷**：本站**只提供跳转到洛谷自己页面的链接**（按关键词打开洛谷题目列表），
-> 不抓取、不缓存、不转发洛谷的题面内容，也不代用户登录或提交。题目均为本站自撰，
-> 自带测试用例与参考题解，在浏览器本地评测。
+### 洛谷远程提交（`/luogu`）
+
+绑定一次洛谷账号后，题目页会出现「提交到洛谷」面板：填洛谷题号（例如 `P1001`，会记住）、
+选洛谷评测语言（默认 C++20 = 洛谷语言 27）、一键提交，并**实时轮询洛谷的评测结果**
+（AC / WA / TLE / MLE / RE / CE……），还能拉取该题在洛谷的**提交记录列表**——
+就是 vjudge 那种远程提交体验。
+
+绑定页 `/luogu` 的交互与 vjudge 的「远程账号管理」一致（保护 / 账号 / 状态 / 更新时间 / 操作 表格，
+下面是可以粘贴 `__client_id` 与 `_uid` 的绑定表单），也支持**一键使用浏览器里已登录的洛谷会话**。
+
+> **为什么需要先装一次浏览器脚本？** 这是浏览器规则决定的，不是实现选择：
+> 洛谷的响应里**没有 CORS 头**（本站页面读不到洛谷的任何返回），而 `Cookie` 是 fetch/XHR 的
+> **禁止请求头**（网页 JS 无法携带登录凭据）。vjudge 能只让用户粘一次 Cookie，是因为它把 Cookie
+> 存到**它自己的服务器**上、由服务器代发请求；本项目不引入服务器，于是用可审计的油猴脚本
+> （`public/oiworld-luogu.user.js`，纯文本、无压缩）通过 `GM_xmlhttpRequest` 代发请求。
+> 效果一样，但**代码与 Cookie 都不离开你的浏览器**：绑定信息只存 `localStorage`（键 `oiworld:luogu`），
+> 解绑即清空，本站没有任何后端。
 >
-> 为什么不做"远程提交"（像 vJudge 那样直接交到洛谷）？纯前端做不到，而且不该做：
-> ① 浏览器跨域限制会让页面读不到洛谷的响应，本站也没有后端可以转发；
-> ② 代用户提交必须持有用户的洛谷会话 Cookie，而跨站 Cookie 是浏览器不允许 JS 读取的；
-> ③ vJudge 的 remote judge 本质是一台长期在线的服务端爬虫（登录池、限速、验证码、结果轮询），
-> 且自动提交通常违反目标站点的用户协议、容易触发风控。所以这一功能保持不做。
+> 详情、实测证据、接口清单与安全边界见 **[docs/luogu-bridge.md](docs/luogu-bridge.md)**。
+
+本站仍然**不抓取、不缓存洛谷题面**：题目描述、测试用例与参考题解都是本站自撰，洛谷只作为"在线评测"使用。
 
 四个靶场是**同一套页面结构**，用顶栏右上角的 `C++ / Python / Java / Pro 靶场` 按钮切换（各自的进度互相独立）：
 
@@ -274,6 +286,11 @@ src/
 ├─ java/                Java 靶场：data.ts（阶段与题库）、service.ts（Doppio JVM）、
 │                      diagnostics.ts（javac 报错自查提示）、useJavaProgressStore.ts、
 │                      runtimeInfo.ts（运行时文案）
+├─ pro/                 Pro 靶场：data.ts（阶段与题库）、lesson.ts（题面模板）、stages/stage-1..7.ts、
+│                      useProProgressStore.ts
+├─ luogu/               洛谷远程提交：bridge.ts（postMessage 客户端）、service.ts（提交 / 轮询 / 记录）、
+│                      verdict.ts（洛谷评测状态表）、languages.ts（洛谷语言编号）、
+│                      useLuoguStore.ts（账号绑定，localStorage）、useLuoguBridge.ts（桥检测）
 ├─ data/
 │  ├─ index.ts           题库加载、搜索筛选、解锁规则、统计
 │  ├─ guide.md           C++ 新手指南（第零课）
@@ -281,14 +298,22 @@ src/
 │  └─ problems/stage-1..7.json   题库（阶段一 ~ 阶段七）
 ├─ store/useProgressStore.ts     进度 + 代码草稿 + 开发者模式（localStorage）
 ├─ pages/                三个靶场各一套页面（Home / Stage / Problem / Progress / Guide）
-├─ components/           编辑器、输出面板、测试用例面板、Markdown、题目表格等
+├─ components/           编辑器、输出面板、测试用例面板、Markdown、题目表格、洛谷提交面板等
 ├─ hooks/                useCompiler（C++ 编译器状态）、useDeveloperMode（开发者模式）
 └─ editor/monaco.ts      Monaco 本地化配置（Worker 由 Vite 打包）
+
+public/
+└─ oiworld-luogu.user.js 洛谷桥接脚本（油猴脚本，纯文本可审计；由 /luogu 页引导安装）
+
+docs/
+└─ luogu-bridge.md       洛谷远程提交桥的设计说明：实测证据、接口清单、消息协议、安全边界、排查
 
 scripts/
 ├─ node-toolchain.mjs    在 Node 里跑同一套 clang-wasm 流程（校验题库用）
 ├─ validate-problems.mjs 题库校验：题解必须能编译并在每个用例上输出正确
 ├─ copy-toolchain.mjs    离线工具链安装（setup:toolchain）
+├─ test-luogu-bridge.mjs 洛谷桥接脚本测试（真实请求 + 模拟已登录两套）
+├─ e2e-luogu.mjs         洛谷远程提交验收（假桥注入）
 ├─ e2e.mjs               浏览器端到端冒烟测试（Playwright）
 ├─ e2e-problem.mjs       单题深度验收：渲染 + 用参考题解提交
 ├─ e2e-beginner.mjs      零基础路径验收：新手指南 / 跳转 TODO / 中文标点提示
@@ -404,6 +429,12 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
 **进度**：`localStorage` 持久化已通过 / 未通过 / 最后访问 / 每题代码草稿；
 进度页支持导出 / 导入 JSON、清空进度，以及开发者模式开关（做题顺序固定为按顺序解锁，不提供关闭开关）。
 
+**洛谷远程提交（`/luogu` + 题目页面板）**：桥接脚本状态检测与一键安装指引、vjudge 式远程账号管理
+（保护 / 账号 / 状态 / 更新时间 / 操作 + `__client_id` / `_uid` 绑定表单）、浏览器会话一键绑定、
+绑定前真实校验 Cookie 是否有效、解绑；题目页可记住洛谷题号、选语言与 O2 开关、一键提交、
+**实时轮询评测结果**（含编译错误原文）、拉取该题提交记录列表、以及不装脚本时的降级路径
+（复制代码 + 打开洛谷题目页）。绑定凭据只存本机，脚本带 origin 白名单与 5 秒提交冷却。
+
 **开发者模式**：一键解锁全部题目、免通过查看并填入参考题解、题目页调试面板
 （编译参数 / 工具链 / 耗时 / 原始 stderr / 复制下载题目 JSON）。`?dev=1`、`Ctrl+Shift+D` 或设置页开关。
 
@@ -421,6 +452,8 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
 | `npm run setup:toolchain` | 把编译器复制到 `public/toolchain`（离线部署） |
 | `npm run test:e2e` | 端到端冒烟测试（需先启动 preview/dev） |
 | `npm run test:problem -- <url> <id>` | 单题深度验收 |
+| `npm run test:bridge` | 洛谷桥接脚本测试：一半**真的请求 luogu.com.cn**（未登录状态验证接口地址 / csrf / 错误翻译 / origin 白名单），一半用模拟已登录的响应验证提交成功路径（请求头、请求体、`rid`、冷却、记录解析） |
+| `npm run test:luogu -- <url>` | 洛谷远程提交验收（注入假洛谷桥，验证 `/luogu` 绑定页与题目页面板；`-- hash` 可对线上站点跑） |
 | `node scripts/e2e-beginner.mjs <url>` | 零基础路径验收（指南 / 跳转 TODO / 中文标点提示） |
 | `node scripts/e2e-devmode.mjs <url>` | 开发者模式验收（解锁 / 免通过看题解 / 快捷键 / 面板） |
 | `node scripts/e2e-static.mjs <base>` | 静态部署验收（hash 路由 / 深链刷新 / base 子路径），本地与线上站点都能跑 |
@@ -463,6 +496,21 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
 - Java 性能实测（同一浏览器会话）：**首次编译约 2 分钟，每个测试用例约 1 分钟**，
   一道题提交（4 个用例）约 5.5 分钟——这是 Doppio JVM 跑在 JavaScript 里的固有代价。
   题库因此刻意保持轻量（循环几千次以内、输出几十行以内），UI 在等待时也会提示预计耗时
+- 洛谷接口实测（`scripts/test-luogu-bridge.mjs`，**真的请求 luogu.com.cn**）：
+  `POST /fe/api/problem/submit/P1001` 存在且未登录时返回
+  `UserNotLoggedInException`（对照：随机路径返回 404），csrf-token 能从题目页 meta 抓到，
+  带 `Origin: https://yhsome.github.io` 的预检请求返回 **403 且没有任何 `Access-Control-Allow-*` 头**
+  （这就是"纯前端读不到洛谷"的硬证据）；`__client_id` / `_uid` 是
+  `HttpOnly; Secure; SameSite=None`
+- 洛谷桥接脚本测试：**24/24 通过**（live 10 项 + mock 14 项）。
+  mock 部分验证了提交请求的地址、`X-CSRF-TOKEN`、`Referer`/`Origin`、请求体 `{lang,code,enableO2}`、
+  `rid` 解析、5 秒冷却、评测记录与提交记录解析（含 `records` 为数组或 `{result:[]}` 两种形态）、
+  绑定 Cookie 会作为 `Cookie` 头发出、人机验证错误被翻译成可操作提示
+- 洛谷远程提交验收（`scripts/e2e-luogu.mjs`，注入假洛谷桥跑真实浏览器）：
+  未装脚本时的状态与安装引导 → 装桥后状态就绪/版本号/自动检测登录 →
+  绑定浏览器会话与绑定粘贴的 Cookie（**绑定前会真的验证 Cookie 有效性**）→ 解绑 →
+  题目页提交（语言 27、题号 P1001、带上绑定的 Cookie）→ 轮询 3 次拿到 AC →
+  刷新提交记录出 3 行（AC / WA / CE）→ 未登录降级提示，**全程零控制台报错**
 
 ---
 
@@ -477,4 +525,9 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
 - Monaco 与 Ant Design 体积较大，生产产物首屏 JS 约 4.4MB（gzip 约 1.2MB），
   适合局域网 / 教学场景；如需更小，可只引入 `editor.api` 与 C++ 语言包。
 - 编译器未启用 C++ 异常，题库与用户代码不要依赖 `try / catch`。
+- **洛谷远程提交需要先装一次油猴脚本**（浏览器同源策略与 `Cookie` 禁止请求头决定的，
+  见 [docs/luogu-bridge.md](docs/luogu-bridge.md)）；洛谷的非公开接口可能变化，
+  遇到时可用 `/luogu` 页的诊断按钮取出原始返回。
+- 洛谷侧还可能触发人机验证或提交频率限制：先在洛谷手动交一次、并别拿它刷提交。
+- Pro 题目目前只标注了洛谷**同类型题目的搜索关键词**，精确题号需要你在题目页手动填写（会被记住）。
 - 阶段一「常见错误」放在「小贴士」之前，阶段二 ~ 七放在最后，属于两批作者的排版差异，不影响阅读。

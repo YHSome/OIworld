@@ -1,6 +1,7 @@
 import { Button, Layout, Menu, Progress, Space, Tag, Tooltip, Typography } from 'antd';
 import { Link, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import {
+  CloudUploadOutlined,
   CodeOutlined,
   ReadOutlined,
   RiseOutlined,
@@ -25,6 +26,7 @@ import { ProHomePage } from './pages/ProHomePage';
 import { ProStagePage } from './pages/ProStagePage';
 import { ProProblemPage } from './pages/ProProblemPage';
 import { ProProgressPage } from './pages/ProProgressPage';
+import { LuoguPage } from './pages/LuoguPage';
 import { useProgressStore } from './store/useProgressStore';
 import { getOverallStats } from './data';
 import { useDeveloperMode } from './hooks/useDeveloperMode';
@@ -58,19 +60,33 @@ export default function App() {
   const javaOverall = getJavaStats(javaCompleted, javaAttempted);
   const proOverall = getProStats(proCompleted, proAttempted);
 
-  const pythonRoute = location.pathname.startsWith('/python');
-  const javaRoute = location.pathname.startsWith('/java');
-  const proRoute = location.pathname.startsWith('/pro');
+  /**
+   * 判断当前属于哪个靶场。
+   *
+   * 注意不能用 `pathname.startsWith('/pro')`：C++ 靶场的题目页是 `/problem/s1-p1`，
+   * 它同样以 `/pro` 开头，会被误判成 Pro 靶场（顶栏标语、进度环、页脚都会串台）。
+   * 所以必须按「路径段」比较。
+   */
+  const pathname = location.pathname;
+  const inTrack = (prefix: string) =>
+    pathname === prefix || pathname.startsWith(`${prefix}/`);
+  const pythonRoute = inTrack('/python');
+  const javaRoute = inTrack('/java');
+  const proRoute = inTrack('/pro');
   /** 四个靶场各自一套页面；C++ 是默认（无前缀） */
   const cppRoute = !pythonRoute && !javaRoute && !proRoute;
+  /** 洛谷账号页与靶场无关，页面上单独标注 */
+  const luoguRoute = inTrack('/luogu');
 
-  const selectedKey = location.pathname.endsWith('/progress')
-    ? 'progress'
-    : location.pathname.endsWith('/guide')
-      ? 'guide'
-      : location.pathname.includes('/stage/')
-        ? 'problems'
-        : '';
+  const selectedKey = luoguRoute
+    ? 'luogu'
+    : pathname.endsWith('/progress')
+      ? 'progress'
+      : pathname.endsWith('/guide')
+        ? 'guide'
+        : pathname.includes('/stage/')
+          ? 'problems'
+          : '';
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -88,13 +104,15 @@ export default function App() {
             <CodeOutlined className="brand-icon" />
             <span className="brand-name">OIworld</span>
             <Text className="brand-slogan">
-              {proRoute
-                ? 'Pro 靶场 · 数据结构与进阶算法'
-                : javaRoute
-                  ? 'Java 基础语法靶场 · 浏览器本地运行'
-                  : pythonRoute
-                    ? 'Python 基础语法靶场 · 浏览器本地运行'
-                    : 'C++ 基础语法靶场 · 浏览器本地编译'}
+              {luoguRoute
+                ? '洛谷远程提交 · 浏览器内代发请求'
+                : proRoute
+                  ? 'Pro 靶场 · 数据结构与进阶算法'
+                  : javaRoute
+                    ? 'Java 基础语法靶场 · 浏览器本地运行'
+                    : pythonRoute
+                      ? 'Python 基础语法靶场 · 浏览器本地运行'
+                      : 'C++ 基础语法靶场 · 浏览器本地编译'}
             </Text>
           </div>
 
@@ -161,6 +179,11 @@ export default function App() {
                     我的进度
                   </Link>
                 ),
+              },
+              {
+                key: 'luogu',
+                icon: <CloudUploadOutlined />,
+                label: <Link to="/luogu">洛谷账号</Link>,
               },
             ]}
           />
@@ -266,6 +289,7 @@ export default function App() {
           <Route path="/pro/stage/:stageNumber" element={<ProStagePage />} />
           <Route path="/pro/problem/:problemId" element={<ProProblemPage />} />
           <Route path="/pro/progress" element={<ProProgressPage />} />
+          <Route path="/luogu" element={<LuoguPage />} />
           <Route path="/stage/:stageNumber" element={<StagePage />} />
           <Route path="/problem/:problemId" element={<ProblemPage />} />
           <Route path="/progress" element={<ProgressPage />} />
@@ -276,18 +300,22 @@ export default function App() {
       <Footer className="app-footer">
         <Space split="·" wrap>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {proRoute
-              ? 'OIworld · Pro 靶场（数据结构与进阶算法）'
-              : javaRoute
-                ? 'OIworld · 从 0 开始的 Java 学习靶场（Beta）'
-                : pythonRoute
-                  ? 'OIworld · 从 0 开始的 Python 学习靶场'
-                  : 'OIworld · YHSome的从0开始的C++ 学习靶场'}
+            {luoguRoute
+              ? 'OIworld · 洛谷远程提交'
+              : proRoute
+                ? 'OIworld · Pro 靶场（数据结构与进阶算法）'
+                : javaRoute
+                  ? 'OIworld · 从 0 开始的 Java 学习靶场（Beta）'
+                  : pythonRoute
+                    ? 'OIworld · 从 0 开始的 Python 学习靶场'
+                    : 'OIworld · YHSome的从0开始的C++ 学习靶场'}
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {proRoute
-              ? '题目自撰并在浏览器本地编译运行；洛谷同类型题目只提供跳转链接，不抓取题面'
-              : javaRoute
+            {luoguRoute
+              ? '提交由你浏览器里的桥接脚本直接发给洛谷；本站没有服务器，代码与 Cookie 都不离开你的浏览器'
+              : proRoute
+                ? '题目自撰并在浏览器本地编译运行；洛谷同类型题目可一键远程提交（不抓取洛谷题面）'
+                : javaRoute
                 ? JAVA_RUNTIME_FOOTER
                 : pythonRoute
                   ? '代码在你的浏览器中由 Python（Pyodide / WebAssembly）本地运行，不会被上传'

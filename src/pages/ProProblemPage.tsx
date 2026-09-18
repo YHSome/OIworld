@@ -55,6 +55,7 @@ import { OutputPanel } from '../components/OutputPanel';
 import { TestCasePanel } from '../components/TestCasePanel';
 import { DeveloperPanel } from '../components/DeveloperPanel';
 import { ToolchainAlert } from '../components/ToolchainAlert';
+import { LuoguSubmitPanel } from '../components/LuoguSubmitPanel';
 import {
   compilerService,
   type SubmissionResult,
@@ -445,7 +446,7 @@ export function ProProblemPage() {
               <div className="pro-luogu-block">
                 <Space direction="vertical" size={6}>
                   <Text strong>
-                    <LinkOutlined /> 去洛谷练同类题
+                    <LinkOutlined /> 本题在洛谷
                   </Text>
                   {luoguCode ? (
                     <Text>
@@ -473,13 +474,24 @@ export function ProProblemPage() {
                     </Text>
                   )}
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    本站<Text strong>不抓取洛谷题面</Text>，只提供跳转到洛谷自己页面的链接；
-                    题面、数据与评测都在洛谷查看。本题的描述、测试用例与题解均为本站自撰。
+                    本站<Text strong>不抓取洛谷题面</Text>；题面、数据与评测都在洛谷。
+                    本题的描述、测试用例与题解均为本站自撰。想直接交到洛谷？用下面的面板。
                   </Text>
                 </Space>
               </div>
             </>
           )}
+
+          <Divider style={{ margin: '16px 0 12px' }} />
+          <LuoguSubmitPanel
+            problemId={problem.id}
+            defaultPid={luoguCode}
+            keyword={luoguKeyword}
+            code={code}
+            track="cpp"
+            disabled={!unlocked}
+            disabledReason="通过本题（或开启开发者模式）后即可提交到洛谷"
+          />
 
           <Divider />
           <Space style={{ width: '100%', justifyContent: 'space-between' }}>

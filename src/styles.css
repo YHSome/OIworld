@@ -238,6 +238,54 @@
   line-height: 1.7;
 }
 
+/* ---------------- 洛谷远程提交（/luogu 页与题目页面板） ---------------- */
+
+.luogu-hero-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 16%, rgba(22, 119, 255, 0.14), transparent 26%),
+    radial-gradient(circle at 72% 104%, rgba(19, 194, 194, 0.1), transparent 34%),
+    linear-gradient(135deg, #f2f8ff 0%, #fff 65%);
+  border: 1px solid #cfe4ff;
+  box-shadow: 0 12px 30px rgba(22, 119, 255, 0.07);
+}
+
+.luogu-hero-card::after {
+  content: '洛谷';
+  position: absolute;
+  right: 20px;
+  bottom: -20px;
+  color: rgba(22, 119, 255, 0.07);
+  font-size: 96px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.luogu-status-card {
+  height: 100%;
+}
+
+.luogu-panel {
+  padding: 10px 12px;
+  border: 1px solid #d6e4ff;
+  border-radius: 8px;
+  background: #f7faff;
+}
+
+.luogu-panel .luogu-result {
+  padding: 8px 10px;
+  border: 1px solid #b7eb8f;
+  border-radius: 6px;
+  background: #f6ffed;
+}
+
+.luogu-panel .ant-table-wrapper {
+  background: #fff;
+  border-radius: 6px;
+}
+
 .python-eyebrow {
   display: block;
   margin-bottom: 7px;

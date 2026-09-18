@@ -33,109 +33,114 @@ const check = (label, condition, extra = '') => {
 };
 
 /**
- * 注入到页面里的假洛谷桥：行为与真的 oiworld-luogu.user.js 协议一致，
- * 只是把网络请求换成了固定数据。
+ * 注入假洛谷的"扩展层"：只替换 GM_xmlhttpRequest 与网络返回，
+ * 桥接脚本本身用的是站点上真实的 public/oiworld-luogu.user.js。
+ * 于是这一套验收同时覆盖了真实桥的 csrf 抓取、URL / 请求头 / 请求体构造、
+ * 错误翻译、冷却与消息协议 —— 而不只是网页侧的界面。
  */
-function fakeBridgeSource() {
+function luoguTransportStub() {
   return () => {
-    const REPLY = '__OIWORLD_LUOGU_REPLY__';
-    const REQUEST = '__OIWORLD_LUOGU_REQUEST__';
-    const state = { submits: 0, recordPolls: 0, lastSubmit: null };
+    const CSRF = '1789843791:oSihpqbI721y5U/hqVcZtPK0D/a3zOLNDtNKdwFldJg=';
+    const state = { requests: [], submits: 0, recordPolls: 0 };
     window.__FAKE_LUOGU_STATE__ = state;
 
-    function reply(id, ok, data, error) {
-      const message = { [REPLY]: true, id, ok };
-      if (ok) message.data = data;
-      else message.error = error;
-      window.postMessage(message, window.location.origin);
-    }
+    const RECORDS = [
+      {
+        id: 123456,
+        status: 12,
+        score: 100,
+        time: 15,
+        memory: 1024,
+        language: 27,
+        submitTime: 1789843800,
+        sourceCodeLength: 120,
+      },
+      {
+        id: 123455,
+        status: 6,
+        score: 30,
+        time: 21,
+        memory: 980,
+        language: 27,
+        submitTime: 1789843700,
+        sourceCodeLength: 118,
+      },
+      {
+        id: 123454,
+        status: 2,
+        score: 0,
+        time: 0,
+        memory: 0,
+        language: 27,
+        submitTime: 1789843600,
+        sourceCodeLength: 116,
+      },
+    ];
 
-    function recordsPayload() {
-      return [
-        {
-          id: 123456,
-          status: 12,
-          score: 100,
-          time: 15,
-          memory: 1024,
-          language: 27,
-          submitTime: 1789843800,
-          sourceCodeLength: 120,
-        },
-        {
-          id: 123455,
-          status: 6,
-          score: 30,
-          time: 21,
-          memory: 980,
-          language: 27,
-          submitTime: 1789843700,
-          sourceCodeLength: 118,
-        },
-        {
-          id: 123454,
-          status: 2,
-          score: 0,
-          time: 0,
-          memory: 0,
-          language: 27,
-          submitTime: 1789843600,
-          sourceCodeLength: 116,
-        },
-      ];
-    }
+    window.GM_xmlhttpRequest = (options) => {
+      const url = new URL(options.url);
+      const path = url.pathname + url.search;
+      state.requests.push({
+        method: options.method || 'GET',
+        url: options.url,
+        headers: options.headers || {},
+        data: options.data ?? null,
+      });
 
-    window.addEventListener('message', (event) => {
-      const data = event.data;
-      if (!data || data[REQUEST] !== true) return;
-      const { id, action, payload } = data;
-      switch (action) {
-        case 'ping':
-          reply(id, true, { bridge: true, version: 'test-1.0.0', origin: window.location.origin });
-          return;
-        case 'session':
-          if (window.__FAKE_LUOGU_LOGGED_OUT__) {
-            reply(id, true, { loggedIn: false, status: 401 });
-            return;
+      const reply = (status, body) => {
+        window.setTimeout(() => {
+          if (options.onload) {
+            options.onload({ status, responseText: body, finalUrl: options.url });
           }
-          reply(id, true, {
-            loggedIn: true,
-            status: 200,
-            uid: Number(payload?.cookie?.uid) || 66666,
-            name: 'YHSome',
-          });
-          return;
-        case 'submit':
-          state.submits += 1;
-          state.lastSubmit = payload;
-          setTimeout(() => reply(id, true, { rid: 987654 + state.submits, status: 200 }), 200);
-          return;
-        case 'record': {
-          state.recordPolls += 1;
-          // 前两次返回"正在评测"，之后返回 AC —— 用来验证轮询确实在跑
-          const settled = state.recordPolls >= 3;
-          reply(id, true, {
-            id: payload.rid,
-            status: settled ? 12 : 1,
-            score: settled ? 100 : 0,
-            time: 15,
-            memory: 1024,
-            language: 27,
-            submitTime: 1789843800,
-            compilationResult: null,
-          });
+        }, 50);
+      };
+
+      if (path.startsWith('/problem/')) {
+        reply(200, `<html><head><meta name="csrf-token" content="${CSRF}"></head></html>`);
+        return;
+      }
+      if (path === '/user/setting') {
+        if (window.__FAKE_LUOGU_LOGGED_OUT__) {
+          reply(401, '<html>login required</html>');
           return;
         }
-        case 'records':
-          reply(id, true, recordsPayload());
-          return;
-        case 'debug':
-          reply(id, true, { url: 'https://www.luogu.com.cn/user/setting', status: 401, body: '{}' });
-          return;
-        default:
-          reply(id, false, undefined, { code: 'UNKNOWN_ACTION', message: `未知指令 ${action}` });
+        reply(200, '<html><script>window.user={"uid":66666,"name":"YHSome"};</script></html>');
+        return;
       }
-    });
+      if (path.startsWith('/fe/api/problem/submit/')) {
+        state.submits += 1;
+        reply(200, JSON.stringify({ data: { rid: 987654 + state.submits } }));
+        return;
+      }
+      if (path.startsWith('/record/list')) {
+        reply(200, JSON.stringify({ currentData: { records: { result: RECORDS } } }));
+        return;
+      }
+      if (path.startsWith('/record/')) {
+        state.recordPolls += 1;
+        // 前两次返回"正在评测"，之后返回 AC —— 用来验证轮询确实在跑
+        const settled = state.recordPolls >= 3;
+        reply(
+          200,
+          JSON.stringify({
+            currentData: {
+              record: {
+                id: 987654,
+                status: settled ? 12 : 1,
+                score: settled ? 100 : 0,
+                time: 15,
+                memory: 1024,
+                language: 27,
+                submitTime: 1789843800,
+                compilationResult: null,
+              },
+            },
+          }),
+        );
+        return;
+      }
+      reply(404, JSON.stringify({ errorMessage: '该页面未找到', status: 404 }));
+    };
   };
 }
 
@@ -177,8 +182,19 @@ try {
   await page.screenshot({ path: path.join(shotDir, 'luogu-1-nobridge.png'), fullPage: true });
 
   /* ---------------- 2. 装桥之后 ---------------- */
-  step('安装桥接脚本后（注入假洛谷桥）');
-  await page.addInitScript(fakeBridgeSource());
+  step('安装桥接脚本后（用站点上真实的桥接脚本 + 假扩展层）');
+  const scriptSource = await fetch(`${base}/oiworld-luogu.user.js`).then((response) => {
+    if (!response.ok) throw new Error(`取不到桥接脚本：HTTP ${response.status}`);
+    return response.text();
+  });
+  check(
+    '站点提供了可安装的桥接脚本',
+    scriptSource.includes('OIworld 洛谷远程提交桥') && scriptSource.includes('GM_xmlhttpRequest'),
+    `${scriptSource.length} 字节`,
+  );
+  // 先铺好 GM_xmlhttpRequest，再按 Tampermonkey 的方式在 document-start 注入真实脚本
+  await page.addInitScript(luoguTransportStub());
+  await page.addInitScript({ content: scriptSource });
   await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.luogu-hero-card', { timeout: 60_000 });
   await page.waitForFunction(
@@ -188,8 +204,23 @@ try {
   );
   const warmText = await page.locator('body').innerText();
   check('桥状态变为已就绪', warmText.includes('已就绪'));
-  check('显示桥版本号', warmText.includes('test-1.0.0'));
-  check('自动检测到洛谷会话已登录', warmText.includes('已登录') && warmText.includes('YHSome'));
+  check('显示桥版本号', /已就绪[\s\S]{0,80}1\.0\.0/.test(warmText) || warmText.includes('1.0.0'));
+  // 会话检测要真的过一次 GM_xmlhttpRequest（假扩展层有 50ms 延迟），等它落地
+  await page.waitForFunction(() => document.body.innerText.includes('YHSome'), undefined, {
+    timeout: 30_000,
+  });
+  const sessionText = await page.locator('body').innerText();
+  check(
+    '自动检测到洛谷会话已登录',
+    sessionText.includes('已登录') && sessionText.includes('YHSome'),
+    sessionText.includes('已登录') ? '有登录标记' : '没有登录标记',
+  );
+  const sessionRequests = await page.evaluate(() =>
+    window.__FAKE_LUOGU_STATE__.requests
+      .filter((item) => item.url.endsWith('/user/setting'))
+      .map((item) => item.url),
+  );
+  check('会话检测真的请求了洛谷 /user/setting', sessionRequests.length > 0, sessionRequests.join(','));
 
   step('绑定浏览器会话');
   await page.locator('button').filter({ hasText: /一键用浏览器会话/ }).click();
@@ -275,21 +306,48 @@ try {
     undefined,
     { timeout: 60_000 },
   );
-  const submitted = await page.evaluate(() => window.__FAKE_LUOGU_STATE__);
-  check('桥收到了提交请求', submitted.submits === 1, `submits=${submitted.submits}`);
+  const finalState = await page.evaluate(() => window.__FAKE_LUOGU_STATE__);
+  check('桥收到了提交请求', finalState.submits === 1, `submits=${finalState.submits}`);
+
+  const postRequest = finalState.requests.find((item) => item.method === 'POST');
   check(
-    '提交内容是用当前编辑器里的代码',
-    typeof submitted.lastSubmit?.code === 'string' && submitted.lastSubmit.code.length > 20,
-    `len=${submitted.lastSubmit?.code?.length}`,
+    '提交真的打到洛谷的提交接口',
+    postRequest?.url === 'https://www.luogu.com.cn/fe/api/problem/submit/P1001',
+    String(postRequest?.url),
   );
-  check('提交语言为 C++20（lang=27）', submitted.lastSubmit?.lang === 27, String(submitted.lastSubmit?.lang));
-  check('提交题号为 P1001', submitted.lastSubmit?.pid === 'P1001', String(submitted.lastSubmit?.pid));
+  let requestBody = {};
+  try {
+    requestBody = JSON.parse(postRequest?.data ?? '{}');
+  } catch {
+    requestBody = {};
+  }
+  check(
+    '提交体是当前编辑器里的代码',
+    typeof requestBody.code === 'string' && requestBody.code.length > 20,
+    `len=${requestBody.code?.length}`,
+  );
+  check('提交语言为 C++20（lang=27）', requestBody.lang === 27, String(requestBody.lang));
+  check('提交带 O2 开关（默认关）', requestBody.enableO2 === 0, String(requestBody.enableO2));
+  check(
+    '提交带 X-CSRF-TOKEN（桥从洛谷页面 meta 里抓的）',
+    typeof postRequest?.headers?.['X-CSRF-TOKEN'] === 'string' &&
+      postRequest.headers['X-CSRF-TOKEN'].length > 20,
+    String(postRequest?.headers?.['X-CSRF-TOKEN']).slice(0, 24),
+  );
+  check(
+    '提交带 Referer 与 Origin（洛谷校验来源）',
+    postRequest?.headers?.Referer === 'https://www.luogu.com.cn/problem/P1001' &&
+      postRequest?.headers?.Origin === 'https://www.luogu.com.cn',
+    JSON.stringify({ Referer: postRequest?.headers?.Referer, Origin: postRequest?.headers?.Origin }),
+  );
   check(
     '带着绑定的 Cookie 一起提交',
-    submitted.lastSubmit?.cookie?.clientId?.startsWith('0123456789'),
-    JSON.stringify(submitted.lastSubmit?.cookie ?? null).slice(0, 80),
+    /^__client_id=0123456789abcdefghijklmnopqrstuvwxyz0123; _uid=66666$/.test(
+      String(postRequest?.headers?.Cookie),
+    ),
+    String(postRequest?.headers?.Cookie),
   );
-  check('轮询了多次才拿到最终结果', submitted.recordPolls >= 2, `polls=${submitted.recordPolls}`);
+  check('轮询了多次才拿到最终结果', finalState.recordPolls >= 2, `polls=${finalState.recordPolls}`);
   const resultText = await page.locator('.luogu-panel').innerText();
   check('面板显示 AC', resultText.includes('AC'), resultText.split('\n').slice(0, 6).join(' | '));
   check('显示评测耗时与内存', /ms/.test(resultText) && /MB/.test(resultText));

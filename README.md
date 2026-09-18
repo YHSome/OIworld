@@ -506,11 +506,18 @@ Monaco 编辑器（clang 错误红点）、标准输入框（一键填入样例�
   mock 部分验证了提交请求的地址、`X-CSRF-TOKEN`、`Referer`/`Origin`、请求体 `{lang,code,enableO2}`、
   `rid` 解析、5 秒冷却、评测记录与提交记录解析（含 `records` 为数组或 `{result:[]}` 两种形态）、
   绑定 Cookie 会作为 `Cookie` 头发出、人机验证错误被翻译成可操作提示
-- 洛谷远程提交验收（`scripts/e2e-luogu.mjs`，注入假洛谷桥跑真实浏览器）：
+- 洛谷远程提交验收（`scripts/e2e-luogu.mjs`，**本地与线上各跑一遍**；注入时用的是站点上
+  **真实的桥接脚本**，只把 `GM_xmlhttpRequest` 换成假扩展层，所以同时验证了真实脚本的
+  csrf 抓取、URL / 请求头 / 请求体构造与消息协议）：
   未装脚本时的状态与安装引导 → 装桥后状态就绪/版本号/自动检测登录 →
   绑定浏览器会话与绑定粘贴的 Cookie（**绑定前会真的验证 Cookie 有效性**）→ 解绑 →
-  题目页提交（语言 27、题号 P1001、带上绑定的 Cookie）→ 轮询 3 次拿到 AC →
-  刷新提交记录出 3 行（AC / WA / CE）→ 未登录降级提示，**全程零控制台报错**
+  题目页提交（请求打到 `POST https://www.luogu.com.cn/fe/api/problem/submit/P1001`、
+  `lang=27`、带 `X-CSRF-TOKEN` 与 `Referer`/`Origin`、带上绑定的 `Cookie` 头）→
+  轮询 3 次拿到 AC → 刷新提交记录出 3 行（AC / WA / CE）→ 未登录降级提示，
+  **全程零控制台报错**
+- 顺带修掉一个 Pro 靶场引入的串台 bug：顶栏用 `pathname.startsWith('/pro')` 判断靶场，
+  而 C++ 题目页 `/problem/s1-p1` 也以 `/pro` 开头，导致 C++ 题目页显示 Pro 的标语、
+  进度与高亮。现在按路径段比较（线上已验证：C++ 题目页显示 C++ 标语与 C++ 进度）
 
 ---
 

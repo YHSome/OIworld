@@ -57,6 +57,7 @@ export const JAVA_DIFFICULTY_COLOR: Record<Difficulty, string> = {
   入门: 'green',
   简单: 'blue',
   中等: 'orange',
+  困难: 'red',
 };
 
 export function getJavaProblemEntry(id?: string): JavaProblemEntry | null {

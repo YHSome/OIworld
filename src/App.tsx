@@ -4,6 +4,7 @@ import {
   CodeOutlined,
   ReadOutlined,
   RiseOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
 import { HomePage } from './pages/HomePage';
 import { StagePage } from './pages/StagePage';
@@ -20,6 +21,10 @@ import { JavaStagePage } from './pages/JavaStagePage';
 import { JavaProblemPage } from './pages/JavaProblemPage';
 import { JavaProgressPage } from './pages/JavaProgressPage';
 import { JavaGuidePage } from './pages/JavaGuidePage';
+import { ProHomePage } from './pages/ProHomePage';
+import { ProStagePage } from './pages/ProStagePage';
+import { ProProblemPage } from './pages/ProProblemPage';
+import { ProProgressPage } from './pages/ProProgressPage';
 import { useProgressStore } from './store/useProgressStore';
 import { getOverallStats } from './data';
 import { useDeveloperMode } from './hooks/useDeveloperMode';
@@ -28,6 +33,8 @@ import { getPythonStats } from './python/data';
 import { useJavaProgressStore } from './java/useJavaProgressStore';
 import { getJavaStats } from './java/data';
 import { JAVA_RUNTIME_FOOTER } from './java/runtimeInfo';
+import { useProProgressStore } from './pro/useProProgressStore';
+import { getProStats } from './pro/data';
 
 const { Header, Content, Footer } = Layout;
 const { Text } = Typography;
@@ -41,17 +48,21 @@ export default function App() {
   const pythonAttempted = usePythonProgressStore((state) => state.attemptedProblems);
   const javaCompleted = useJavaProgressStore((state) => state.completedProblems);
   const javaAttempted = useJavaProgressStore((state) => state.attemptedProblems);
+  const proCompleted = useProProgressStore((state) => state.completedProblems);
+  const proAttempted = useProProgressStore((state) => state.attemptedProblems);
   // 在这里调用一次：安装 ?dev=1 解析与 Ctrl+Shift+D 快捷键
   const { developerMode } = useDeveloperMode();
 
   const overall = getOverallStats(completed, attempted);
   const pythonOverall = getPythonStats(pythonCompleted, pythonAttempted);
   const javaOverall = getJavaStats(javaCompleted, javaAttempted);
+  const proOverall = getProStats(proCompleted, proAttempted);
 
   const pythonRoute = location.pathname.startsWith('/python');
   const javaRoute = location.pathname.startsWith('/java');
-  /** 三个靶场各自一套页面；C++ 是默认（无前缀） */
-  const cppRoute = !pythonRoute && !javaRoute;
+  const proRoute = location.pathname.startsWith('/pro');
+  /** 四个靶场各自一套页面；C++ 是默认（无前缀） */
+  const cppRoute = !pythonRoute && !javaRoute && !proRoute;
 
   const selectedKey = location.pathname.endsWith('/progress')
     ? 'progress'
@@ -67,17 +78,23 @@ export default function App() {
         <div className="app-header-inner">
           <div
             className="brand"
-            onClick={() => navigate(javaRoute ? '/java' : pythonRoute ? '/python' : '/')}
+            onClick={() =>
+              navigate(
+                proRoute ? '/pro' : javaRoute ? '/java' : pythonRoute ? '/python' : '/',
+              )
+            }
             role="presentation"
           >
             <CodeOutlined className="brand-icon" />
             <span className="brand-name">OIworld</span>
             <Text className="brand-slogan">
-              {javaRoute
-                ? 'Java 基础语法靶场 · 浏览器本地运行'
-                : pythonRoute
-                  ? 'Python 基础语法靶场 · 浏览器本地运行'
-                  : 'C++ 基础语法靶场 · 浏览器本地编译'}
+              {proRoute
+                ? 'Pro 靶场 · 数据结构与进阶算法'
+                : javaRoute
+                  ? 'Java 基础语法靶场 · 浏览器本地运行'
+                  : pythonRoute
+                    ? 'Python 基础语法靶场 · 浏览器本地运行'
+                    : 'C++ 基础语法靶场 · 浏览器本地编译'}
             </Text>
           </div>
 
@@ -90,25 +107,57 @@ export default function App() {
                 key: 'problems',
                 icon: <CodeOutlined />,
                 label: (
-                  <Link to={javaRoute ? '/java/stage/1' : pythonRoute ? '/python/stage/1' : '/stage/1'}>
+                  <Link
+                    to={
+                      proRoute
+                        ? '/pro/stage/1'
+                        : javaRoute
+                          ? '/java/stage/1'
+                          : pythonRoute
+                            ? '/python/stage/1'
+                            : '/stage/1'
+                    }
+                  >
                     学习阶段
                   </Link>
                 ),
               },
-              {
-                key: 'guide',
-                icon: <ReadOutlined />,
-                label: (
-                  <Link to={javaRoute ? '/java/guide' : pythonRoute ? '/python/guide' : '/guide'}>
-                    {javaRoute ? 'Java 指南' : pythonRoute ? 'Python 指南' : '新手指南'}
-                  </Link>
-                ),
-              },
+              ...(proRoute
+                ? []
+                : [
+                    {
+                      key: 'guide',
+                      icon: <ReadOutlined />,
+                      label: (
+                        <Link
+                          to={
+                            javaRoute
+                              ? '/java/guide'
+                              : pythonRoute
+                                ? '/python/guide'
+                                : '/guide'
+                          }
+                        >
+                          {javaRoute ? 'Java 指南' : pythonRoute ? 'Python 指南' : '新手指南'}
+                        </Link>
+                      ),
+                    },
+                  ]),
               {
                 key: 'progress',
                 icon: <RiseOutlined />,
                 label: (
-                  <Link to={javaRoute ? '/java/progress' : pythonRoute ? '/python/progress' : '/progress'}>
+                  <Link
+                    to={
+                      proRoute
+                        ? '/pro/progress'
+                        : javaRoute
+                          ? '/java/progress'
+                          : pythonRoute
+                            ? '/python/progress'
+                            : '/progress'
+                    }
+                  >
                     我的进度
                   </Link>
                 ),
@@ -141,6 +190,14 @@ export default function App() {
               >
                 Java 靶场
               </Button>
+              <Button
+                icon={<ThunderboltOutlined />}
+                type={proRoute ? 'primary' : 'default'}
+                className={proRoute ? 'pro-switch-active' : undefined}
+                onClick={() => navigate('/pro')}
+              >
+                Pro 靶场
+              </Button>
             </Space.Compact>
             <Tooltip title="进度保存在本机浏览器，不会上传">
               <Space size={8} className="header-progress">
@@ -148,19 +205,35 @@ export default function App() {
                   type="circle"
                   size={36}
                   percent={
-                    javaRoute ? javaOverall.percent : pythonRoute ? pythonOverall.percent : overall.percent
+                    proRoute
+                      ? proOverall.percent
+                      : javaRoute
+                        ? javaOverall.percent
+                        : pythonRoute
+                          ? pythonOverall.percent
+                          : overall.percent
                   }
-                  strokeColor={javaRoute ? '#fa8c16' : pythonRoute ? '#722ed1' : '#1677ff'}
+                  strokeColor={
+                    proRoute
+                      ? '#d4380d'
+                      : javaRoute
+                        ? '#fa8c16'
+                        : pythonRoute
+                          ? '#722ed1'
+                          : '#1677ff'
+                  }
                   format={(percent) => (
                     <span style={{ fontSize: 11 }}>{percent}%</span>
                   )}
                 />
                 <Text className="header-stat">
-                  {javaRoute
-                    ? `${javaOverall.passed}/${javaOverall.total}`
-                    : pythonRoute
-                      ? `${pythonOverall.passed}/${pythonOverall.total}`
-                      : `${overall.passed}/${overall.total}`}
+                  {proRoute
+                    ? `${proOverall.passed}/${proOverall.total}`
+                    : javaRoute
+                      ? `${javaOverall.passed}/${javaOverall.total}`
+                      : pythonRoute
+                        ? `${pythonOverall.passed}/${pythonOverall.total}`
+                        : `${overall.passed}/${overall.total}`}
                 </Text>
               </Space>
             </Tooltip>
@@ -189,6 +262,10 @@ export default function App() {
           <Route path="/java/stage/:stageNumber" element={<JavaStagePage />} />
           <Route path="/java/problem/:problemId" element={<JavaProblemPage />} />
           <Route path="/java/progress" element={<JavaProgressPage />} />
+          <Route path="/pro" element={<ProHomePage />} />
+          <Route path="/pro/stage/:stageNumber" element={<ProStagePage />} />
+          <Route path="/pro/problem/:problemId" element={<ProProblemPage />} />
+          <Route path="/pro/progress" element={<ProProgressPage />} />
           <Route path="/stage/:stageNumber" element={<StagePage />} />
           <Route path="/problem/:problemId" element={<ProblemPage />} />
           <Route path="/progress" element={<ProgressPage />} />
@@ -199,18 +276,22 @@ export default function App() {
       <Footer className="app-footer">
         <Space split="·" wrap>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {javaRoute
-              ? 'OIworld · 从 0 开始的 Java 学习靶场（Beta）'
-              : pythonRoute
-                ? 'OIworld · 从 0 开始的 Python 学习靶场'
-                : 'OIworld · YHSome的从0开始的C++ 学习靶场'}
+            {proRoute
+              ? 'OIworld · Pro 靶场（数据结构与进阶算法）'
+              : javaRoute
+                ? 'OIworld · 从 0 开始的 Java 学习靶场（Beta）'
+                : pythonRoute
+                  ? 'OIworld · 从 0 开始的 Python 学习靶场'
+                  : 'OIworld · YHSome的从0开始的C++ 学习靶场'}
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            {javaRoute
-              ? JAVA_RUNTIME_FOOTER
-              : pythonRoute
-                ? '代码在你的浏览器中由 Python（Pyodide / WebAssembly）本地运行，不会被上传'
-                : '代码在你的浏览器中由 clang（WebAssembly 版）本地编译，不会被上传'}
+            {proRoute
+              ? '题目自撰并在浏览器本地编译运行；洛谷同类型题目只提供跳转链接，不抓取题面'
+              : javaRoute
+                ? JAVA_RUNTIME_FOOTER
+                : pythonRoute
+                  ? '代码在你的浏览器中由 Python（Pyodide / WebAssembly）本地运行，不会被上传'
+                  : '代码在你的浏览器中由 clang（WebAssembly 版）本地编译，不会被上传'}
           </Text>
           <Tag color="default" style={{ fontSize: 11 }}>
             无文件读写 / 无网络 / 仅标准输入输出

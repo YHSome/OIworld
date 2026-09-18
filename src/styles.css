@@ -92,6 +92,19 @@
   border-color: #d46b08 !important;
 }
 
+/* Pro 靶场（数据结构与进阶算法）主色为深橙红，与题目/工具栏里的 volcano 标签一致 */
+.language-switch .pro-switch-active {
+  background: #d4380d;
+  border-color: #d4380d;
+  box-shadow: none;
+}
+
+.language-switch .pro-switch-active:hover,
+.language-switch .pro-switch-active:focus {
+  background: #ad2102 !important;
+  border-color: #ad2102 !important;
+}
+
 .header-stat {
   font-size: 12px;
   color: #595959;
@@ -187,6 +200,42 @@
   font-weight: 700;
   line-height: 1;
   pointer-events: none;
+}
+
+/* Pro 靶场（数据结构与进阶算法）头图：深橙红主题 */
+.pro-hero-card {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 88% 16%, rgba(212, 56, 13, 0.14), transparent 26%),
+    radial-gradient(circle at 72% 104%, rgba(173, 33, 2, 0.1), transparent 34%),
+    linear-gradient(135deg, #fff5f2 0%, #fff 65%);
+  border: 1px solid #ffd8cc;
+  box-shadow: 0 12px 30px rgba(173, 33, 2, 0.07);
+}
+
+.pro-hero-card::after {
+  content: '{ }';
+  position: absolute;
+  right: 20px;
+  bottom: -34px;
+  color: rgba(212, 56, 13, 0.07);
+  font-family: Consolas, monospace;
+  font-size: 150px;
+  font-weight: 700;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* 题目页里的「洛谷同类型题目」跳转区块 */
+.pro-luogu-block {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px dashed #ffbb96;
+  border-radius: 8px;
+  background: #fff7f3;
+  font-size: 12px;
+  line-height: 1.7;
 }
 
 .python-eyebrow {

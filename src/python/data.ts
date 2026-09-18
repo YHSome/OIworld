@@ -681,7 +681,7 @@ export const PYTHON_PROBLEMS: PythonProblemEntry[] = PYTHON_STAGES.flatMap((item
 PYTHON_PROBLEMS.forEach((entry, globalIndex) => { entry.globalIndex = globalIndex; });
 const byId = new Map(PYTHON_PROBLEMS.map((entry) => [entry.problem.id, entry]));
 
-export const PYTHON_DIFFICULTY_COLOR: Record<Difficulty, string> = { 入门: 'green', 简单: 'blue', 中等: 'orange' };
+export const PYTHON_DIFFICULTY_COLOR: Record<Difficulty, string> = { 入门: 'green', 简单: 'blue', 中等: 'orange', 困难: 'red' };
 export function getPythonProblemEntry(id?: string) { return id ? byId.get(id) ?? null : null; }
 export function getPythonStage(number: number) { return PYTHON_STAGES.find((item) => item.stage === number) ?? null; }
 export function getPythonNeighbours(id: string) { const entry = byId.get(id); return { prev: entry ? PYTHON_PROBLEMS[entry.globalIndex - 1] ?? null : null, next: entry ? PYTHON_PROBLEMS[entry.globalIndex + 1] ?? null : null }; }

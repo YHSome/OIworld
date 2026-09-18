@@ -52,12 +52,13 @@ const PROBLEM_MAP = new Map<string, ProblemEntry>(
   ALL_PROBLEMS.map((entry) => [entry.problem.id, entry]),
 );
 
-export const DIFFICULTY_ORDER: Difficulty[] = ['入门', '简单', '中等'];
+export const DIFFICULTY_ORDER: Difficulty[] = ['入门', '简单', '中等', '困难'];
 
 export const DIFFICULTY_COLOR: Record<Difficulty, string> = {
   入门: 'green',
   简单: 'blue',
   中等: 'orange',
+  困难: 'red',
 };
 
 export function getProblemEntry(id: string | undefined): ProblemEntry | null {

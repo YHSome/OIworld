@@ -17,7 +17,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
-const stagesDir = path.join(root, 'src', 'java', 'stages');
+const stagesDirs = [
+  path.join(root, 'src', 'java', 'stages'),
+  path.join(root, 'src', 'pro', 'stages'),
+];
 const checkOnly = process.argv.includes('--check');
 
 /**
@@ -139,9 +142,11 @@ function processFile(file) {
   return fixed;
 }
 
-const files = fs.existsSync(stagesDir)
-  ? fs.readdirSync(stagesDir).filter((name) => name.endsWith('.ts')).map((name) => path.join(stagesDir, name))
-  : [];
+const files = stagesDirs.flatMap((dir) =>
+  fs.existsSync(dir)
+    ? fs.readdirSync(dir).filter((name) => name.endsWith('.ts')).map((name) => path.join(dir, name))
+    : [],
+);
 
 let total = 0;
 for (const file of files) {

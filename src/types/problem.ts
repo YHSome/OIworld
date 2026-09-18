@@ -4,7 +4,7 @@
  */
 
 /** 题目难度 */
-export type Difficulty = '入门' | '简单' | '中等';
+export type Difficulty = '入门' | '简单' | '中等' | '困难';
 
 /** 单个测试用例 */
 export interface TestCase {
@@ -29,6 +29,13 @@ export interface Problem {
   solution_code: string;
   test_cases: TestCase[];
   hints: string[];
+  /**
+   * 洛谷同类型题目的搜索关键词（Pro 靶场用）。
+   * 本站不抓取洛谷题面，只提供跳转到洛谷题目列表搜索页的链接。
+   */
+  luogu_keyword?: string;
+  /** 洛谷题号（例如 P3367）。只在人工核对过之后才填 */
+  luogu_code?: string;
 }
 
 /** 一个阶段（阶段一到阶段七）的所有题目 */

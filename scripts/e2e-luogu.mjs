@@ -310,7 +310,9 @@ try {
   await page.addInitScript(() => {
     window.__FAKE_LUOGU_LOGGED_OUT__ = true;
   });
+  // hash 路由下换到 #/luogu 只是同文档跳转，不会重新执行 init script，所以要显式刷新一次
   await page.goto(url('/luogu'), { waitUntil: 'domcontentloaded' });
+  await page.reload({ waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.luogu-hero-card', { timeout: 60_000 });
   await page.locator('button').filter({ hasText: /检测登录/ }).click();
   await page.waitForFunction(() => document.body.innerText.includes('未登录'), undefined, {

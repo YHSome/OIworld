@@ -175,6 +175,7 @@ int main() {
         '递归的两段是 `(l, i - 1)` 和 `(i + 1, r)`，千万别把基准自己也圈进去——否则区间不缩小，会死递归。',
       ],
       luoguKeyword: '快速排序',
+      luoguCode: 'P1177',
     }),
 
     proLesson({
@@ -348,6 +349,7 @@ int main() {
         '合并结果先写进 `tmp`，最后一定要拷回 `a[l..r]`，否则上一层合并用的是没排序的数据。',
       ],
       luoguKeyword: '归并排序 逆序对',
+      luoguCode: 'P1908',
     }),
 
     proLesson({
@@ -508,6 +510,7 @@ int main() {
         '把 `r` 初始化成 `n + 1`（一个永远满足条件的假位置），"所有数都小于 x"时就会自然返回 `n + 1`。',
       ],
       luoguKeyword: '二分查找',
+      luoguCode: 'P2249',
     }),
 
     proLesson({
@@ -677,6 +680,7 @@ int main() {
         '找"最大的可行值"时，`mid` 要向上取整 `(l + r + 1) / 2`，否则 `l = mid` 会让区间卡住不动。',
       ],
       luoguKeyword: '二分答案',
+      luoguCode: 'P1182',
     }),
 
     proLesson({
@@ -812,6 +816,7 @@ int main() {
         '别忘了 `pre[0] = 0` 这条约定——它就是让 `l = 1` 时公式依然成立的关键。',
       ],
       luoguKeyword: '前缀和',
+      luoguCode: 'P8218',
     }),
 
     proLesson({
@@ -978,6 +983,7 @@ int main() {
         '所有操作做完后，对 `d` 做一遍前缀和 `a[i] = a[i-1] + d[i]` 就还原了；注意 `r == n` 时不要去写 `d[n+1]`。',
       ],
       luoguKeyword: '差分',
+      luoguCode: 'P2367',
     }),
   ],
 };

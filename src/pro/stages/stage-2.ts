@@ -220,6 +220,7 @@ void printList() {
         '遍历只有一种写法：`for (int p = head; p != 0; p = nxt[p])`，`p` 是节点编号而不是位置。',
       ],
       luoguKeyword: '单链表',
+      luoguCode: 'B3631',
     }),
 
     proLesson({
@@ -523,6 +524,7 @@ ${pointsTable([
         '当其中一条链走空了，把另一条链剩下的一整段直接挂到 `tail` 后面即可，不需要一个节点一个节点地接。',
       ],
       luoguKeyword: '合并有序链表',
+      luoguCode: 'P1366',
     }),
 
     proLesson({
@@ -695,6 +697,7 @@ ${pointsTable([
         '匹配成功后记得把 `j` 退到 `pi[m-1]`（不是 0），否则重叠的出现位置会漏掉。',
       ],
       luoguKeyword: 'KMP',
+      luoguCode: 'P3375',
     }),
 
     proLesson({
@@ -849,6 +852,7 @@ ${pointsTable([
         '两个区间长度不同就直接判 `NO`，不要再去比哈希值。',
       ],
       luoguKeyword: '字符串哈希',
+      luoguCode: 'P3370',
     }),
 
     proLesson({
@@ -1015,6 +1019,7 @@ int queryWord(const string &s) {
         '查询时中途遇到缺失的边可以直接返回 0；能走完就返回结尾节点的计数。',
       ],
       luoguKeyword: '字典树',
+      luoguCode: 'P8306',
     }),
   ],
 };

@@ -144,6 +144,7 @@ int main() {
         '别忘了所有取值前都判断 `top == 0`（栈空返回 -1）。',
       ],
       luoguKeyword: '栈',
+      luoguCode: 'B3614',
     }),
 
     proLesson({
@@ -257,6 +258,7 @@ int main() {
         '循环结束后别忘了检查栈是否为空——否则 `"((("` 会被误判。',
       ],
       luoguKeyword: '括号匹配 栈',
+      luoguCode: 'P1739',
     }),
 
     proLesson({
@@ -368,6 +370,7 @@ int main() {
         '多位数字要自己拼接：`value = value * 10 + (token[i] - \'0\')`。',
       ],
       luoguKeyword: '后缀表达式',
+      luoguCode: 'P1449',
     }),
 
     proLesson({
@@ -493,6 +496,7 @@ int main() {
         '`front` 只看不动：输出 `q[head]` 但不改 `head`。',
       ],
       luoguKeyword: '队列',
+      luoguCode: 'B3616',
     }),
 
     proLesson({
@@ -594,6 +598,7 @@ int main() {
         '输出时相邻数字用空格分隔，注意不要多输出行末空格。',
       ],
       luoguKeyword: '单调栈',
+      luoguCode: 'P5788',
     }),
 
     proLesson({
@@ -702,6 +707,7 @@ int main() {
         '队头始终是当前窗口的最大值，`i >= k` 时就可以输出它。',
       ],
       luoguKeyword: '单调队列 滑动窗口',
+      luoguCode: 'P1886',
     }),
   ],
 };

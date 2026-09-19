@@ -210,6 +210,7 @@ int main() {
         '答案是 `dp[1][1]`；输出 `dp[n][n]` 只能拿到一条特定路径。',
       ],
       luoguKeyword: '数字三角形',
+      luoguCode: 'P1216',
     }),
 
     proLesson({
@@ -362,6 +363,7 @@ int main() {
         '答案是 `dp[V]`：一维数组的下标是容量，不是物品编号。',
       ],
       luoguKeyword: '01 背包',
+      luoguCode: 'P1048',
     }),
 
     proLesson({
@@ -511,6 +513,7 @@ int main() {
         '结果是 `dp[V]`；拿不了任何物品（容量 0 或都超重）时自然是 0。',
       ],
       luoguKeyword: '完全背包',
+      luoguCode: 'P1616',
     }),
 
     proLesson({
@@ -669,6 +672,7 @@ int main() {
         '题目要求**严格**上升，所以判断条件用 `a[j] < a[i]`，等号不能带。',
       ],
       luoguKeyword: '最长上升子序列',
+      luoguCode: 'B3637',
     }),
 
     proLesson({
@@ -825,6 +829,7 @@ int main() {
         '答案是填完表后的右下角 `dp[n][m]`。',
       ],
       luoguKeyword: '最长公共子序列',
+      luoguCode: 'P1439',
     }),
 
     proLesson({
@@ -984,6 +989,7 @@ int main() {
         '两个末尾字符相同时不需要任何操作，直接继承 `dp[i-1][j-1]`，不要加 1。',
       ],
       luoguKeyword: '编辑距离',
+      luoguCode: 'P2758',
     }),
   ],
 };

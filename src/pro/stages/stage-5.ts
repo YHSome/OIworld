@@ -207,6 +207,7 @@ int main() {
         '求最大度数时从 1 到 n 扫，只有 `deg[i] > deg[best]` 才更新，这样并列时留下的就是编号最小的点。',
       ],
       luoguKeyword: '图的存储',
+      luoguCode: 'B3643',
     }),
 
     proLesson({
@@ -384,6 +385,7 @@ int main() {
         '因为 `i` 从小到大扫，第 `i` 次发现的块最小编号就是 `i`，所以块的输出顺序不用额外处理；但块**内部**要 `sort` 一下。',
       ],
       luoguKeyword: 'DFS 连通块',
+      luoguCode: 'P1596',
     }),
 
     proLesson({
@@ -542,6 +544,7 @@ int main() {
         '只有在 `dist[v] == -1` 时才入队，这样每个点只入队一次，复杂度才是 $O(n+m)$。',
       ],
       luoguKeyword: 'BFS 最短路',
+      luoguCode: 'P1443',
     }),
 
     proLesson({
@@ -720,6 +723,7 @@ int main() {
         '处理完后如果进过答案的点不足 `n` 个，说明图里有环，输出 `-1`。',
       ],
       luoguKeyword: '拓扑排序',
+      luoguCode: 'B3644',
     }),
 
     proLesson({
@@ -920,6 +924,7 @@ int main() {
         '选够 `n - 1` 条边就能连通全部 n 个点；如果扫完所有边还不到 `n - 1` 条，说明图不连通，输出 `-1`。',
       ],
       luoguKeyword: '最小生成树 Kruskal',
+      luoguCode: 'P3366',
     }),
 
     proLesson({
@@ -1106,6 +1111,7 @@ int main() {
         '如果某一轮找不到 `!used` 且 `d != INF` 的点，说明剩下的点都不可达，可以提前跳出；输出时把 `INF` 打印成 `-1`。',
       ],
       luoguKeyword: 'Dijkstra',
+      luoguCode: 'P4779',
     }),
   ],
 };

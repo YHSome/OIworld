@@ -151,6 +151,7 @@ int main() {
         '`b = 0` 时循环一次都不进，答案就是 1——这正是 $a^0 = 1$。',
       ],
       luoguKeyword: '快速幂',
+      luoguCode: 'P1226',
     }),
 
     proLesson({
@@ -292,6 +293,7 @@ int main() {
         '`i * p` 可能超过 int 范围，写成 `1LL * i * prime[j]` 最省心。',
       ],
       luoguKeyword: '线性筛',
+      luoguCode: 'P3383',
     }),
 
     proLesson({
@@ -469,6 +471,7 @@ int main() {
         '题目要求的 $0 ≤ x < b/g$ 是用来消除多解的：先 `m = b / g`，再 `x = ((x % m) + m) % m`，最后用 `(g - a*x)/b` 反解 y。',
       ],
       luoguKeyword: '扩展欧几里得',
+      luoguCode: 'P1082',
     }),
 
     proLesson({
@@ -676,6 +679,7 @@ int main() {
         '注意下标从 1 开始——`lowbit(0) = 0` 会让循环永远跑不完。',
       ],
       luoguKeyword: '树状数组',
+      luoguCode: 'P3374',
     }),
 
     proLesson({
@@ -903,6 +907,7 @@ int main() {
         '别忘了数组开 `4 * MAXN`，并把 `tree`、`a`、读入的 `x` 都用 `long long`。',
       ],
       luoguKeyword: '线段树',
+      luoguCode: 'P3372',
     }),
 
     proLesson({
@@ -1060,6 +1065,7 @@ int main() {
         '`lastEnd` 的初值要比任何合法的左端点都小，取 `-1` 最方便；这样 `n = 0` 时也能自然输出 0。',
       ],
       luoguKeyword: '区间调度 贪心',
+      luoguCode: 'P1803',
     }),
   ],
 };

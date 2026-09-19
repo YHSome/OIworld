@@ -105,6 +105,31 @@ export function ProProblemTable({ entries, showStage = false }: Props) {
         ]
       : []),
     {
+      title: '洛谷',
+      width: 110,
+      render: (_, row) => {
+        const code = row.problem.luogu_code;
+        if (!code) {
+          return (
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              —
+            </Text>
+          );
+        }
+        return (
+          <a
+            href={`https://www.luogu.com.cn/problem/${code}`}
+            target="_blank"
+            rel="noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            style={{ fontSize: 13 }}
+          >
+            {code}
+          </a>
+        );
+      },
+    },
+    {
       title: '测试点',
       width: 80,
       render: (_, row) => (

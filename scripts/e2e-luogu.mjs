@@ -15,6 +15,11 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import {
+  BOOKMARKLET_CODE_SOURCE,
+  BOOKMARKLET_HREF,
+  encodeLuoguPayload,
+} from '../src/luogu/bookmarklet.ts';
 
 const base = (process.argv[2] ?? 'http://localhost:4173').replace(/\/$/, '');
 const hashRouter = process.argv[3] === 'hash';
@@ -363,7 +368,135 @@ try {
   check('记录了语言 C++20', recordText.includes('C++20'));
   await page.screenshot({ path: path.join(shotDir, 'luogu-3-submit.png'), fullPage: true });
 
-  /* ---------------- 4. 未登录的降级 ---------------- */
+  /* ---------------- 4. 书签提交（免安装） ---------------- */
+  step('书签提交：安装入口');
+  await page.goto(url('/luogu'), { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.luogu-bookmarklet', { timeout: 60_000 });
+  const bookmarkletHref = await page.locator('.luogu-bookmarklet').getAttribute('href');
+  check('书签是可拖拽的 javascript: 链接', (bookmarkletHref ?? '').startsWith('javascript:'));
+  check(
+    '书签内容就是站点导出的那段脚本',
+    bookmarkletHref === BOOKMARKLET_HREF,
+    `len=${bookmarkletHref?.length}`,
+  );
+  check(
+    '页面说明了书签与桥接脚本的区别',
+    (await page.locator('body').innerText()).includes('书签提交和桥接脚本的区别'),
+  );
+
+  step('书签提交：在"洛谷题目页"里真跑一遍（假 fetch）');
+  const payload = encodeLuoguPayload({ code: '#include <bits>\nint main(){ return 0; }', lang: 27 });
+  await page.evaluate(
+    ({ code, payloadValue }) => {
+      // 把地址伪装成洛谷题目页，并注入 csrf-token 与假的 fetch
+      history.pushState({}, '', `/problem/P1001?oiworld=${payloadValue}`);
+      const meta = document.createElement('meta');
+      meta.setAttribute('name', 'csrf-token');
+      meta.setAttribute('content', 'TEST-CSRF-TOKEN');
+      document.head.appendChild(meta);
+      const state = { requests: [], recordPolls: 0 };
+      window.__BOOKMARKLET_TEST__ = state;
+      window.fetch = (input, init = {}) => {
+        const url = String(input);
+        state.requests.push({ url, method: init.method ?? 'GET', headers: init.headers ?? {}, body: init.body ?? null });
+        const json = (data) => Promise.resolve({ ok: true, status: 200, json: () => Promise.resolve(data) });
+        if (url.includes('/fe/api/problem/submit/')) return json({ data: { rid: 424242 } });
+        if (url.includes('/record/')) {
+          state.recordPolls += 1;
+          if (state.recordPolls < 2) return json({ currentData: { record: { status: 1 } } });
+          return json({
+            currentData: { record: { status: 12, score: 100, time: 12, memory: 2048 } },
+          });
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) });
+      };
+      // 书签里的代码（故意不用 eval 的间接形式，测试的就是这段源码）
+      new Function(code)();
+    },
+    { code: BOOKMARKLET_CODE_SOURCE, payloadValue: payload },
+  );
+  await page.waitForSelector('[data-oiworld-bookmarklet]', { timeout: 15_000 });
+  await page.waitForFunction(
+    () => /AC/.test(document.querySelector('[data-oiworld-bookmarklet]')?.textContent ?? ''),
+    undefined,
+    { timeout: 20_000 },
+  );
+  const bookmarkletState = await page.evaluate(() => window.__BOOKMARKLET_TEST__);
+  const post = bookmarkletState.requests.find((item) => item.method === 'POST');
+  check(
+    '书签把提交打到了洛谷提交接口',
+    post?.url === '/fe/api/problem/submit/P1001',
+    String(post?.url),
+  );
+  check(
+    '书签带上了洛谷页面的 csrf-token',
+    post?.headers?.['X-CSRF-TOKEN'] === 'TEST-CSRF-TOKEN',
+    JSON.stringify(post?.headers ?? {}),
+  );
+  let bookmarkletBody = {};
+  try {
+    bookmarkletBody = JSON.parse(post?.body ?? '{}');
+  } catch {
+    bookmarkletBody = {};
+  }
+  check(
+    '书签提交的是地址里带的代码与语言',
+    bookmarkletBody.lang === 27 && /#include/.test(String(bookmarkletBody.code)),
+    JSON.stringify({ lang: bookmarkletBody.lang, len: bookmarkletBody.code?.length }),
+  );
+  check('书签会轮询评测结果', bookmarkletState.recordPolls >= 2, `polls=${bookmarkletState.recordPolls}`);
+  const boxText = await page.locator('[data-oiworld-bookmarklet]').innerText();
+  check('书签浮层显示 AC 与记录号', boxText.includes('AC') && boxText.includes('424242'), boxText.replace(/\n/g, ' '));
+  await page.screenshot({ path: path.join(shotDir, 'luogu-4-bookmarklet.png'), fullPage: true });
+
+  step('书签提交：不在题目页时给出提示');
+  await page.evaluate(
+    ({ code }) => {
+      history.pushState({}, '', '/');
+      document.querySelector('[data-oiworld-bookmarklet]')?.remove();
+      new Function(code)();
+    },
+    { code: BOOKMARKLET_CODE_SOURCE },
+  );
+  const guard = await page.locator('[data-oiworld-bookmarklet]').innerText();
+  check('提示先去洛谷题目页', /先在洛谷打开一道题目/.test(guard), guard.replace(/\n/g, ' '));
+
+  /* ---------------- 5. 三个基础靶场的题目页 ---------------- */
+  step('C++ / Python / Java 题目页也有提交面板');
+  // Python / Java 的运行时很大，这里只想验证面板渲染，所以拦掉它们的运行时下载。
+  // 主动中断资源会往控制台写 ERR_FAILED / Failed to fetch，所以先记一个基线，
+  // 只断言这一段之外没有控制台错误。
+  const errorsBeforeAborts = consoleErrors.length;
+  await page.route('**/python-runtime/**', (route) => route.abort());
+  await page.route('**/doppio-runtime/**', (route) => route.abort());
+  await page.route('**/toolchain/**', (route) => route.abort());
+
+  const tracks = [
+    { name: 'C++', route: urlWithQuery('/problem/s1-p1', 'dev=1'), language: 'C++20' },
+    { name: 'Python', route: urlWithQuery('/python/problem/py-s1-p1', 'dev=1'), language: 'Python 3' },
+    { name: 'Java', route: urlWithQuery('/java/problem/j1-1', 'dev=1'), language: 'Java 8' },
+  ];
+  for (const track of tracks) {
+    await page.goto(track.route, { waitUntil: 'domcontentloaded', timeout: 90_000 });
+    await page.waitForSelector('.luogu-panel', { timeout: 60_000 });
+    const text = await page.locator('.luogu-panel').innerText();
+    check(`${track.name} 题目页有「提交到洛谷」面板`, text.includes('提交到洛谷'));
+    check(
+      `${track.name} 面板默认语言为 ${track.language}`,
+      text.includes(track.language),
+      text.replace(/\n/g, ' ').slice(0, 120),
+    );
+    check(`${track.name} 面板可填洛谷题号`, (await page.locator('.luogu-panel input[placeholder*="P1001"]').count()) === 1);
+  }
+  await page.unroute('**/python-runtime/**');
+  await page.unroute('**/doppio-runtime/**');
+  await page.unroute('**/toolchain/**');
+  // 被中断的请求其报错是异步落到控制台的，等它们都落地后再取基线
+  await page.waitForTimeout(1500);
+  const errorsAfterTrackPhase = consoleErrors.length;
+  check('中断资源之前没有任何控制台错误', errorsBeforeAborts === 0);
+
+  /* ---------------- 6. 未登录的降级 ---------------- */
   step('洛谷未登录时的提示');
   await page.addInitScript(() => {
     window.__FAKE_LUOGU_LOGGED_OUT__ = true;
@@ -378,7 +511,13 @@ try {
   });
   check('显示未登录状态', (await page.locator('body').innerText()).includes('未登录'));
 
-  check('全程无控制台错误', consoleErrors.length === 0, consoleErrors.slice(0, 2).join(' | '));
+  // 上面为提速主动中断了资源下载，这段时间的控制台噪声不计入
+  const unexpectedErrors = consoleErrors.slice(errorsAfterTrackPhase);
+  check(
+    '除主动中断资源的那一段外，全程无控制台错误',
+    unexpectedErrors.length === 0,
+    unexpectedErrors.slice(0, 2).join(' | '),
+  );
 } catch (error) {
   check('脚本执行', false, error instanceof Error ? error.message : String(error));
   await page

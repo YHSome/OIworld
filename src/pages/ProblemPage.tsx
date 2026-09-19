@@ -45,6 +45,7 @@ import { CodeEditor, type CodeEditorHandle } from '../components/CodeEditor';
 import { OutputPanel } from '../components/OutputPanel';
 import { TestCasePanel } from '../components/TestCasePanel';
 import { DeveloperPanel } from '../components/DeveloperPanel';
+import { LuoguSubmitPanel } from '../components/LuoguSubmitPanel';
 import { ToolchainAlert } from '../components/ToolchainAlert';
 import { compilerService, type SubmissionResult, type TestCaseResult } from '../compiler/client';
 import { parseDiagnostics, type Diagnostic } from '../compiler/diagnostics';
@@ -405,6 +406,16 @@ export function ProblemPage() {
                 : '通过本题后可查看参考题解'}
             </Button>
           </div>
+
+          <Divider style={{ margin: '16px 0 12px' }} />
+          <LuoguSubmitPanel
+            problemId={problem.id}
+            defaultPid={problem.luogu_code}
+            code={code}
+            track="cpp"
+            disabled={!unlocked}
+            disabledReason="通过本题（或开启开发者模式）后即可提交到洛谷"
+          />
 
           <Divider />
           <Space style={{ width: '100%', justifyContent: 'space-between' }}>

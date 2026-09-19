@@ -31,6 +31,7 @@ import {
 } from 'antd';
 import {
   ApiOutlined,
+  BookOutlined,
   CheckCircleOutlined,
   CloudUploadOutlined,
   CopyOutlined,
@@ -54,6 +55,7 @@ import { LUOGU_DEFAULT_LANGUAGE, getLuoguLanguageName } from '../luogu/languages
 import { describeLuoguError } from '../luogu/bridge';
 import { checkLuoguSession, debugLuogu, luoguProblemUrl } from '../luogu/service';
 import { maskClientId, useLuoguStore } from '../luogu/useLuoguStore';
+import { BOOKMARKLET_HREF, BOOKMARKLET_NAME } from '../luogu/bookmarklet';
 import type { LuoguSession } from '../luogu/types';
 
 const { Title, Text, Paragraph } = Typography;
@@ -511,6 +513,75 @@ export function LuoguPage() {
               绑定前需要先安装桥接脚本：Cookie 是否有效必须真的请求一次洛谷才能验证。
             </Text>
           )}
+        </Space>
+      </Card>
+
+      {/* ---------------- 免安装方案：书签提交 ---------------- */}
+      <Card
+        title={
+          <Space>
+            <BookOutlined /> 不想装扩展？用「书签提交」（免安装）
+          </Space>
+        }
+        style={{ marginBottom: 16 }}
+      >
+        <Space direction="vertical" size={10} style={{ width: '100%' }}>
+          <Text>
+            把下面这个按钮<Text strong>拖到浏览器的书签栏</Text>，就装好了。
+            以后在洛谷题目页点一下这个书签，它会在<Text strong>洛谷页面里</Text>把代码提交上去
+            —— 不装任何扩展，也不用粘贴 Cookie（用的是浏览器自己的登录状态）。
+          </Text>
+          <Space size={12} wrap align="center">
+            <a
+              href={BOOKMARKLET_HREF}
+              className="luogu-bookmarklet"
+              onClick={(event) => {
+                event.preventDefault();
+                messageApi.info(
+                  '请把这个按钮拖到书签栏（直接点它只会在这里打招呼）。装好后去洛谷题目页点它。',
+                );
+              }}
+              title="把「OIworld 提交」拖到书签栏"
+            >
+              📤 {BOOKMARKLET_NAME}
+            </a>
+            <Button
+              size="small"
+              icon={<CopyOutlined />}
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(BOOKMARKLET_HREF);
+                  messageApi.success('书签地址已复制：新建一个书签，把地址粘贴进去即可');
+                } catch {
+                  messageApi.warning('复制失败，请直接拖拽上面的按钮到书签栏');
+                }
+              }}
+            >
+              复制书签地址（手动新建书签）
+            </Button>
+          </Space>
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            用法：在任意 OIworld 题目页点「书签提交」→ 会自动复制代码并打开洛谷对应题目 →
+            在洛谷那个标签页点一下书签栏里的「OIworld 提交」→ 右上角会显示评测结果（AC / WA / …）。
+          </Text>
+          <Alert
+            type="info"
+            showIcon
+            message="书签提交和桥接脚本的区别"
+            description={
+              <ul style={{ margin: 0, paddingInlineStart: 20 }}>
+                <li>
+                  <Text strong>书签提交</Text>：零安装，但每次要自己点一下书签，而且完全依赖洛谷页面的结构，
+                  洛谷改版时可能失效。适合"偶尔交一次"。
+                </li>
+                <li>
+                  <Text strong>桥接脚本</Text>：装一次，之后在 OIworld 页面里点按钮就能提交、看结果、拉提交记录，
+                  体验和 vjudge 一样。适合"经常交"。
+                </li>
+                <li>两者都是纯前端、都在你自己的浏览器里完成，都不经过任何服务器。</li>
+              </ul>
+            }
+          />
         </Space>
       </Card>
 

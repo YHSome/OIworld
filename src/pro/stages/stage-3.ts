@@ -199,6 +199,7 @@ void postorder(int u) {         // 后序：左 → 右 → 自己
         '输出空格的小技巧：用一个全局 `bool first`，输出前判断"不是第一个数才打空格"。',
       ],
       luoguKeyword: '二叉树遍历',
+      luoguCode: 'B3642',
     }),
 
     proLesson({
@@ -325,6 +326,7 @@ int leaves(int u) {                 // 以 u 为根的子树中的叶子数
         '别忘了单个节点（只有根）的情况：深度 1、叶子数 1。',
       ],
       luoguKeyword: '二叉树的深度',
+      luoguCode: 'P4913',
     }),
 
     proLesson({
@@ -518,6 +520,7 @@ int root = 0;               // 根节点编号，0 表示空树`,
         '重复值直接跳过，不要再建节点——否则树里会有两个相同的值。',
       ],
       luoguKeyword: '二叉搜索树',
+      luoguCode: 'P5076',
     }),
 
     proLesson({
@@ -694,6 +697,7 @@ int sz = 0;    // 堆中元素个数`,
         '空堆时 `pop` / `top` 输出 `-1`，别去读 `h[1]`。',
       ],
       luoguKeyword: '堆',
+      luoguCode: 'P3378',
     }),
 
     proLesson({
@@ -813,6 +817,7 @@ ${pointsTable([
         '取出两个、累加代价、把新堆放回，循环到只剩一堆为止；`n == 1` 时答案是 0。',
       ],
       luoguKeyword: '哈夫曼树',
+      luoguCode: 'P1090',
     }),
 
     proLesson({
@@ -1007,6 +1012,7 @@ void unite(int a, int b) {
         '连通块个数 = 满足 `fa[i] == i` 的节点个数。',
       ],
       luoguKeyword: '并查集',
+      luoguCode: 'P3367',
     }),
   ],
 };

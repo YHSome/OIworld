@@ -48,6 +48,7 @@ import { MarkdownView } from '../components/MarkdownView';
 import { CodeEditor, type CodeEditorHandle } from '../components/CodeEditor';
 import { OutputPanel } from '../components/OutputPanel';
 import { TestCasePanel } from '../components/TestCasePanel';
+import { LuoguSubmitPanel } from '../components/LuoguSubmitPanel';
 import type { SubmissionResult, TestCaseResult } from '../compiler/client';
 import type { RunOutcome, TestCase } from '../types/problem';
 
@@ -371,6 +372,16 @@ export function JavaProblemPage() {
               </Button>
             )}
           </div>
+
+          <Divider style={{ margin: '16px 0 12px' }} />
+          <LuoguSubmitPanel
+            problemId={problem.id}
+            defaultPid={problem.luogu_code}
+            code={code}
+            track="java"
+            disabled={!unlocked}
+            disabledReason="通过本题（或开启开发者模式）后即可提交到洛谷"
+          />
 
           <Divider />
           <Space style={{ width: '100%', justifyContent: 'space-between' }}>

@@ -17,6 +17,7 @@
     "validate:python-diagnostics": "node scripts/validate-python-diagnostics.mjs",
     "validate:java": "node scripts/validate-java-problems.mjs",
     "validate:pro": "node scripts/validate-pro-problems.mjs",
+    "validate:luogu": "node scripts/verify-luogu-codes.mjs",
     "fix:lessons": "node scripts/fix-lesson-backticks.mjs",
     "test:bridge": "node scripts/test-luogu-bridge.mjs",
     "test:luogu": "node scripts/e2e-luogu.mjs",

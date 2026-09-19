@@ -286,6 +286,24 @@
   border-radius: 6px;
 }
 
+/* 可拖拽的「OIworld 提交」书签（免安装方案的安装入口） */
+.luogu-bookmarklet {
+  display: inline-block;
+  padding: 6px 16px;
+  border: 1px solid #1677ff;
+  border-radius: 8px;
+  background: #e6f4ff;
+  color: #0958d9;
+  font-weight: 600;
+  cursor: grab;
+  user-select: none;
+}
+
+.luogu-bookmarklet:hover {
+  background: #bae0ff;
+  color: #003eb3;
+}
+
 .python-eyebrow {
   display: block;
   margin-bottom: 7px;

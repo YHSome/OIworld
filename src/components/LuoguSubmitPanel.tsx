@@ -25,6 +25,7 @@ import {
   Typography,
 } from 'antd';
 import {
+  BookOutlined,
   CloudUploadOutlined,
   CopyOutlined,
   ExportOutlined,
@@ -60,6 +61,7 @@ import {
 } from '../luogu/verdict';
 import { useLuoguStore } from '../luogu/useLuoguStore';
 import { useLuoguBridge } from '../luogu/useLuoguBridge';
+import { buildBookmarkletUrl } from '../luogu/bookmarklet';
 import type { LuoguRecord } from '../luogu/types';
 
 const { Text, Paragraph } = Typography;
@@ -198,6 +200,34 @@ export function LuoguSubmitPanel({
     }
   };
 
+  /**
+   * 书签提交（免安装扩展）：把载荷放进剪贴板，并打开洛谷对应题目页，
+   * 用户在洛谷那个标签页点一下书签即可完成提交。
+   */
+  const handleBookmarklet = async () => {
+    if (!pidValid) {
+      messageApi.warning('先填一个正确的洛谷题号，例如 P1001');
+      return;
+    }
+    const { url, payload, inUrl } = buildBookmarkletUrl(pid, {
+      code,
+      lang: language,
+      enableO2,
+    });
+    try {
+      await navigator.clipboard.writeText(payload);
+    } catch {
+      // 复制失败也不致命：载荷一般同时在地址里
+    }
+    window.open(url, '_blank', 'noopener,noreferrer');
+    messageApi.info(
+      inUrl
+        ? '已打开洛谷题目页：在那个标签页点一下书签栏里的「OIworld 提交」即可'
+        : '代码较长已放进剪贴板：在打开的洛谷页面点一下书签栏里的「OIworld 提交」即可',
+      6,
+    );
+  };
+
   const status = record ? getLuoguStatus(record.status) : null;
   const recordsColumns = useMemo(
     () => [
@@ -302,6 +332,10 @@ export function LuoguSubmitPanel({
                   你的代码与 Cookie 都不会离开你的浏览器。
                 </Text>
                 <Link to="/luogu">前往「洛谷账号」页安装并绑定 →</Link>
+                <Text style={{ fontSize: 12 }}>
+                  不想装扩展也可以：在「洛谷账号」页装一次<Text strong>书签提交</Text>，
+                  或者直接用下面的「复制代码 / 书签提交」按钮。
+                </Text>
               </Space>
             }
           />
@@ -350,6 +384,11 @@ export function LuoguSubmitPanel({
               复制代码
             </Button>
           </Tooltip>
+          <Tooltip title="免安装扩展：需要先把「OIworld 提交」书签拖到书签栏（在「洛谷账号」页安装）">
+            <Button icon={<BookOutlined />} disabled={!pidValid} onClick={handleBookmarklet}>
+              书签提交
+            </Button>
+          </Tooltip>
           {pidValid && (
             <Button
               type="link"
@@ -367,6 +406,27 @@ export function LuoguSubmitPanel({
         {disabled && disabledReason && (
           <Text type="secondary" style={{ fontSize: 12 }}>
             {disabledReason}
+          </Text>
+        )}
+
+        {!pidValid && (
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            填一个洛谷题号（例如 <Text code>P1001</Text>），就能把当前代码交到洛谷；题号会记住。
+            {keyword ? (
+              <>
+                {' '}
+                也可以
+                <a
+                  href={`https://www.luogu.com.cn/problem/list?keyword=${encodeURIComponent(keyword)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ marginLeft: 4 }}
+                >
+                  在洛谷搜「{keyword}」
+                </a>
+                。
+              </>
+            ) : null}
           </Text>
         )}
 

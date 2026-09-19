@@ -314,7 +314,7 @@ export default function App() {
             {luoguRoute
               ? '提交由你浏览器里的桥接脚本直接发给洛谷；本站没有服务器，代码与 Cookie 都不离开你的浏览器'
               : proRoute
-                ? '题目自撰并在浏览器本地编译运行；洛谷同类型题目可一键远程提交（不抓取洛谷题面）'
+                ? '题目自撰，判题在洛谷进行：代码由你浏览器里的桥接脚本 / 书签直接提交（不抓取洛谷题面）'
                 : javaRoute
                 ? JAVA_RUNTIME_FOOTER
                 : pythonRoute
@@ -322,7 +322,7 @@ export default function App() {
                   : '代码在你的浏览器中由 clang（WebAssembly 版）本地编译，不会被上传'}
           </Text>
           <Tag color="default" style={{ fontSize: 11 }}>
-            无文件读写 / 无网络 / 仅标准输入输出
+            {proRoute ? '在线评测 · 洛谷' : '无文件读写 / 无网络 / 仅标准输入输出'}
           </Tag>
         </Space>
       </Footer>

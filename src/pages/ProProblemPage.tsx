@@ -1,12 +1,14 @@
 /**
- * Pro 题目页（数据结构与进阶算法）：布局与 C++ / Python / Java 靶场完全一致
- * —— 左侧题目描述（含提示 / 题解 / 洛谷链接 / 上下题），
- * 右侧编译器状态 + 编辑器 + 标准输入 / 运行结果 + 测试用例。
+ * Pro 题目页（数据结构与进阶算法）。
  *
- * 与前三个靶场的差异：
- *  - 题目是 C++，运行链路复用 C++ 靶场的 clang（WebAssembly 版）编译器；
- *  - 右侧顶部显示编译器（工具链）加载状态，开发者模式下还有开发者面板；
- *  - 描述卡片里多一个「洛谷对应 / 同类型题目」跳转区块（本站不抓取洛谷题面）。
+ * 与 C++ / Python / Java 靶场的最大区别：**Pro 的题目在洛谷上评测**。
+ * 这三道题的讲解、题解、样例都是本站自撰的，但判题交给洛谷，
+ * 所以这一页没有本地编译器、没有「运行 / 提交」按钮、也没有测试用例面板，
+ * 只有：题目描述 + 在线编辑器 + 「提交到洛谷」面板。
+ *
+ * 直接好处：打开 Pro 题目页不再需要下载约 90MB 的 clang 工具链。
+ *
+ * 通关规则：洛谷返回 AC 才算通过本题，并解锁下一题（其它结果记为「未通过」）。
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -17,9 +19,7 @@ import {
   Card,
   Collapse,
   Divider,
-  Input,
   Modal,
-  Segmented,
   Space,
   Tag,
   Tooltip,
@@ -30,14 +30,14 @@ import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   BulbOutlined,
+  CloudUploadOutlined,
   CodeOutlined,
+  CopyOutlined,
   ExperimentOutlined,
   LinkOutlined,
   LockOutlined,
-  PlayCircleOutlined,
   ReadOutlined,
   ReloadOutlined,
-  SendOutlined,
 } from '@ant-design/icons';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
@@ -51,22 +51,11 @@ import { useProProgressStore } from '../pro/useProProgressStore';
 import { useDeveloperMode } from '../hooks/useDeveloperMode';
 import { MarkdownView } from '../components/MarkdownView';
 import { CodeEditor, type CodeEditorHandle } from '../components/CodeEditor';
-import { OutputPanel } from '../components/OutputPanel';
-import { TestCasePanel } from '../components/TestCasePanel';
-import { DeveloperPanel } from '../components/DeveloperPanel';
-import { ToolchainAlert } from '../components/ToolchainAlert';
 import { LuoguSubmitPanel } from '../components/LuoguSubmitPanel';
-import {
-  compilerService,
-  type SubmissionResult,
-  type TestCaseResult,
-} from '../compiler/client';
-import { parseDiagnostics, type Diagnostic } from '../compiler/diagnostics';
-import { useCompilerStatus, warmUpCompiler } from '../hooks/useCompiler';
-import type { RunOutcome, TestCase } from '../types/problem';
+import { isLuoguPending } from '../luogu/verdict';
+import type { LuoguRecord } from '../luogu/types';
 
 const { Title, Text, Paragraph } = Typography;
-const { TextArea } = Input;
 
 export function ProProblemPage() {
   const { problemId } = useParams();
@@ -85,18 +74,10 @@ export function ProProblemPage() {
   const setLastVisited = useProProgressStore((state) => state.setLastVisited);
   const { developerMode } = useDeveloperMode();
 
-  const compilerStatus = useCompilerStatus();
-
   const [code, setCode] = useState('');
-  const [stdin, setStdin] = useState('');
-  const [outcome, setOutcome] = useState<RunOutcome | null>(null);
-  const [submission, setSubmission] = useState<SubmissionResult | null>(null);
-  const [results, setResults] = useState<TestCaseResult[] | null>(null);
-  const [diagnostics, setDiagnostics] = useState<Diagnostic[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [mode, setMode] = useState<'run' | 'submit'>('run');
   const [solutionVisible, setSolutionVisible] = useState(false);
-  const [bottomTab, setBottomTab] = useState<'stdin' | 'output'>('output');
+  /** 这道题提交过程中最近一次洛谷结果（用于避免重复弹「通过」） */
+  const handledRid = useRef<number | null>(null);
 
   const draftTimer = useRef<number | undefined>(undefined);
   const editorRef = useRef<CodeEditorHandle | null>(null);
@@ -105,8 +86,7 @@ export function ProProblemPage() {
   const next = entry ? getProNeighbours(entry.problem.id).next : null;
 
   const unlocked = useMemo(
-    () =>
-      problem ? isProProblemUnlocked(problem.id, completed, developerMode) : false,
+    () => (problem ? isProProblemUnlocked(problem.id, completed, developerMode) : false),
     [problem, completed, developerMode],
   );
 
@@ -115,26 +95,13 @@ export function ProProblemPage() {
     if (!problem) return;
     const draft = useProProgressStore.getState().drafts[problem.id];
     setCode(draft ?? problem.starter_code);
-    setStdin(problem.test_cases[0]?.input ?? '');
-    setOutcome(null);
-    setSubmission(null);
-    setResults(null);
-    setDiagnostics([]);
     setSolutionVisible(false);
-    setBottomTab('output');
+    handledRid.current = null;
     if (isProProblemUnlocked(problem.id, completed, developerMode)) {
       setLastVisited(problem.id);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [problem?.id]);
-
-  /** 进入页面就预热编译器（后台下载 clang/lld，与 C++ 靶场同一份工具链） */
-  useEffect(() => {
-    if (!unlocked) return;
-    void warmUpCompiler().catch(() => {
-      /* 错误已经记录在 compilerService 的状态里 */
-    });
-  }, [unlocked]);
 
   const handleCodeChange = useCallback(
     (value: string) => {
@@ -147,6 +114,98 @@ export function ProProblemPage() {
     },
     [problem, setDraft],
   );
+
+  /**
+   * 洛谷评测结果回调：**AC 才算通过**，其它最终结果记为未通过。
+   * 只在「这一条提交」上判定，避免把记录列表里别人的 AC 当成本题通过。
+   */
+  const handleVerdict = useCallback(
+    (record: LuoguRecord) => {
+      if (!problem) return;
+      const alreadyCompleted = useProProgressStore
+        .getState()
+        .completedProblems.includes(problem.id);
+
+      if (record.status === 12) {
+        markCompleted(problem.id);
+        if (!alreadyCompleted && handledRid.current !== record.id) {
+          handledRid.current = record.id;
+          modal.success({
+            title: '洛谷评测通过！🎉',
+            content: (
+              <div>
+                <Paragraph style={{ marginBottom: 8 }}>
+                  《{problem.title}》在洛谷上拿到了 <Text strong>AC</Text>
+                  {record.time ? `，用时 ${record.time} ms` : ''}
+                  {record.memory ? `、内存 ${(record.memory / 1024).toFixed(2)} MB` : ''}。
+                </Paragraph>
+                {next ? (
+                  <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                    下一题：《{next.problem.title}》
+                  </Paragraph>
+                ) : (
+                  <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                    你已经完成了 Pro 靶场的全部题目，太厉害了！
+                  </Paragraph>
+                )}
+              </div>
+            ),
+            okText: next ? '去做下一题' : '好的',
+            cancelText: '留在本题',
+            onOk: () => {
+              if (next) navigate(`/pro/problem/${next.problem.id}`);
+            },
+          });
+        }
+        return;
+      }
+
+      // 还在评测队列里就先不动进度
+      if (!isLuoguPending(record.status)) {
+        markAttempted(problem.id);
+      }
+    },
+    [problem, markCompleted, markAttempted, modal, navigate, next],
+  );
+
+  const handleReset = () => {
+    if (!problem) return;
+    modal.confirm({
+      title: '重置为初始代码？',
+      content: '你在本题中修改的代码会被清空。',
+      okText: '重置',
+      cancelText: '取消',
+      onOk: () => {
+        setCode(problem.starter_code);
+        clearDraft(problem.id);
+      },
+    });
+  };
+
+  const jumpTodo = () => {
+    const found = editorRef.current?.jumpToFirstTodo();
+    messageApi.info(
+      found ? '光标已跳到 TODO 那一行，把代码写在这里' : '代码里没有 TODO 标记，请按题目说明修改',
+    );
+  };
+
+  /** 开发者模式：把参考题解填进编辑器（用于人工核对题目与题解） */
+  const fillSolution = () => {
+    if (!problem) return;
+    setCode(problem.solution_code);
+    setDraft(problem.id, problem.solution_code);
+    messageApi.success('已填入参考题解，可以直接提交到洛谷验证');
+  };
+
+  const copyProblemJson = async () => {
+    if (!problem) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(problem, null, 2));
+      messageApi.success('题目 JSON 已复制');
+    } catch {
+      messageApi.warning('浏览器不允许自动复制');
+    }
+  };
 
   if (!problem || !entry) {
     return (
@@ -169,7 +228,7 @@ export function ProProblemPage() {
               <LockOutlined /> 这道题还没有解锁
             </Title>
             <Paragraph type="secondary" style={{ margin: 0 }}>
-              题目需要按顺序完成：通过上一题，才能解锁本题。
+              题目需要按顺序完成：<Text strong>上一题在洛谷拿到 AC</Text>，才能解锁本题。
               {previousProblem && (
                 <>
                   {' '}
@@ -211,133 +270,6 @@ export function ProProblemPage() {
       ? `https://www.luogu.com.cn/problem/list?keyword=${encodeURIComponent(luoguKeyword)}`
       : '';
 
-  const handleRun = async () => {
-    setBusy(true);
-    setMode('run');
-    setSubmission(null);
-    setResults(null);
-    try {
-      const result = await compilerService.runOnce(code, stdin);
-      setOutcome(result);
-      setDiagnostics(parseDiagnostics(result.diagnostics));
-      setBottomTab('output');
-    } catch (error) {
-      messageApi.error(
-        `运行失败：${error instanceof Error ? error.message : String(error)}`,
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const evaluateAll = async (official: boolean) => {
-    setBusy(true);
-    setMode(official ? 'submit' : 'run');
-    setOutcome(null);
-    setSubmission(null);
-    setResults(null);
-    try {
-      const result = await compilerService.submit(
-        code,
-        problem.test_cases,
-        {},
-        (caseResult) => {
-          setResults((prev) => {
-            const list = prev ? [...prev] : [];
-            list[caseResult.index] = caseResult;
-            return list;
-          });
-        },
-      );
-      setSubmission(result);
-      setResults(result.cases);
-      setDiagnostics(parseDiagnostics(result.diagnostics));
-      setBottomTab('output');
-
-      if (result.compileOk) {
-        if (result.passed === result.total && result.total > 0) {
-          const firstTime = !completed.includes(problem.id);
-          markCompleted(problem.id);
-          if (firstTime) {
-            modal.success({
-              title: '恭喜通过！🎉',
-              content: (
-                <div>
-                  <Paragraph style={{ marginBottom: 8 }}>
-                    你用 {result.total} 个测试用例全部通过了《{problem.title}》。
-                  </Paragraph>
-                  {next ? (
-                    <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                      下一题：《{next.problem.title}》
-                    </Paragraph>
-                  ) : (
-                    <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                      你已经完成了 Pro 靶场的全部题目，太厉害了！
-                    </Paragraph>
-                  )}
-                </div>
-              ),
-              okText: next ? '去做下一题' : '好的',
-              cancelText: '留在本题',
-              onOk: () => {
-                if (next) navigate(`/pro/problem/${next.problem.id}`);
-              },
-            });
-          }
-        } else {
-          markAttempted(problem.id);
-        }
-      }
-    } catch (error) {
-      messageApi.error(
-        `评测失败：${error instanceof Error ? error.message : String(error)}`,
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const handleReset = () => {
-    modal.confirm({
-      title: '重置为初始代码？',
-      content: '你在本题中修改的代码会被清空。',
-      okText: '重置',
-      cancelText: '取消',
-      onOk: () => {
-        setCode(problem.starter_code);
-        clearDraft(problem.id);
-        setOutcome(null);
-        setSubmission(null);
-        setResults(null);
-        setDiagnostics([]);
-      },
-    });
-  };
-
-  const useCaseAsInput = (testCase: TestCase) => {
-    setStdin(testCase.input);
-    setBottomTab('stdin');
-    messageApi.success('已把该用例的输入填入标准输入框');
-  };
-
-  const jumpTodo = () => {
-    const found = editorRef.current?.jumpToFirstTodo();
-    messageApi.info(
-      found ? '光标已跳到 TODO 那一行，把代码写在这里' : '代码里没有 TODO 标记，请按题目说明修改',
-    );
-  };
-
-  /** 开发者模式：把参考题解直接填进编辑器（用于快速验证题目与判题数据） */
-  const fillSolution = () => {
-    setCode(problem.solution_code);
-    setDraft(problem.id, problem.solution_code);
-    setOutcome(null);
-    setSubmission(null);
-    setResults(null);
-    setDiagnostics([]);
-    messageApi.success('已填入参考题解，点「提交」即可验证这道题');
-  };
-
   return (
     <div className="problem-page">
       {/* ---------------- 左侧：题目描述 ---------------- */}
@@ -349,12 +281,12 @@ export function ProProblemPage() {
             closable
             icon={<ReadOutlined />}
             style={{ marginBottom: 12 }}
-            message="Pro 靶场用 C++ 写题：还没写过 C++？先看「新手指南 · 第零课」"
+            message="Pro 靶场用 C++ 写题，判题在洛谷进行"
             description={
               <Space direction="vertical" size={6}>
                 <Text type="secondary" style={{ fontSize: 12 }}>
-                  里面讲清楚了：代码为什么长这样、每个符号是什么意思、报错怎么读，
-                  以及中文标点这个最大的坑。
+                  还没写过 C++？先看「新手指南 · 第零课」，它讲清楚了代码为什么长这样、
+                  每个符号是什么意思、报错怎么读，以及中文标点这个最大的坑。
                 </Text>
                 <Space wrap>
                   <Button
@@ -380,13 +312,14 @@ export function ProProblemPage() {
               {problem.difficulty}
             </Tag>
             <Tag color="volcano">{problem.knowledge_point}</Tag>
+            <Tag icon={<CloudUploadOutlined />} color="blue">
+              洛谷在线评测
+            </Tag>
             <Text type="secondary" style={{ fontSize: 12 }}>
               {problem.id}
             </Text>
           </Space>
-          <Title level={3} style={{ marginTop: 4 }}>
-            {problem.title}
-          </Title>
+          <Title level={3}>{problem.title}</Title>
           <Divider style={{ margin: '12px 0' }} />
           <MarkdownView content={problem.description} />
 
@@ -426,7 +359,7 @@ export function ProProblemPage() {
             >
               {status === 'passed' || developerMode
                 ? '查看参考题解'
-                : '通过本题后可查看参考题解'}
+                : '在洛谷通过本题后可查看参考题解'}
             </Button>
             {developerMode && (
               <Button
@@ -435,7 +368,17 @@ export function ProProblemPage() {
                 icon={<ExperimentOutlined />}
                 onClick={fillSolution}
               >
-                填入参考题解并评测（开发者）
+                填入参考题解（开发者）
+              </Button>
+            )}
+            {developerMode && (
+              <Button
+                block
+                style={{ marginTop: 8 }}
+                icon={<CopyOutlined />}
+                onClick={copyProblemJson}
+              >
+                复制题目 JSON（开发者）
               </Button>
             )}
           </div>
@@ -474,24 +417,13 @@ export function ProProblemPage() {
                     </Text>
                   )}
                   <Text type="secondary" style={{ fontSize: 12 }}>
-                    本站<Text strong>不抓取洛谷题面</Text>；题面、数据与评测都在洛谷。
-                    本题的描述、测试用例与题解均为本站自撰。想直接交到洛谷？用下面的面板。
+                    本站<Text strong>不抓取洛谷题面</Text>：题面、数据与评测都在洛谷，
+                    本题的描述与题解为本站自撰。判题以洛谷结果为准，AC 即通过本题。
                   </Text>
                 </Space>
               </div>
             </>
           )}
-
-          <Divider style={{ margin: '16px 0 12px' }} />
-          <LuoguSubmitPanel
-            problemId={problem.id}
-            defaultPid={luoguCode}
-            keyword={luoguKeyword}
-            code={code}
-            track="cpp"
-            disabled={!unlocked}
-            disabledReason="通过本题（或开启开发者模式）后即可提交到洛谷"
-          />
 
           <Divider />
           <Space style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -524,13 +456,24 @@ export function ProProblemPage() {
         </Card>
       </div>
 
-      {/* ---------------- 右侧：代码编辑与运行 ---------------- */}
+      {/* ---------------- 右侧：写代码 + 提交到洛谷 ---------------- */}
       <div className="problem-right">
-        <ToolchainAlert
-          status={compilerStatus}
-          onRetry={() => {
-            void warmUpCompiler().catch(() => undefined);
-          }}
+        <Alert
+          type="info"
+          showIcon
+          icon={<ExperimentOutlined />}
+          style={{ marginBottom: 12 }}
+          message="这道题怎么交？"
+          description={
+            <ol style={{ margin: 0, paddingInlineStart: 20, fontSize: 12 }}>
+              <li>题号已经按题库填好了（也可以改成别的洛谷题号，会记住）。</li>
+              <li>在下面的编辑器里写代码。判题由洛谷完成，所以这里没有本地「运行」。</li>
+              <li>
+                点<Text strong>「提交到洛谷」</Text>，评测结果会显示在按钮下方；
+                <Text strong>AC 即通过本题</Text>并解锁下一题。
+              </li>
+            </ol>
+          }
         />
 
         <Card variant="borderless" styles={{ body: { padding: 12 } }}>
@@ -543,37 +486,18 @@ export function ProProblemPage() {
               <Tag icon={<CodeOutlined />} color="volcano">
                 C++ 20
               </Tag>
-              <Tooltip title="编译参数固定为 -std=c++20 -O0 -Wall，由 clang 在浏览器本地编译成 WebAssembly 后执行">
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  clang → WebAssembly · 代码不会上传
-                </Text>
-              </Tooltip>
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                Monaco 编辑器 · 代码由你本机的桥接脚本/书签发给洛谷
+              </Text>
             </Space>
             <Space>
               <Tooltip title="把光标移动到 // TODO 那一行（不知道该在哪写代码时点它）">
-                <Button icon={<AimOutlined />} onClick={jumpTodo} disabled={busy}>
+                <Button icon={<AimOutlined />} onClick={jumpTodo}>
                   写到哪？
                 </Button>
               </Tooltip>
-              <Button icon={<ReloadOutlined />} onClick={handleReset} disabled={busy}>
+              <Button icon={<ReloadOutlined />} onClick={handleReset}>
                 重置代码
-              </Button>
-              <Button
-                icon={<PlayCircleOutlined />}
-                onClick={handleRun}
-                loading={busy && mode === 'run' && !submission}
-                disabled={busy}
-              >
-                运行
-              </Button>
-              <Button
-                type="primary"
-                icon={<SendOutlined />}
-                onClick={() => evaluateAll(true)}
-                loading={busy && mode === 'submit'}
-                disabled={busy}
-              >
-                提交
               </Button>
             </Space>
           </Space>
@@ -584,98 +508,41 @@ export function ProProblemPage() {
               language="cpp"
               value={code}
               onChange={handleCodeChange}
-              diagnostics={diagnostics}
-              height={400}
+              height={420}
             />
           </div>
         </Card>
 
-        <Card variant="borderless" styles={{ body: { padding: 12 } }} style={{ marginTop: 12 }}>
-          <Segmented
-            value={bottomTab}
-            onChange={(value) => setBottomTab(value as 'stdin' | 'output')}
-            options={[
-              { value: 'stdin', label: '标准输入 (stdin)' },
-              { value: 'output', label: '运行结果' },
-            ]}
-            style={{ marginBottom: 8 }}
-          />
-          {bottomTab === 'stdin' ? (
-            <div>
-              <TextArea
-                value={stdin}
-                onChange={(event) => setStdin(event.target.value)}
-                rows={7}
-                placeholder="在这里输入程序的测试数据（相当于键盘输入）"
-                style={{
-                  fontFamily: 'Consolas, "Courier New", monospace',
-                  fontSize: 13,
-                }}
-              />
-              <Space style={{ marginTop: 8 }} wrap>
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  每个测试用例的输入都可以一键填入：
-                </Text>
-                {problem.test_cases.map((testCase, index) => (
-                  <Button
-                    key={index}
-                    size="small"
-                    onClick={() => useCaseAsInput(testCase)}
-                  >
-                    样例 {index + 1}
-                  </Button>
-                ))}
-              </Space>
-            </div>
-          ) : (
-            <OutputPanel
-              outcome={outcome}
-              submission={submission}
-              busy={busy}
-              mode={mode}
-              code={code}
-              language="cpp"
-              onJumpToLine={(line) => editorRef.current?.jumpToLine(line)}
-            />
-          )}
-        </Card>
-
-        <Card variant="borderless" styles={{ body: { padding: 12 } }} style={{ marginTop: 12 }}>
-          <TestCasePanel
-            testCases={problem.test_cases}
-            results={results}
-            running={busy}
-            onRunAll={() => evaluateAll(false)}
-            onUseAsInput={useCaseAsInput}
+        <Card
+          variant="borderless"
+          styles={{ body: { padding: 12 } }}
+          style={{ marginTop: 12 }}
+        >
+          <LuoguSubmitPanel
+            problemId={problem.id}
+            defaultPid={luoguCode}
+            keyword={luoguKeyword}
+            code={code}
+            track="cpp"
+            disabled={!unlocked}
+            onVerdict={handleVerdict}
           />
         </Card>
 
         <Alert
           type="info"
           showIcon
-          icon={<ExperimentOutlined />}
+          icon={<CloudUploadOutlined />}
           style={{ marginTop: 12 }}
-          message="小提示"
+          message="为什么这题不在浏览器里判？"
           description={
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              「运行」只用标准输入框里的数据跑一次，适合边写边试；
-              「提交」会把这道题的全部测试用例依次跑一遍并逐个比对输出，全部通过才算完成并解锁下一题。
-              评测会忽略每行行尾的多余空格和末尾空行。
+            <Text style={{ fontSize: 12 }}>
+              Pro 靶场的题目都来自洛谷的公开题（题号已逐题核对），所以判题直接交给洛谷：
+              你得到的是洛谷官方的评测结果与提交记录，也不用再下载 90MB 的编译器。
+              本题的描述、题解与样例是本站自撰的，洛谷那边只用于评测。
             </Text>
           }
         />
-
-        {developerMode && (
-          <DeveloperPanel
-            problem={problem}
-            entryStage={entry.stage.stage}
-            compilerStatus={compilerStatus}
-            outcome={outcome}
-            submission={submission}
-            code={code}
-            onFillSolution={fillSolution}
-          />
-        )}
       </div>
 
       <Modal
@@ -686,7 +553,7 @@ export function ProProblemPage() {
         onCancel={() => setSolutionVisible(false)}
       >
         <Paragraph type="secondary">
-          建议先自己写出来再看答案；看懂之后，试着不看答案重写一遍。
+          先自己试一试；看懂答案后，再不看答案重写一遍。
         </Paragraph>
         <pre className="output-pre solution-pre">{problem.solution_code}</pre>
       </Modal>

@@ -111,13 +111,6 @@ export function ProProblemTable({ entries, showStage = false }: Props) {
       render: (_, row) => <LuoguCodeCell code={row.problem.luogu_code} />,
     },
     {
-      title: '测试点',
-      width: 80,
-      render: (_, row) => (
-        <Text type="secondary">{row.problem.test_cases.length}</Text>
-      ),
-    },
-    {
       title: '操作',
       width: 110,
       render: (_, row) => {

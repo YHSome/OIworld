@@ -88,14 +88,14 @@ export function ProHomePage() {
             <Paragraph type="secondary" style={{ fontSize: 15, marginBottom: 12 }}>
               从 <Text code>stack</Text> / <Text code>queue</Text> 开始，把栈、队列、堆、
               并查集、树状数组、线段树这些结构一个个自己造出来，再用它们解决经典问题。
-              题目全部是 <Text strong>C++</Text>，在
-              <Text strong>你的浏览器里由 clang（WebAssembly 版）本地编译运行</Text>
-              ——不依赖后端服务器，代码不会上传。
+              题目全部是 <Text strong>C++</Text>，<Text strong>判题在洛谷进行</Text>
+              ：在编辑器里写好代码，点一下「提交到洛谷」就能拿到洛谷官方的评测结果，
+              本站既没有后端服务器，也不需要下载本地编译器。
             </Paragraph>
             <Paragraph type="secondary" style={{ fontSize: 13, marginBottom: 16 }}>
-              <LinkOutlined /> 题目按知识点自撰（自带测试用例与参考题解），
-              并额外提供<Text strong>洛谷同类型题目的跳转链接</Text>方便你去找原题练习；
-              本站不抓取洛谷题面，只跳到洛谷自己的页面。
+              <LinkOutlined /> 每道题都标注了<Text strong>洛谷对应题目</Text>
+              （42 道里 41 道有精确题号，已逐题核对），直接交到洛谷练；
+              本题的描述、题解与样例为本站自撰，洛谷那边只用于评测，不抓取洛谷题面。
             </Paragraph>
             <Space wrap>
               <Button

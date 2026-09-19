@@ -85,6 +85,11 @@ interface LuoguSubmitPanelProps {
    * Pro 靶场是"洛谷对应题目"，三个基础靶场是"洛谷同类型练习"（不是原题移植）。
    */
   pidLabel?: string;
+  /**
+   * 每次拿到洛谷评测结果时回调（同一条提交会随轮询多次回调）。
+   * 用于"以洛谷 AC 判定本题通过"这类进度逻辑。
+   */
+  onVerdict?: (record: LuoguRecord) => void;
 }
 
 export function LuoguSubmitPanel({
@@ -96,6 +101,7 @@ export function LuoguSubmitPanel({
   disabled = false,
   disabledReason,
   pidLabel = '洛谷对应题目',
+  onVerdict,
 }: LuoguSubmitPanelProps) {
   const { message: messageApi } = AntApp.useApp();
   const bridge = useLuoguBridge();
@@ -153,7 +159,9 @@ export function LuoguSubmitPanel({
       setLoadingRecords(true);
       if (!silent) setRecordsError('');
       try {
-        const list = await fetchLuoguRecords(pid);
+        // 绑定了账号就只看这个账号在这道题上的记录，避免把公开记录列表里
+        // 别人的成绩当成本题进度
+        const list = await fetchLuoguRecords(pid, 1, boundUid || undefined);
         setRecords(list);
         if (!silent && list.length === 0) {
           messageApi.info('洛谷没有返回提交记录（可能这个账号还没交过这题）');
@@ -166,7 +174,7 @@ export function LuoguSubmitPanel({
         setLoadingRecords(false);
       }
     },
-    [messageApi, pid, pidValid],
+    [boundUid, messageApi, pid, pidValid],
   );
 
   const handleSubmit = async () => {
@@ -188,7 +196,9 @@ export function LuoguSubmitPanel({
       pollToken.current = token;
       const finalRecord = await pollLuoguRecord(result.rid, {
         onUpdate: (next) => {
-          if (pollToken.current === token) setRecord(next);
+          if (pollToken.current !== token) return;
+          setRecord(next);
+          onVerdict?.(next);
         },
       });
       if (pollToken.current === token && finalRecord) {

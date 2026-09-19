@@ -109,9 +109,17 @@ export async function fetchLuoguRecord(rid: number): Promise<LuoguRecord> {
   return normalizeLuoguRecord(raw);
 }
 
-/** 读某题的提交记录列表 */
-export async function fetchLuoguRecords(pid: string, page = 1): Promise<LuoguRecord[]> {
-  const raw = await callLuoguBridge<unknown[]>('records', { pid: pid.trim(), page }, 30000);
+/** 读某题的提交记录列表；给了 uid 就只看这个账号的记录 */
+export async function fetchLuoguRecords(
+  pid: string,
+  page = 1,
+  uid?: string,
+): Promise<LuoguRecord[]> {
+  const raw = await callLuoguBridge<unknown[]>(
+    'records',
+    { pid: pid.trim(), page, uid: uid || undefined },
+    30000,
+  );
   const list = Array.isArray(raw) ? raw : [];
   return list.map(normalizeLuoguRecord);
 }

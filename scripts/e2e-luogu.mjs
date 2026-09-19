@@ -370,6 +370,11 @@ try {
   check('面板显示 AC', resultText.includes('AC'), resultText.split('\n').slice(0, 6).join(' | '));
   check('显示评测耗时与内存', /ms/.test(resultText) && /MB/.test(resultText));
   check('给出洛谷记录链接', resultText.includes('查看洛谷记录'));
+  // Pro 靶场在拿到 AC 时会弹「洛谷评测通过」，先关掉它，免得弹窗遮住后面的点击
+  if ((await page.locator('.ant-modal-content').count()) > 0) {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(500);
+  }
 
   step('提交成功后自动刷新了提交记录（无需手动点按钮）');
   await page.waitForSelector('.luogu-panel .ant-table-tbody tr.ant-table-row', { timeout: 30_000 });

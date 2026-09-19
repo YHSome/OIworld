@@ -20,6 +20,7 @@ import {
   BOOKMARKLET_HREF,
   encodeLuoguPayload,
 } from '../src/luogu/bookmarklet.ts';
+import { BEGINNER_LUOGU_CODES } from '../src/data/luogu-codes.ts';
 
 const base = (process.argv[2] ?? 'http://localhost:4173').replace(/\/$/, '');
 const hashRouter = process.argv[3] === 'hash';
@@ -296,8 +297,20 @@ try {
   check('可填洛谷题号', (await page.locator('.luogu-panel input[placeholder*="P1001"]').count()) === 1);
   check('可选评测语言', panelText.includes('C++20'));
 
-  await page.locator('.luogu-panel input[placeholder*="P1001"]').fill('P1001');
-  await page.locator('.luogu-panel input[placeholder*="P1001"]').blur();
+  const pidField = page.locator('.luogu-panel input[placeholder*="P1001"]');
+  check(
+    '题号已按题库标注预填（p1-1 → B3614）',
+    (await pidField.inputValue()) === 'B3614',
+    await pidField.inputValue(),
+  );
+  check(
+    '面板说明了题号来源是「洛谷对应题目」',
+    panelText.includes('洛谷对应题目'),
+    panelText.replace(/\n/g, ' ').slice(0, 160),
+  );
+
+  await pidField.fill('P1001');
+  await pidField.blur();
   await page.waitForTimeout(400);
   const savedPid = await page.evaluate(
     () => JSON.parse(window.localStorage.getItem('oiworld:luogu') ?? '{}')?.state?.problemIds?.['p1-1'],
@@ -358,7 +371,14 @@ try {
   check('显示评测耗时与内存', /ms/.test(resultText) && /MB/.test(resultText));
   check('给出洛谷记录链接', resultText.includes('查看洛谷记录'));
 
-  step('刷新提交记录');
+  step('提交成功后自动刷新了提交记录（无需手动点按钮）');
+  await page.waitForSelector('.luogu-panel .ant-table-tbody tr.ant-table-row', { timeout: 30_000 });
+  const autoRows = await page.locator('.luogu-panel .ant-table-tbody tr.ant-table-row').count();
+  check('记录表格自动出现 3 行', autoRows === 3, `rows=${autoRows}`);
+  const autoText = await page.locator('.luogu-panel .ant-table-tbody').innerText();
+  check('自动刷新出的记录含 AC', autoText.includes('AC'));
+
+  step('刷新提交记录（手动按钮仍然可用）');
   await page.locator('.luogu-panel button').filter({ hasText: /刷新提交记录/ }).click();
   await page.waitForSelector('.luogu-panel .ant-table-tbody tr.ant-table-row', { timeout: 30_000 });
   const rows = await page.locator('.luogu-panel .ant-table-tbody tr.ant-table-row').count();
@@ -472,9 +492,9 @@ try {
   await page.route('**/toolchain/**', (route) => route.abort());
 
   const tracks = [
-    { name: 'C++', route: urlWithQuery('/problem/s1-p1', 'dev=1'), language: 'C++20' },
-    { name: 'Python', route: urlWithQuery('/python/problem/py-s1-p1', 'dev=1'), language: 'Python 3' },
-    { name: 'Java', route: urlWithQuery('/java/problem/j1-1', 'dev=1'), language: 'Java 8' },
+    { name: 'C++', route: urlWithQuery('/problem/s1-p1', 'dev=1'), language: 'C++20', problemId: 's1-p1' },
+    { name: 'Python', route: urlWithQuery('/python/problem/py-s1-p1', 'dev=1'), language: 'Python 3', problemId: 'py-s1-p1' },
+    { name: 'Java', route: urlWithQuery('/java/problem/j1-1', 'dev=1'), language: 'Java 8', problemId: 'j1-1' },
   ];
   for (const track of tracks) {
     await page.goto(track.route, { waitUntil: 'domcontentloaded', timeout: 90_000 });
@@ -487,7 +507,29 @@ try {
       text.replace(/\n/g, ' ').slice(0, 120),
     );
     check(`${track.name} 面板可填洛谷题号`, (await page.locator('.luogu-panel input[placeholder*="P1001"]').count()) === 1);
+    const expected = BEGINNER_LUOGU_CODES[track.problemId];
+    const actual = await page
+      .locator('.luogu-panel input[placeholder*="P1001"]')
+      .inputValue();
+    check(
+      `${track.name} 面板已按题库标注预填 ${expected}（${track.problemId}）`,
+      actual === expected,
+      actual,
+    );
+    check(`${track.name} 面板标注为「洛谷同类型练习」`, text.includes('洛谷同类型练习'));
   }
+
+  step('题目列表里的「洛谷」列');
+  await page.goto(url('/stage/1'), { waitUntil: 'domcontentloaded', timeout: 90_000 });
+  await page.waitForSelector('table tbody tr', { timeout: 60_000 });
+  const stageHeaders = await page.locator('.ant-table-thead th').allInnerTexts();
+  check('C++ 阶段页有「洛谷」列', stageHeaders.includes('洛谷'), stageHeaders.join(' | '));
+  const firstRowLuogu = await page
+    .locator('.ant-table-tbody tr.ant-table-row')
+    .first()
+    .locator('a[href*="luogu.com.cn/problem/"]')
+    .innerText();
+  check('第一行显示 B2002', firstRowLuogu === 'B2002', firstRowLuogu);
   await page.unroute('**/python-runtime/**');
   await page.unroute('**/doppio-runtime/**');
   await page.unroute('**/toolchain/**');

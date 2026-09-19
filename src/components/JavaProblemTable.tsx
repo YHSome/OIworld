@@ -10,6 +10,7 @@ import {
 } from '../java/data';
 import { useJavaProgressStore } from '../java/useJavaProgressStore';
 import { useDeveloperMode } from '../hooks/useDeveloperMode';
+import { LuoguCodeCell } from './LuoguCodeCell';
 import { StatusTag } from './StatusTag';
 
 const { Text } = Typography;
@@ -104,6 +105,11 @@ export function JavaProblemTable({ entries, showStage = false }: Props) {
           } as ColumnsType<Row>[number],
         ]
       : []),
+    {
+      title: '洛谷',
+      width: 110,
+      render: (_, row) => <LuoguCodeCell code={row.problem.luogu_code} />,
+    },
     {
       title: '测试点',
       width: 80,

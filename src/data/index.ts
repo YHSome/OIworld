@@ -19,12 +19,15 @@ import stage4 from './problems/stage-4.json';
 import stage5 from './problems/stage-5.json';
 import stage6 from './problems/stage-6.json';
 import stage7 from './problems/stage-7.json';
+import { withLuoguCodes } from './luogu-codes';
 
 export const STAGES: StageData[] = (
   [stage1, stage2, stage3, stage4, stage5, stage6, stage7] as unknown as StageData[]
 )
   .slice()
-  .sort((a, b) => a.stage - b.stage);
+  .sort((a, b) => a.stage - b.stage)
+  // 每个阶段补上「洛谷同类型练习」的题号（表见 src/data/luogu-codes.ts）
+  .map((stage) => withLuoguCodes(stage));
 
 /** 题目 + 它所属阶段的信息 */
 export interface ProblemEntry {

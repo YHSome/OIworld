@@ -1,4 +1,5 @@
 import type { Difficulty, Problem, ProblemStatus, StageData } from '../types/problem';
+import { withLuoguCode, withLuoguCodes } from '../data/luogu-codes.ts';
 
 const stage = (
   number: number,
@@ -6,7 +7,9 @@ const stage = (
   subtitle: string,
   summary: string,
   problems: Problem[],
-): StageData => ({ stage: number, title, subtitle, summary, problems });
+): StageData =>
+  // 补上「洛谷同类型练习」的题号（表见 src/data/luogu-codes.ts）
+  withLuoguCodes({ stage: number, title, subtitle, summary, problems });
 
 export const PYTHON_STAGES: StageData[] = [
   stage(1, '第一阶段：开口说话', '输出、变量与输入', '从 `print()` 开始，学会把数据读进来、算出来、输出去。', [
@@ -676,7 +679,13 @@ for (const stageData of PYTHON_STAGES) {
   }
 }
 
+// 阶段 1~3 的一部分题目是在数组定义之后 push 进来的，这里统一补一次洛谷题号
+for (const stageData of PYTHON_STAGES) {
+  for (const problem of stageData.problems) withLuoguCode(problem);
+}
+
 export interface PythonProblemEntry { problem: Problem; stage: StageData; indexInStage: number; globalIndex: number }
+
 export const PYTHON_PROBLEMS: PythonProblemEntry[] = PYTHON_STAGES.flatMap((item) => item.problems.map((problem, indexInStage) => ({ problem, stage: item, indexInStage, globalIndex: 0 })));
 PYTHON_PROBLEMS.forEach((entry, globalIndex) => { entry.globalIndex = globalIndex; });
 const byId = new Map(PYTHON_PROBLEMS.map((entry) => [entry.problem.id, entry]));

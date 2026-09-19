@@ -8,6 +8,7 @@
  */
 
 import type { Difficulty, Problem, ProblemStatus, StageData } from '../types/problem';
+import { withLuoguCodes } from '../data/luogu-codes.ts';
 
 import { STAGE_1 } from './stages/stage-1.ts';
 import { STAGE_2 } from './stages/stage-2.ts';
@@ -25,7 +26,8 @@ export const JAVA_STAGES: StageData[] = [
   STAGE_5,
   STAGE_6,
   STAGE_7,
-];
+  // 每个阶段补上「洛谷同类型练习」的题号（表见 src/data/luogu-codes.ts）
+].map((stage) => withLuoguCodes(stage));
 
 export interface JavaProblemEntry {
   problem: Problem;

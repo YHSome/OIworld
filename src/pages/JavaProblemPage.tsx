@@ -379,6 +379,7 @@ export function JavaProblemPage() {
             defaultPid={problem.luogu_code}
             code={code}
             track="java"
+            pidLabel="洛谷同类型练习"
             disabled={!unlocked}
             disabledReason="通过本题（或开启开发者模式）后即可提交到洛谷"
           />

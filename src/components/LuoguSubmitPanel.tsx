@@ -80,6 +80,11 @@ interface LuoguSubmitPanelProps {
   /** 题目未解锁等情况下禁用提交 */
   disabled?: boolean;
   disabledReason?: string;
+  /**
+   * 预填题号的来源说明。
+   * Pro 靶场是"洛谷对应题目"，三个基础靶场是"洛谷同类型练习"（不是原题移植）。
+   */
+  pidLabel?: string;
 }
 
 export function LuoguSubmitPanel({
@@ -90,6 +95,7 @@ export function LuoguSubmitPanel({
   track = 'cpp',
   disabled = false,
   disabledReason,
+  pidLabel = '洛谷对应题目',
 }: LuoguSubmitPanelProps) {
   const { message: messageApi } = AntApp.useApp();
   const bridge = useLuoguBridge();
@@ -134,6 +140,35 @@ export function LuoguSubmitPanel({
     [problemId, setProblemId],
   );
 
+  /**
+   * 拉取该题的提交记录。
+   * @param silent 静默模式：用于提交成功后自动刷新，不弹提示、失败也不打断用户
+   */
+  const loadRecords = useCallback(
+    async (silent = false) => {
+      if (!pidValid) {
+        if (!silent) messageApi.warning('先填一个正确的洛谷题号，例如 P1001');
+        return;
+      }
+      setLoadingRecords(true);
+      if (!silent) setRecordsError('');
+      try {
+        const list = await fetchLuoguRecords(pid);
+        setRecords(list);
+        if (!silent && list.length === 0) {
+          messageApi.info('洛谷没有返回提交记录（可能这个账号还没交过这题）');
+        }
+      } catch (error) {
+        if (silent) return;
+        setRecords([]);
+        setRecordsError(describeLuoguError(error));
+      } finally {
+        setLoadingRecords(false);
+      }
+    },
+    [messageApi, pid, pidValid],
+  );
+
   const handleSubmit = async () => {
     if (!pidValid) {
       messageApi.warning('洛谷题号格式不对，应该形如 P1001');
@@ -161,6 +196,8 @@ export function LuoguSubmitPanel({
         if (finalRecord.status === 12) messageApi.success('洛谷评测结果：AC 通过！');
         else messageApi.info(`洛谷评测结果：${meta.short}（${meta.label}）`);
       }
+      // 评测出结果时洛谷那边也已经记下这条提交了，顺手刷新一次记录列表
+      await loadRecords(true);
     } catch (error) {
       if (isLuoguBridgeError(error) && error.code === 'NOT_LOGGED_IN') {
         messageApi.error('洛谷认为当前没有登录，请先登录洛谷或在本站绑定 Cookie');
@@ -169,25 +206,6 @@ export function LuoguSubmitPanel({
       }
     } finally {
       setSubmitting(false);
-    }
-  };
-
-  const handleLoadRecords = async () => {
-    if (!pidValid) {
-      messageApi.warning('先填一个正确的洛谷题号，例如 P1001');
-      return;
-    }
-    setLoadingRecords(true);
-    setRecordsError('');
-    try {
-      const list = await fetchLuoguRecords(pid);
-      setRecords(list);
-      if (list.length === 0) messageApi.info('洛谷没有返回提交记录（可能这个账号还没交过这题）');
-    } catch (error) {
-      setRecords([]);
-      setRecordsError(describeLuoguError(error));
-    } finally {
-      setLoadingRecords(false);
     }
   };
 
@@ -376,7 +394,7 @@ export function LuoguSubmitPanel({
           >
             提交到洛谷
           </Button>
-          <Button icon={<ReloadOutlined />} loading={loadingRecords} onClick={handleLoadRecords}>
+          <Button icon={<ReloadOutlined />} loading={loadingRecords} onClick={() => loadRecords(false)}>
             刷新提交记录
           </Button>
           <Tooltip title="不用桥也能用：复制代码，打开洛谷题目页手动粘贴提交">
@@ -427,6 +445,12 @@ export function LuoguSubmitPanel({
                 。
               </>
             ) : null}
+          </Text>
+        )}
+
+        {pidValid && defaultPid && pid.toUpperCase() === defaultPid.trim().toUpperCase() && (
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            题号是题库标注的{pidLabel}，已自动填好；也可以改成别的洛谷题号。
           </Text>
         )}
 

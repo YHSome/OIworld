@@ -11,6 +11,7 @@ import {
 import { useProgressStore } from '../store/useProgressStore';
 import { useDeveloperMode } from '../hooks/useDeveloperMode';
 import { StatusTag } from './StatusTag';
+import { LuoguCodeCell } from './LuoguCodeCell';
 
 const { Text } = Typography;
 
@@ -110,6 +111,11 @@ export function ProblemTable({
           } as ColumnsType<Row>[number],
         ]
       : []),
+    {
+      title: '洛谷',
+      width: 110,
+      render: (_, row) => <LuoguCodeCell code={row.problem.luogu_code} />,
+    },
     {
       title: '测试点',
       width: 80,

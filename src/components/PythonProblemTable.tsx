@@ -6,6 +6,7 @@ import { PYTHON_DIFFICULTY_COLOR, type PythonProblemEntry, getPythonProblemStatu
 import { usePythonProgressStore } from '../python/usePythonProgressStore';
 import { useDeveloperMode } from '../hooks/useDeveloperMode';
 import { StatusTag } from './StatusTag';
+import { LuoguCodeCell } from './LuoguCodeCell';
 
 const { Text } = Typography;
 
@@ -25,6 +26,7 @@ export function PythonProblemTable({ entries, showStage = false }: Props) {
     { title: '难度', width: 92, render: (_, row) => <Tag color={PYTHON_DIFFICULTY_COLOR[row.problem.difficulty]}>{row.problem.difficulty}</Tag> },
     { title: '知识点', width: 170, render: (_, row) => <Text type="secondary">{row.problem.knowledge_point}</Text> },
     ...(showStage ? [{ title: '所属阶段', width: 190, render: (_: unknown, row: Row) => <Text type="secondary">{row.stage.title}</Text> } as ColumnsType<Row>[number]] : []),
+    { title: '洛谷', width: 110, render: (_, row) => <LuoguCodeCell code={row.problem.luogu_code} /> },
     { title: '测试点', width: 80, render: (_, row) => <Text type="secondary">{row.problem.test_cases.length}</Text> },
     { title: '操作', width: 110, render: (_, row) => { const unlocked = isPythonProblemUnlocked(row.problem.id, completed, developerMode); return unlocked ? <Button type="link" size="small" icon={<PlayCircleOutlined />} onClick={(event) => { event.stopPropagation(); open(row.problem.id, true); }}>开始做题</Button> : <Text type="secondary" style={{ fontSize: 12 }}>待解锁</Text>; } },
   ];

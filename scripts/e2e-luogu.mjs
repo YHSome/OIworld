@@ -21,7 +21,9 @@ import { chromium } from 'playwright';
 import {
   BOOKMARKLET_CODE_SOURCE,
   BOOKMARKLET_HREF,
+  decodeLuoguResult,
   encodeLuoguPayload,
+  encodeLuoguResult,
 } from '../src/luogu/bookmarklet.ts';
 import { BEGINNER_LUOGU_CODES } from '../src/data/luogu-codes.ts';
 
@@ -129,7 +131,16 @@ try {
 
   /* ---------------- 4. 书签脚本本身 ---------------- */
   step('书签脚本：在"洛谷题目页"里真跑一遍（假 fetch）');
-  const payload = encodeLuoguPayload({ code: '#include <bits>\nint main(){ return 0; }', lang: 27 });
+  const payload = encodeLuoguPayload({
+    code: '#include <bits>\nint main(){ return 0; }',
+    lang: 27,
+    back: {
+      origin: `${base}${hashRouter ? '' : ''}`,
+      route: '/pro/problem/p1-1',
+      hash: hashRouter,
+      problemId: 'p1-1',
+    },
+  });
   await page.evaluate(
     ({ code, payloadValue }) => {
       history.pushState({}, '', `/problem/P1001?oiworld=${payloadValue}`);
@@ -188,6 +199,24 @@ try {
   check('书签会轮询评测结果', bookmarkletState.recordPolls >= 2, `polls=${bookmarkletState.recordPolls}`);
   const boxText = await page.locator('[data-oiworld-bookmarklet]').innerText();
   check('书签浮层显示 AC 与记录号', boxText.includes('AC') && boxText.includes('424242'), boxText.replace(/\n/g, ' '));
+  const backLink = await page
+    .locator('[data-oiworld-bookmarklet] a')
+    .filter({ hasText: /记回 OIworld/ })
+    .getAttribute('href');
+  check(
+    '书签给出了「把结果记回 OIworld」的链接',
+    (backLink ?? '').includes('/pro/problem/p1-1?luoguResult='),
+    (backLink ?? '').slice(0, 70),
+  );
+  check(
+    '回传链接里带着题目 id 与 AC 状态',
+    (() => {
+      const encoded = new URL(backLink ?? 'https://x/').searchParams.get('luoguResult');
+      const decoded = decodeLuoguResult(encoded);
+      return decoded?.status === 12 && decoded?.problemId === 'p1-1';
+    })(),
+    String(backLink).slice(-40),
+  );
   await page.screenshot({ path: path.join(shotDir, 'luogu-3-bookmarklet.png'), fullPage: true });
 
   step('书签脚本：不在题目页时给出提示');
@@ -202,7 +231,72 @@ try {
   const guard = await page.locator('[data-oiworld-bookmarklet]').innerText();
   check('提示先去洛谷题目页', /先在洛谷打开一道题目/.test(guard), guard.replace(/\n/g, ' '));
 
-  /* ---------------- 5. 手动标记通过 ---------------- */
+  /* ---------------- 5. 结果回传 + 手动标记 ---------------- */
+  step('书签回传结果：访问带 ?luoguResult 的题目页 → 自动标记通过');
+  const passResult = encodeLuoguResult({
+    rid: 298504808,
+    status: 12,
+    score: 100,
+    time: 40,
+    memory: 820,
+    historyScore: 100,
+    problemId: 'p1-1',
+  });
+  await page.goto(
+    hashRouter
+      ? `${base}/#/pro/problem/p1-1?luoguResult=${passResult}`
+      : `${base}/pro/problem/p1-1?luoguResult=${passResult}`,
+    { waitUntil: 'domcontentloaded' },
+  );
+  await page.waitForSelector('.ant-modal-content', { timeout: 60_000 });
+  const passModal = await page.locator('.ant-modal-content').first().innerText();
+  check('弹出「洛谷评测通过」', /洛谷评测通过/.test(passModal), passModal.replace(/\n/g, ' ').slice(0, 80));
+  check('弹窗里带上了洛谷的分数与用时', /100 分/.test(passModal) && /40 ms/.test(passModal));
+  const progressFromCallback = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('oiworld:pro-progress') ?? '{}'),
+  );
+  check(
+    '本题由回传结果自动计入通过',
+    (progressFromCallback?.state?.completedProblems ?? []).includes('p1-1'),
+    JSON.stringify(progressFromCallback?.state?.completedProblems ?? null),
+  );
+  check(
+    '处理完把 luoguResult 参数从地址栏清掉（避免刷新重复触发）',
+    !(await page.evaluate(() => window.location.href)).includes('luoguResult'),
+  );
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(300);
+
+  step('没通过的结果只记为"未通过"');
+  await page.evaluate(() => window.localStorage.removeItem('oiworld:pro-progress'));
+  const failResult = encodeLuoguResult({
+    rid: 298504809,
+    status: 6,
+    score: 30,
+    problemId: 'p1-1',
+  });
+  await page.goto(
+    hashRouter
+      ? `${base}/#/pro/problem/p1-1?luoguResult=${failResult}`
+      : `${base}/pro/problem/p1-1?luoguResult=${failResult}`,
+    { waitUntil: 'domcontentloaded' },
+  );
+  await page.waitForFunction(
+    () => /洛谷评测结果/.test(document.body.innerText) && /WA/.test(document.body.innerText),
+    undefined,
+    { timeout: 30_000 },
+  );
+  check('面板显示回传的 WA 结果', (await page.locator('.luogu-panel').innerText()).includes('WA'));
+  const progressAfterFail = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('oiworld:pro-progress') ?? '{}'),
+  );
+  check(
+    '未通过时不计入通过、记为已提交',
+    !(progressAfterFail?.state?.completedProblems ?? []).includes('p1-1') &&
+      (progressAfterFail?.state?.attemptedProblems ?? []).includes('p1-1'),
+    JSON.stringify(progressAfterFail?.state ?? null).slice(0, 120),
+  );
+
   step('Pro 题目页：手动标记通过并解锁下一题');
   await page.goto(url('/pro/problem/p1-1'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('.problem-page', { timeout: 60_000 });

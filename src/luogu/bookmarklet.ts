@@ -44,7 +44,7 @@ function decode(text){
   for(i=0;i<bin.length;i++){bytes[i]=bin.charCodeAt(i);}
   var parsed=JSON.parse(new TextDecoder().decode(bytes));
   if(!parsed||typeof parsed.code!=='string'||!parsed.code.trim()){throw new Error('empty');}
-  return {code:parsed.code,lang:Number(parsed.lang)||fallbackLang,enableO2:parsed.enableO2?1:0};
+  return {code:parsed.code,lang:Number(parsed.lang)||fallbackLang,enableO2:parsed.enableO2?1:0,back:parsed.back||null};
 }
 function resolve(){
   var fromUrl=params.get('oiworld');
@@ -65,7 +65,52 @@ function verdict(status){
   var tone=status===12?'#52c41a':(status===0||status===1?'#1677ff':(status===2?'#faad14':'#ff4d4f'));
   return {label:label,tone:tone};
 }
-function poll(rid,tries){
+/** 读洛谷题目页上"历史分数"那一行（书签在洛谷页面里，可以直接读 DOM） */
+function historyScore(){
+  try{
+    var rows=document.querySelectorAll('.l-flex-info-row');
+    for(var i=0;i<rows.length;i++){
+      var row=rows[i];
+      var label=row.querySelector('span');
+      if(!label||label.textContent.replace(/\\s/g,'')!=='历史分数'){continue;}
+      var value=row.querySelector('a span')||row.querySelectorAll('span')[1];
+      var score=Number(String(value&&value.textContent||'').replace(/[^0-9]/g,''));
+      return isFinite(score)?score:null;
+    }
+  }catch(e){}
+  return null;
+}
+/** 把结果打包成可以带回 OIworld 的链接（跨站写不了本站存储，就用地址传） */
+function backUrl(payload,result){
+  var back=payload&&payload.back;
+  if(!back||!back.origin){return '';}
+  var data={rid:result.rid,status:result.status,score:result.score,time:result.time,memory:result.memory,historyScore:result.historyScore,problemId:back.problemId||''};
+  var json=JSON.stringify(data);
+  var bytes=new TextEncoder().encode(json);
+  var binary='';
+  for(var i=0;i<bytes.length;i++){binary+=String.fromCharCode(bytes[i]);}
+  var b64=btoa(binary).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+  var route=back.route||'/';
+  return back.hash?back.origin+'/#'+route+'?luoguResult='+b64:back.origin+route+'?luoguResult='+b64;
+}
+function showResult(payload,result){
+  var v=verdict(result.status);
+  var cost=[];
+  if(result.time){cost.push(result.time+' ms');}
+  if(result.memory){cost.push((result.memory/1024).toFixed(2)+' MB');}
+  var lines=['<b>洛谷评测结果：'+esc(v.label)+'</b>','R'+result.rid+(cost.length?' · '+cost.join(' / '):'')+(typeof result.score==='number'?' · '+result.score+' 分':'')];
+  var link='<a href="https://www.luogu.com.cn/record/'+result.rid+'" target="_blank" style="color:#69b1ff">查看洛谷记录</a>';
+  if(typeof result.historyScore==='number'){lines.push('历史分数：'+result.historyScore+(result.historyScore>=100?'（已通过 ✔）':''));}
+  var back=backUrl(payload,result);
+  if(back){
+    lines.push('<a href="'+back+'" style="color:#95de64;font-weight:600">↩ 把结果记回 OIworld</a>（点了就会自动标记本题）');
+    setTimeout(function(){try{window.open(back,'_blank');}catch(e){}},1500);
+  }else{
+    lines.push(link);
+  }
+  say(lines.join('<br>'),v.tone);
+}
+function poll(payload,rid,tries){
   fetch('/record/'+rid+'?_contentOnly=1',{credentials:'same-origin',headers:{'x-luogu-type':'content-only'}})
     .then(function(r){return r.json();})
     .then(function(json){
@@ -74,18 +119,23 @@ function poll(rid,tries){
       var status=rec&&typeof rec.status==='number'?rec.status:-1;
       if(status===0||status===1){
         say('<b>已提交 R'+rid+'</b><br>洛谷正在评测…（'+(tries+1)+'）','#1677ff');
-        if(tries<40){setTimeout(function(){poll(rid,tries+1);},2500);}else{say('<b>R'+rid+'</b><br>评测还在排队，去洛谷看结果吧。','#1677ff');}
+        if(tries<40){setTimeout(function(){poll(payload,rid,tries+1);},2500);}
+        else{showResult(payload,{rid:rid,status:status,historyScore:historyScore()});}
         return;
       }
-      var v=verdict(status);
-      var cost=[];
-      if(rec&&rec.time){cost.push(rec.time+' ms');}
-      if(rec&&rec.memory){cost.push((rec.memory/1024).toFixed(2)+' MB');}
-      say('<b>洛谷评测结果：'+esc(v.label)+'</b><br>R'+rid+(cost.length?' · '+cost.join(' / '):'')+(rec&&typeof rec.score==='number'?' · '+rec.score+' 分':'')+'<br><a href="https://www.luogu.com.cn/record/'+rid+'" target="_blank" style="color:#69b1ff">查看洛谷记录</a>',v.tone);
+      showResult(payload,{
+        rid:rid,
+        status:status,
+        score:rec&&typeof rec.score==='number'?rec.score:undefined,
+        time:rec&&rec.time,
+        memory:rec&&rec.memory,
+        historyScore:historyScore()
+      });
     })
     .catch(function(){
-      if(tries<40){setTimeout(function(){poll(rid,tries+1);},2500);return;}
-      say('<b>已提交 R'+rid+'</b><br>读取评测结果失败，去洛谷看吧。','#faad14');
+      if(tries<40){setTimeout(function(){poll(payload,rid,tries+1);},2500);return;}
+      // 轮询读不到就退而用页面上的"历史分数"判断
+      showResult(payload,{rid:rid,status:historyScore()>=100?12:-1,historyScore:historyScore()});
     });
 }
 say('<b>OIworld 提交</b><br>正在准备提交到 '+pid+' …','#1677ff');
@@ -102,8 +152,8 @@ resolve().then(function(payload){
   }).then(function(r){return r.json().then(function(json){return {ok:r.ok,status:r.status,json:json};});})
     .then(function(res){
       var rid=res.json&&(res.json.rid||(res.json.data&&res.json.data.rid)||(res.json.currentData&&res.json.currentData.rid));
-      if(res.ok&&rid){say('<b>已提交 R'+rid+'</b><br>洛谷正在评测…','#1677ff');poll(rid,0);return;}
-      var type=res.json&&res.json.errorType?'':'';
+      if(res.ok&&rid){say('<b>已提交 R'+rid+'</b><br>洛谷正在评测…','#1677ff');poll(payload,rid,0);return;}
+      var type=res.json&&res.json.errorType?res.json.errorType:'';
       var message=(res.json&&(res.json.errorMessage||res.json.data))||('HTTP '+res.status);
       if(String(type).match(/Captcha|Verify/i)||/验证码|人机/.test(String(message))){
         say('<b>洛谷要求人机验证</b><br>请先在洛谷手动提交一次这道题，通过验证后再点这个书签。','#faad14');return;
@@ -135,6 +185,37 @@ export interface LuoguSubmitPayloadInput {
   /** 洛谷语言编号（C++20 = 27 等） */
   lang: number;
   enableO2?: boolean;
+  /**
+   * 结果回传信息：书签在洛谷页面上拿到评测结果后，用它拼一个 OIworld 链接，
+   * 指向本题并带上 `?luoguResult=<base64url>`，于是本站就能知道"这题过了没有"。
+   */
+  back?: LuoguResultBack;
+}
+
+/** 结果要回传到哪个页面 */
+export interface LuoguResultBack {
+  /** 本站 origin + 子路径，例如 https://yhsome.github.io/OIworld */
+  origin: string;
+  /** 题目页路由，例如 /pro/problem/p1-1 */
+  route: string;
+  /** 是否使用 hash 路由（GitHub Pages 上是） */
+  hash: boolean;
+  /** 本站题目 id（回传时带回来，避免切到别的题时误判） */
+  problemId?: string;
+}
+
+/** 书签回传的评测结果 */
+export interface LuoguResultPayload {
+  rid: number;
+  /** 洛谷状态码，12 = AC */
+  status: number;
+  score?: number;
+  time?: number;
+  memory?: number;
+  /** 洛谷题目页上"历史分数"的值（100 表示已通过） */
+  historyScore?: number | null;
+  /** 本站题目 id（书签从载荷里带回来的） */
+  problemId?: string;
 }
 
 function toBase64Url(text: string): string {
@@ -144,6 +225,15 @@ function toBase64Url(text: string): string {
   return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+function fromBase64Url(text: string): string {
+  let base64 = text.trim().replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) base64 += '=';
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
 /** base64url 编码的提交载荷（书签脚本能直接解出来） */
 export function encodeLuoguPayload(input: LuoguSubmitPayloadInput): string {
   return toBase64Url(
@@ -151,9 +241,33 @@ export function encodeLuoguPayload(input: LuoguSubmitPayloadInput): string {
       code: input.code,
       lang: input.lang,
       enableO2: input.enableO2 ? 1 : 0,
+      back: input.back,
     }),
   );
 }
+
+/** 解析书签回传的 `?luoguResult=` 参数（解析失败返回 null） */
+export function decodeLuoguResult(encoded: string | null): LuoguResultPayload | null {
+  if (!encoded) return null;
+  try {
+    const parsed = JSON.parse(fromBase64Url(encoded)) as LuoguResultPayload;
+    if (!parsed || typeof parsed.status !== 'number') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/** 编码一个回传结果（书签里是内联实现的，这里给测试与调试用） */
+export function encodeLuoguResult(result: LuoguResultPayload): string {
+  return toBase64Url(JSON.stringify(result));
+}
+
+/** 判断回传结果算不算"通过"：AC，或历史分数满分 */
+export function isLuoguResultPassed(result: LuoguResultPayload): boolean {
+  return result.status === 12 || (typeof result.historyScore === 'number' && result.historyScore >= 100);
+}
+
 
 /** 地址栏能装下的载荷上限（超过就只带语言参数，代码走剪贴板） */
 const MAX_PAYLOAD_IN_URL = 3500;

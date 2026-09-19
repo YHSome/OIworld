@@ -12,9 +12,10 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, App as AntApp, Button, Input, Select, Space, Switch, Tooltip, Typography } from 'antd';
+import { Alert, App as AntApp, Button, Input, Select, Space, Switch, Tag, Tooltip, Typography } from 'antd';
 import {
   BookOutlined,
+  CheckCircleOutlined,
   CopyOutlined,
   ExportOutlined,
   LinkOutlined,
@@ -33,6 +34,9 @@ import {
   luoguProblemUrl,
   luoguRecordListUrl,
 } from '../luogu/service';
+import { getLuoguStatus } from '../luogu/verdict';
+import { isLuoguResultPassed } from '../luogu/bookmarklet';
+import { useLuoguResultParam, useLuoguResultStore } from '../luogu/useLuoguResult';
 import { useLuoguStore } from '../luogu/useLuoguStore';
 
 const { Text, Paragraph } = Typography;
@@ -82,10 +86,33 @@ export function LuoguSubmitPanel({
 
   const [pidInput, setPidInput] = useState(storedPid || defaultPid);
   const [showSteps, setShowSteps] = useState(false);
+  /** 解析 `?luoguResult=`：书签回传的洛谷评测结果（四个靶场共用这一个入口） */
+  useLuoguResultParam();
+  /** 最近一次回传结果（用于在面板里显示） */
+  const lastResult = useLuoguResultStore((state) => state.lastResult);
+  const receivedAt = useLuoguResultStore((state) => state.receivedAt);
 
   const language = storedLanguage ?? LUOGU_DEFAULT_LANGUAGE[track];
   const pid = pidInput.trim().toUpperCase();
   const pidValid = isValidLuoguPid(pid);
+
+  /**
+   * 结果要带回哪个页面：书签在洛谷页面上，跨站写不了本站的存储，
+   * 所以把"回传地址"一起塞进载荷里（含 hash 路由、子路径与题目 id）。
+   */
+  const buildBackInfo = () => {
+    const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+    const hashMode = window.location.hash.startsWith('#/');
+    const route = hashMode
+      ? window.location.hash.slice(1).split('?')[0]
+      : window.location.pathname;
+    return {
+      origin: `${window.location.origin}${base}`,
+      route,
+      hash: hashMode,
+      problemId,
+    };
+  };
 
   /** 题目切换时，重置面板状态 */
   useEffect(() => {
@@ -126,6 +153,7 @@ export function LuoguSubmitPanel({
       code,
       lang: language,
       enableO2,
+      back: buildBackInfo(),
     });
     try {
       await navigator.clipboard.writeText(payload);
@@ -160,6 +188,48 @@ export function LuoguSubmitPanel({
             {showSteps ? '收起步骤' : '怎么用？'}
           </Button>
         </Space>
+
+        {lastResult && (
+          <Alert
+            type={isLuoguResultPassed(lastResult) ? 'success' : 'warning'}
+            showIcon
+            icon={<CheckCircleOutlined />}
+            message={
+              <Space size={6} wrap>
+                <Text strong>上次洛谷提交结果</Text>
+                <Tag
+                  color={getLuoguStatus(lastResult.status).color}
+                  style={{ marginInlineEnd: 0 }}
+                >
+                  {getLuoguStatus(lastResult.status).short}
+                </Tag>
+                {typeof lastResult.score === 'number' && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    {lastResult.score} 分
+                  </Text>
+                )}
+                {typeof lastResult.historyScore === 'number' && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    历史分数 {lastResult.historyScore}
+                  </Text>
+                )}
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  R{lastResult.rid}
+                </Text>
+              </Space>
+            }
+            description={
+              <Space size={8} wrap style={{ fontSize: 12 }}>
+                <span>{getLuoguStatus(lastResult.status).label}</span>
+                {receivedAt && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    （{new Date(receivedAt).toLocaleTimeString()} 由书签回传）
+                  </Text>
+                )}
+              </Space>
+            }
+          />
+        )}
 
         {showSteps && (
           <Alert

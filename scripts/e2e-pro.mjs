@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Pro 靶场验收（数据结构与进阶算法）。
  *
  * Pro 的判题在洛谷进行，所以这一套重点验证：
@@ -18,6 +18,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { encodeLuoguResult } from '../src/luogu/bookmarklet.ts';
 
 const base = (process.argv[2] ?? 'http://localhost:4173').replace(/\/$/, '');
 const hashRouter = process.argv[3] === 'hash';
@@ -45,6 +46,8 @@ const check = (label, condition, extra = '') => {
   if (!condition) failed += 1;
   console.log(`  ${condition ? '[OK]' : '[FAIL]'} ${label}${extra ? ` — ${extra}` : ''}`);
 };
+const toolchainRequests = () =>
+  requestedUrls.filter((item) => item.includes('/toolchain/') || item.includes('jsdelivr') || item.includes('clang.wasm'));
 const buttonByText = (text) =>
   page.locator('button').filter({ hasText: new RegExp(`^${text}$`) });
 
@@ -118,16 +121,16 @@ try {
     (await buttonByText('写到哪？').count()) === 1 &&
       (await buttonByText('重置代码').count()) === 1,
   );
-  check('没有本地「运行」按钮', (await buttonByText('运行').count()) === 0);
-  check('没有本地「提交」按钮', (await buttonByText('提交').count()) === 0);
-  check('没有测试用例面板', !problemText.includes('运行全部测试'));
+  check('有本地「运行」与「小样例自查」（可选自查）', (await buttonByText('运行').count()) === 1 && (await buttonByText('小样例自查').count()) === 1);
+  check('没有本地「提交」（判题只在洛谷）', (await buttonByText('提交').count()) === 0);
+  check('自查面板默认收起', !problemText.includes('运行全部测试'));
   check(
     '没有编译器状态提示条',
     (await page.locator('.problem-right .ant-alert-message').allInnerTexts()).every(
       (text) => !/编译器|clang|加载/.test(text),
     ),
   );
-  check('说明为什么不在浏览器里判题', problemText.includes('为什么这题不在浏览器里判'));
+  check('说明结果怎么回传（判题在洛谷）', problemText.includes('判题在洛谷，本站怎么知道结果'));
   check('有洛谷跳转区块', (await page.locator('.pro-luogu-block').count()) === 1);
   const prefilledPid = await page
     .locator('.luogu-panel input[placeholder*="P1001"]')
@@ -166,6 +169,40 @@ try {
     (await page.locator('button').filter({ hasText: /复制题目 JSON/ }).count()) > 0,
   );
 
+  step('本地小样例自查（可选，不决定是否通过）');
+  await page.evaluate(() => window.localStorage.removeItem('oiworld:pro-progress'));
+  await hardGoto('/pro/problem/p1-1');
+  await page.waitForSelector('.problem-page', { timeout: 30_000 });
+  check(
+    '面板默认收起，且打开页面时还没请求编译器（懒加载）',
+    toolchainRequests().length === 0,
+    toolchainRequests().slice(0, 2).join(' | '),
+  );
+  await page.locator('button').filter({ hasText: /填入参考题解/ }).click();
+  await page.waitForTimeout(400);
+  await page.locator('button').filter({ hasText: /小样例自查/ }).click();
+  await page.waitForFunction(
+    () => /小样例 \d+\/\d+ 全过|小样例通过/.test(document.body.innerText),
+    undefined,
+    { timeout: 300_000 },
+  );
+  const selfCheckText = await page.locator('body').innerText();
+  check(
+    '小样例全部通过并说明"这不是洛谷的判题结果"',
+    /小样例 \d+\/\d+ 全过/.test(selfCheckText) && selfCheckText.includes('本站自撰的小数据'),
+  );
+  check('自查时确实加载了编译器', toolchainRequests().length > 0, `${toolchainRequests().length} 个请求`);
+  const progressAfterSelfCheck = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('oiworld:pro-progress') ?? '{}'),
+  );
+  check(
+    '本地自查只记"已提交"，**不**算通过',
+    !(progressAfterSelfCheck?.state?.completedProblems ?? []).includes('p1-1') &&
+      (progressAfterSelfCheck?.state?.attemptedProblems ?? []).includes('p1-1'),
+    JSON.stringify(progressAfterSelfCheck?.state ?? null).slice(0, 120),
+  );
+  await page.screenshot({ path: path.join(shotDir, 'pro-selfcheck.png'), fullPage: true });
+
   step('书签提交：复制载荷并打开洛谷对应题目页');
   await page.addInitScript(() => {
     window.open = (target) => {
@@ -188,6 +225,21 @@ try {
     openedUrl.startsWith('https://www.luogu.com.cn/problem/B3614?oiworld='),
     openedUrl.slice(0, 80),
   );
+  const payloadInOpenedUrl = (() => {
+    try {
+      const encoded = new URL(openedUrl).searchParams.get('oiworld') ?? '';
+      const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(Buffer.from(base64, 'base64').toString('utf8'));
+    } catch {
+      return null;
+    }
+  })();
+  check(
+    '载荷里带了回传地址（书签据此把结果记回本站）',
+    Boolean(payloadInOpenedUrl?.back?.route?.includes('/pro/problem/p1-1')) &&
+      payloadInOpenedUrl?.back?.problemId === 'p1-1',
+    JSON.stringify(payloadInOpenedUrl?.back ?? null),
+  );
   const progressAfterSubmit = await page.evaluate(() =>
     JSON.parse(window.localStorage.getItem('oiworld:pro-progress') ?? '{}'),
   );
@@ -198,17 +250,38 @@ try {
   );
   await page.screenshot({ path: path.join(shotDir, 'pro-4-submit.png'), fullPage: true });
 
-  step('在洛谷拿到 AC 后手动标记通过');
-  await page.locator('button').filter({ hasText: /标记本题通过/ }).click();
-  await page.locator('.ant-popconfirm button').filter({ hasText: /^标记为通过$/ }).click();
-  await page.waitForSelector('.ant-modal-content', { timeout: 20_000 });
+  step('书签回传 AC → 自动标记通过；没通过则只记"未通过"');
+  const failedResult = encodeLuoguResult({ rid: 555002, status: 6, score: 30, problemId: 'p1-1' });
+  await hardGoto('/pro/problem/p1-1', `luoguResult=${failedResult}`);
+  await page.waitForFunction(() => /WA/.test(document.body.innerText), undefined, { timeout: 30_000 });
+  const afterFail = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('oiworld:pro-progress') ?? '{}'),
+  );
+  check(
+    'WA 只记"已提交"，不算通过',
+    !(afterFail?.state?.completedProblems ?? []).includes('p1-1') &&
+      (afterFail?.state?.attemptedProblems ?? []).includes('p1-1'),
+    JSON.stringify(afterFail?.state ?? null).slice(0, 120),
+  );
+
+  const passedResult = encodeLuoguResult({
+    rid: 555003,
+    status: 12,
+    score: 100,
+    time: 12,
+    memory: 1024,
+    historyScore: 100,
+    problemId: 'p1-1',
+  });
+  await hardGoto('/pro/problem/p1-1', `luoguResult=${passedResult}`);
+  await page.waitForSelector('.ant-modal-content', { timeout: 30_000 });
   const modalText = await page.locator('.ant-modal-content').first().innerText();
-  check('弹出「本题已标记为通过」', /已标记为通过/.test(modalText), modalText.replace(/\n/g, ' ').slice(0, 80));
+  check('弹出「洛谷评测通过」', /洛谷评测通过/.test(modalText), modalText.replace(/\n/g, ' ').slice(0, 80));
   const progressAfterPass = await page.evaluate(() =>
     JSON.parse(window.localStorage.getItem('oiworld:pro-progress') ?? '{}'),
   );
   check(
-    '本题已计入通过（oiworld:pro-progress）',
+    '回传的 AC 自动计入通过（oiworld:pro-progress）',
     (progressAfterPass?.state?.completedProblems ?? []).includes('p1-1'),
     JSON.stringify(progressAfterPass?.state?.completedProblems ?? null),
   );
@@ -247,15 +320,11 @@ try {
   check('已计入 1 题', /已通过\s*1/.test(progressText));
   check('说明进度存本地', progressText.includes('oiworld:pro-progress'));
 
-  step('Pro 页面完全没有加载编译器');
-  const toolchainRequests = requestedUrls.filter(
-    (item) =>
-      item.includes('/toolchain/') || item.includes('jsdelivr') || item.includes('clang.wasm'),
-  );
+  step('编译器只在你主动自查时才加载');
   check(
-    '没有任何工具链 / CDN 请求',
-    toolchainRequests.length === 0,
-    toolchainRequests.slice(0, 2).join(' | '),
+    '整个流程里的工具链请求都来自「小样例自查」那一步',
+    toolchainRequests().length > 0,
+    `${toolchainRequests().length} 个请求`,
   );
 
   check('全程无控制台错误', consoleErrors.length === 0, consoleErrors.slice(0, 2).join(' | '));

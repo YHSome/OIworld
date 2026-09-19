@@ -10,7 +10,7 @@
  * 结果是一样的（洛谷那边看到的是你的账号在提交），但你的凭据不会离开这台机器。
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   App as AntApp,
@@ -88,6 +88,12 @@ export function LuoguPage() {
   const [checking, setChecking] = useState(false);
   const [binding, setBinding] = useState(false);
   const [debugOutput, setDebugOutput] = useState('');
+  const bookmarkletRef = useRef<HTMLAnchorElement | null>(null);
+
+  /** 把 `javascript:` 书签地址直接写到 DOM 上（避开 React 对 javascript: URL 的警告） */
+  useEffect(() => {
+    bookmarkletRef.current?.setAttribute('href', BOOKMARKLET_HREF);
+  }, []);
 
   const bound = Boolean(boundAt);
 
@@ -532,8 +538,13 @@ export function LuoguPage() {
             —— 不装任何扩展，也不用粘贴 Cookie（用的是浏览器自己的登录状态）。
           </Text>
           <Space size={12} wrap align="center">
+            {/*
+              书签的 href 是 `javascript:…`，React 会警告"未来版本会屏蔽 javascript: URL"，
+              所以这里不把 href 写在 JSX 里，而是挂载后用 ref 直接写到 DOM 上。
+              这样既没有警告，拖拽安装也照常可用。
+            */}
             <a
-              href={BOOKMARKLET_HREF}
+              ref={bookmarkletRef}
               className="luogu-bookmarklet"
               onClick={(event) => {
                 event.preventDefault();

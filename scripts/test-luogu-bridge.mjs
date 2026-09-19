@@ -29,6 +29,11 @@ import https from 'node:https';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const SCRIPT_PATH = resolve(here, '..', 'public', 'oiworld-luogu.user.js');
+/** 真实抓包夹具：洛谷 /record/list 的实际响应（HTML + lentille-context） */
+const REAL_RECORD_LIST_HTML = readFileSync(
+  resolve(here, 'fixtures', 'luogu-record-list.html'),
+  'utf8',
+);
 const OFFLINE = process.argv.includes('--offline');
 const ORIGIN = 'https://yhsome.github.io';
 const EVIL_ORIGIN = 'https://evil.example.com';
@@ -441,6 +446,95 @@ async function mockSuite() {
       listRequest.url.includes('page=1') &&
       listRequest.url.includes('_contentOnly=1'),
     listRequest?.url,
+  );
+
+  // 洛谷对 _contentOnly=1 的请求经常返回 HTML，JSON 内嵌在 lentille-context 里 ——
+  // 只做 JSON.parse(整个响应) 会解析失败并被当成"没有记录"（这正是线上踩到的坑）
+  const htmlBridge = createBridge(async (options) => {
+    const path = new URL(options.url).pathname;
+    const ctx = (data) =>
+      `<html><head><script id="lentille-context" type="application/json">${JSON.stringify({
+        instance: 'main',
+        template: 'record.list',
+        status: 200,
+        data,
+      })}</script></head><body></body></html>`;
+    if (path.startsWith('/record/list')) {
+      return {
+        status: 200,
+        body: ctx({
+          records: {
+            result: [
+              { id: 111, status: 12, score: 100, time: 5, memory: 512, language: 27, submitTime: 1 },
+              { id: 110, status: 6, score: 0, time: 7, memory: 600, language: 27, submitTime: 0 },
+            ],
+          },
+        }),
+      };
+    }
+    if (path.startsWith('/record/')) {
+      return {
+        status: 200,
+        body: ctx({ record: { id: 111, status: 12, score: 100, time: 5, memory: 512 } }),
+      };
+    }
+    return { status: 404, body: '{}' };
+  });
+  const htmlList = await htmlBridge.call('records', { pid: 'P1001' });
+  check(
+    '记录列表是「HTML 内嵌 JSON」时也能解析出记录',
+    htmlList.ok && Array.isArray(htmlList.data) && htmlList.data.length === 2,
+    JSON.stringify(htmlList).slice(0, 200),
+  );
+  const htmlRecord = await htmlBridge.call('record', { rid: 111 });
+  check(
+    '记录详情是「HTML 内嵌 JSON」时也能解析',
+    htmlRecord.ok && htmlRecord.data.status === 12,
+    JSON.stringify(htmlRecord).slice(0, 160),
+  );
+
+  // 老版洛谷：window._feInjection = JSON.parse(decodeURIComponent("…"))
+  const injectionBridge = createBridge(async (options) => {
+    const path = new URL(options.url).pathname;
+    if (path.startsWith('/record/list')) {
+      const payload = encodeURIComponent(
+        JSON.stringify({ currentData: { records: { result: [{ id: 9, status: 12, score: 100 }] } } }),
+      );
+      return {
+        status: 200,
+        body: `<html><script>window._feInjection = JSON.parse(decodeURIComponent("${payload}"));</script></html>`,
+      };
+    }
+    return { status: 404, body: '{}' };
+  });
+  const injectionList = await injectionBridge.call('records', { pid: 'P1001' });
+  check(
+    '记录列表是「_feInjection」老形态时也能解析',
+    injectionList.ok && Array.isArray(injectionList.data) && injectionList.data.length === 1,
+    JSON.stringify(injectionList).slice(0, 160),
+  );
+
+  // 真实抓包：GET /record/list?pid=B3614&page=1&_contentOnly=1 的实际返回
+  // （HTML + lentille-context，记录在 data.records.result 里）
+  const realBridge = createBridge(async (options) => {
+    if (String(options.url).includes('/record/list')) {
+      return { status: 200, body: REAL_RECORD_LIST_HTML };
+    }
+    return { status: 404, body: '{}' };
+  });
+  const realList = await realBridge.call('records', { pid: 'B3614' });
+  const realRecords = Array.isArray(realList.data) ? realList.data : [];
+  check(
+    '真实抓包响应：解析出 3 条记录',
+    realList.ok && realRecords.length === 3,
+    `实际 ${realRecords.length}`,
+  );
+  const mine = realRecords.filter((item) => String(item?.user?.uid ?? '') === '1895028');
+  check('真实抓包响应：按 uid 过滤出自己的 2 条', mine.length === 2, `实际 ${mine.length}`);
+  check(
+    '真实抓包响应：R298504808 的 status/分数/语言解析正确',
+    mine[0]?.id === 298504808 && mine[0]?.status === 14 && mine[0]?.score === 0 && mine[0]?.language === 27,
+    JSON.stringify({ id: mine[0]?.id, status: mine[0]?.status, score: mine[0]?.score }),
   );
 
   // 绑定 Cookie：模拟"浏览器没登录，用粘贴的 Cookie 提交"

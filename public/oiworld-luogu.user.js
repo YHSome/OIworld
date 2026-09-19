@@ -1,9 +1,11 @@
 // ==UserScript==
 // @name         OIworld 洛谷远程提交桥
 // @namespace    https://github.com/YHSome/OIworld
-// @version      1.0.0
+// @version      1.0.1
 // @description  让 OIworld 靶场页面在你的浏览器里直接向洛谷提交代码、读取评测结果与提交记录。Cookie 只在你的浏览器与洛谷之间流转，不经过任何第三方服务器。
 // @author       YHSome
+// @updateURL    https://yhsome.github.io/OIworld/oiworld-luogu.user.js
+// @downloadURL  https://yhsome.github.io/OIworld/oiworld-luogu.user.js
 // @match        https://*.github.io/OIworld/*
 // @match        http://localhost/*
 // @match        http://localhost:*/*
@@ -146,6 +148,54 @@
     } catch (error) {
       return null;
     }
+  }
+
+  /**
+   * 解析一次洛谷接口的响应体。
+   *
+   * 关键点：**洛谷对 `?_contentOnly=1` 的请求并不总是返回纯 JSON**，
+   * 很多时候返回的仍然是 HTML，真正的 JSON 内嵌在
+   * `<script id="lentille-context" type="application/json">…</script>` 里
+   * （老版本则是 `window._feInjection = JSON.parse(decodeURIComponent("…"))`）。
+   * 只做 JSON.parse(body) 会直接解析失败 → 被当成"没有记录"。
+   */
+  function parsePayload(body) {
+    var text = String(body || '').trim();
+    if (!text) return null;
+
+    var direct = parseJson(text);
+    if (direct) return direct;
+
+    var context = extractLentilleContext(text);
+    if (context) return context;
+
+    var injection = /window\._feInjection\s*=\s*JSON\.parse\(decodeURIComponent\("([\s\S]*?)"\)\)/.exec(text);
+    if (injection) {
+      try {
+        return JSON.parse(decodeURIComponent(injection[1]));
+      } catch (error) {
+        /* 继续往下兜底 */
+      }
+    }
+
+    // 最后再兜一次：从 HTML 里截出第一个看起来完整的 JSON 对象
+    var start = text.indexOf('{"');
+    if (start !== -1) {
+      var depth = 0;
+      for (var i = start; i < text.length; i += 1) {
+        var ch = text[i];
+        if (ch === '{') depth += 1;
+        else if (ch === '}') {
+          depth -= 1;
+          if (depth === 0) {
+            var candidate = parseJson(text.slice(start, i + 1));
+            if (candidate) return candidate;
+            break;
+          }
+        }
+      }
+    }
+    return null;
   }
 
   /** 从嵌套对象里按候选路径取第一个存在的值 */
@@ -442,7 +492,7 @@
         return request({ method: 'POST', url: url, headers: headers, data: body });
       })
       .then(function (response) {
-        var json = parseJson(response.body);
+        var json = parsePayload(response.body);
         var rid = pick(json || {}, ['rid', 'data.rid', 'currentData.rid', 'data.data.rid']);
         if (response.status >= 200 && response.status < 300 && rid) {
           return { rid: Number(rid), status: response.status, raw: json };
@@ -470,7 +520,7 @@
       url: LUOGU + '/record/' + encodeURIComponent(rid) + '?_contentOnly=1',
       headers: { Accept: 'application/json', 'x-luogu-type': 'content-only' },
     }).then(function (response) {
-      var json = parseJson(response.body);
+      var json = parsePayload(response.body);
       if (response.status !== 200) {
         var failure = describeFailure(response.status, json, response.body);
         throw Object.assign(new Error(failure.message), { code: failure.code });
@@ -501,7 +551,7 @@
       url: url,
       headers: withCookie({ Accept: 'application/json', 'x-luogu-type': 'content-only' }, payload.cookie),
     }).then(function (response) {
-      var json = parseJson(response.body);
+      var json = parsePayload(response.body);
       if (response.status !== 200) {
         var failure = describeFailure(response.status, json, response.body);
         throw Object.assign(new Error(failure.message), { code: failure.code });

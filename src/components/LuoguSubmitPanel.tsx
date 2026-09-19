@@ -52,6 +52,7 @@ import {
   luoguRecordListUrl,
   luoguRecordUrl,
   pollLuoguRecord,
+  debugLuogu,
   submitToLuogu,
 } from '../luogu/service';
 import {
@@ -124,6 +125,8 @@ export function LuoguSubmitPanel({
   const [loadingRecords, setLoadingRecords] = useState(false);
   const [recordsError, setRecordsError] = useState('');
   const [recordsNote, setRecordsNote] = useState('');
+  const [rawDump, setRawDump] = useState('');
+  const [dumping, setDumping] = useState(false);
   const pollToken = useRef(0);
 
   const language = storedLanguage ?? LUOGU_DEFAULT_LANGUAGE[track];
@@ -240,8 +243,26 @@ export function LuoguSubmitPanel({
     }
   };
 
-  const handleCopy = async () => {
+  /**
+   * 诊断：把洛谷「提交记录列表」这个接口的原始返回抓回来。
+   * 记录显示不出来时，把它贴给维护者就能立刻定位（是没登录、接口变了，还是解析问题）。
+   */
+  const handleDumpRecords = async () => {
+    setDumping(true);
+    setRawDump('读取中…');
     try {
+      const result = await debugLuogu(
+        `/record/list?pid=${encodeURIComponent(pid)}&page=1&_contentOnly=1`,
+      );
+      setRawDump(`GET ${result.url}\nHTTP ${result.status}\n\n${result.body}`);
+    } catch (error) {
+      setRawDump(describeLuoguError(error));
+    } finally {
+      setDumping(false);
+    }
+  };
+
+  const handleCopy = async () => {    try {
       await navigator.clipboard.writeText(code);
       messageApi.success('代码已复制，去洛谷粘贴即可');
     } catch {
@@ -559,6 +580,40 @@ export function LuoguSubmitPanel({
           <Text type="secondary" style={{ fontSize: 12 }}>
             {recordsNote}
           </Text>
+        )}
+
+        {(recordsError || recordsNote || (records && records.length === 0)) && pidValid && (
+          <Space direction="vertical" size={6} style={{ width: '100%' }}>
+            <Space size={8}>
+              <Button size="small" loading={dumping} onClick={handleDumpRecords}>
+                查看洛谷原始返回（排查用）
+              </Button>
+              {rawDump && (
+                <Button
+                  size="small"
+                  type="link"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(rawDump);
+                      messageApi.success('已复制，可以直接发给维护者');
+                    } catch {
+                      messageApi.warning('复制失败，请手动选中');
+                    }
+                  }}
+                >
+                  复制
+                </Button>
+              )}
+            </Space>
+            {rawDump && (
+              <Input.TextArea
+                value={rawDump}
+                readOnly
+                autoSize={{ minRows: 4, maxRows: 10 }}
+                style={{ fontFamily: 'Consolas, monospace', fontSize: 12 }}
+              />
+            )}
+          </Space>
         )}
 
         {tableRecords && tableRecords.length > 0 && (

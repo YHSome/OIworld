@@ -244,6 +244,11 @@ export default defineConfig(({ command }) => {
           '**/public/python-runtime/**',
           '**/public/doppio-runtime/**',
           '**/public/java-runtime/**',
+          // 编辑器/工具以"临时目录 + 重命名"的方式原子写文件时，会在目标文件旁边建一个
+          // `.<文件名>.<pid>.<uuid>.tmpdir/` 目录；监听器扫到它就会抛 EBUSY 把 dev server 打死。
+          // 这两条把它排除掉，放在任何目录里写文件都不会再触发。
+          '**/*.tmpdir/**',
+          '**/.*.tmpdir/**',
         ],
       },
     },

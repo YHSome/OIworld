@@ -119,7 +119,16 @@ function luoguTransportStub() {
         return;
       }
       if (path.startsWith('/record/list')) {
-        reply(200, JSON.stringify({ currentData: { records: { result: RECORDS } } }));
+        // 洛谷对 _contentOnly=1 的请求返回的是 HTML，JSON 内嵌在 lentille-context 里
+        reply(
+          200,
+          `<html><head><script id="lentille-context" type="application/json">${JSON.stringify({
+            instance: 'main',
+            template: 'record.list',
+            status: 200,
+            data: { records: { result: RECORDS } },
+          })}</script></head><body></body></html>`,
+        );
         return;
       }
       if (path.startsWith('/record/')) {
@@ -128,8 +137,11 @@ function luoguTransportStub() {
         const settled = state.recordPolls >= 3;
         reply(
           200,
-          JSON.stringify({
-            currentData: {
+          `<html><head><script id="lentille-context" type="application/json">${JSON.stringify({
+            instance: 'main',
+            template: 'record.show',
+            status: 200,
+            data: {
               record: {
                 id: 98765432,
                 status: settled ? 12 : 1,
@@ -141,7 +153,7 @@ function luoguTransportStub() {
                 compilationResult: null,
               },
             },
-          }),
+          })}</script></head><body></body></html>`,
         );
         return;
       }

@@ -20,7 +20,6 @@
     "validate:luogu": "node scripts/verify-luogu-codes.mjs",
     "validate:pro-luogu": "node scripts/validate-pro-luogu.mjs",
     "fix:lessons": "node scripts/fix-lesson-backticks.mjs",
-    "test:bridge": "node scripts/test-luogu-bridge.mjs",
     "test:luogu": "node scripts/e2e-luogu.mjs",
     "test:e2e": "node scripts/e2e.mjs",
     "test:problem": "node scripts/e2e-problem.mjs",

@@ -312,9 +312,9 @@ export default function App() {
           </Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
             {luoguRoute
-              ? '提交由你浏览器里的桥接脚本直接发给洛谷；本站没有服务器，代码与 Cookie 都不离开你的浏览器'
+              ? '提交由你浏览器里的书签脚本在洛谷页面上完成；本站没有服务器，代码与登录态都不离开你的浏览器'
               : proRoute
-                ? '题目自撰，判题在洛谷进行：代码由你浏览器里的桥接脚本 / 书签直接提交（不抓取洛谷题面）'
+                ? '题目自撰，判题在洛谷进行：用「书签提交」把代码交到洛谷（不抓取洛谷题面）'
                 : javaRoute
                 ? JAVA_RUNTIME_FOOTER
                 : pythonRoute

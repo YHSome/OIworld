@@ -20,6 +20,7 @@ import {
   Collapse,
   Divider,
   Modal,
+  Popconfirm,
   Space,
   Tag,
   Tooltip,
@@ -30,6 +31,7 @@ import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
   BulbOutlined,
+  CheckCircleOutlined,
   CloudUploadOutlined,
   CodeOutlined,
   CopyOutlined,
@@ -52,8 +54,6 @@ import { useDeveloperMode } from '../hooks/useDeveloperMode';
 import { MarkdownView } from '../components/MarkdownView';
 import { CodeEditor, type CodeEditorHandle } from '../components/CodeEditor';
 import { LuoguSubmitPanel } from '../components/LuoguSubmitPanel';
-import { isLuoguPending } from '../luogu/verdict';
-import type { LuoguRecord } from '../luogu/types';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -76,8 +76,6 @@ export function ProProblemPage() {
 
   const [code, setCode] = useState('');
   const [solutionVisible, setSolutionVisible] = useState(false);
-  /** 这道题提交过程中最近一次洛谷结果（用于避免重复弹「通过」） */
-  const handledRid = useRef<number | null>(null);
 
   const draftTimer = useRef<number | undefined>(undefined);
   const editorRef = useRef<CodeEditorHandle | null>(null);
@@ -96,7 +94,6 @@ export function ProProblemPage() {
     const draft = useProProgressStore.getState().drafts[problem.id];
     setCode(draft ?? problem.starter_code);
     setSolutionVisible(false);
-    handledRid.current = null;
     if (isProProblemUnlocked(problem.id, completed, developerMode)) {
       setLastVisited(problem.id);
     }
@@ -116,57 +113,48 @@ export function ProProblemPage() {
   );
 
   /**
-   * 洛谷评测结果回调：**AC 才算通过**，其它最终结果记为未通过。
-   * 只在「这一条提交」上判定，避免把记录列表里别人的 AC 当成本题通过。
+   * 点了「书签提交」：记为"已提交"（本站读不到洛谷的评测结果，所以只能记到这一步）。
+   * 真正的通过由用户在洛谷确认后自己标记（见 handleMarkPassed）。
    */
-  const handleVerdict = useCallback(
-    (record: LuoguRecord) => {
-      if (!problem) return;
-      const alreadyCompleted = useProProgressStore
-        .getState()
-        .completedProblems.includes(problem.id);
+  const handleOpenLuogu = useCallback(() => {
+    if (!problem) return;
+    markAttempted(problem.id);
+  }, [problem, markAttempted]);
 
-      if (record.status === 12) {
-        markCompleted(problem.id);
-        if (!alreadyCompleted && handledRid.current !== record.id) {
-          handledRid.current = record.id;
-          modal.success({
-            title: '洛谷评测通过！🎉',
-            content: (
-              <div>
-                <Paragraph style={{ marginBottom: 8 }}>
-                  《{problem.title}》在洛谷上拿到了 <Text strong>AC</Text>
-                  {record.time ? `，用时 ${record.time} ms` : ''}
-                  {record.memory ? `、内存 ${(record.memory / 1024).toFixed(2)} MB` : ''}。
-                </Paragraph>
-                {next ? (
-                  <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                    下一题：《{next.problem.title}》
-                  </Paragraph>
-                ) : (
-                  <Paragraph type="secondary" style={{ marginBottom: 0 }}>
-                    你已经完成了 Pro 靶场的全部题目，太厉害了！
-                  </Paragraph>
-                )}
-              </div>
-            ),
-            okText: next ? '去做下一题' : '好的',
-            cancelText: '留在本题',
-            onOk: () => {
-              if (next) navigate(`/pro/problem/${next.problem.id}`);
-            },
-          });
-        }
-        return;
-      }
-
-      // 还在评测队列里就先不动进度
-      if (!isLuoguPending(record.status)) {
-        markAttempted(problem.id);
-      }
-    },
-    [problem, markCompleted, markAttempted, modal, navigate, next],
-  );
+  /** 用户在洛谷拿到 AC 之后，手动把本题标记为通过（会解锁下一题） */
+  const handleMarkPassed = () => {
+    if (!problem) return;
+    const firstTime = !useProProgressStore.getState().completedProblems.includes(problem.id);
+    markCompleted(problem.id);
+    if (firstTime) {
+      modal.success({
+        title: '本题已标记为通过 🎉',
+        content: (
+          <div>
+            <Paragraph style={{ marginBottom: 8 }}>
+              你在洛谷通过了《{problem.title}》（<Text code>{problem.luogu_code || '洛谷对应题目'}</Text>）。
+            </Paragraph>
+            {next ? (
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                下一题：《{next.problem.title}》
+              </Paragraph>
+            ) : (
+              <Paragraph type="secondary" style={{ marginBottom: 0 }}>
+                你已经完成了 Pro 靶场的全部题目，太厉害了！
+              </Paragraph>
+            )}
+          </div>
+        ),
+        okText: next ? '去做下一题' : '好的',
+        cancelText: '留在本题',
+        onOk: () => {
+          if (next) navigate(`/pro/problem/${next.problem.id}`);
+        },
+      });
+    } else {
+      messageApi.success('已标记为通过');
+    }
+  };
 
   const handleReset = () => {
     if (!problem) return;
@@ -366,6 +354,24 @@ export function ProProblemPage() {
                 ? '查看参考题解'
                 : '在洛谷通过本题后可查看参考题解'}
             </Button>
+            <Popconfirm
+              title="确认已经在洛谷通过了这道题？"
+              description="本站读不到洛谷的评测结果（没有浏览器扩展就无法跨站读取），所以通过与否以你自己的判断为准。"
+              okText="标记为通过"
+              cancelText="取消"
+              onConfirm={handleMarkPassed}
+            >
+              <Button
+                block
+                style={{ marginTop: 8 }}
+                icon={<CheckCircleOutlined />}
+                disabled={completed.includes(problem.id)}
+              >
+                {completed.includes(problem.id)
+                  ? '本题已通过'
+                  : '我已在洛谷 AC · 标记本题通过'}
+              </Button>
+            </Popconfirm>
             {developerMode && (
               <Button
                 block
@@ -487,8 +493,13 @@ export function ProProblemPage() {
               </li>
               <li>在下面的编辑器里写代码。判题由洛谷完成，所以这里没有本地「运行」。</li>
               <li>
-                点<Text strong>「提交到洛谷」</Text>，评测结果会显示在按钮下方；
-                <Text strong>AC 即通过本题</Text>并解锁下一题。
+                点<Text strong>「书签提交」</Text>：会自动复制代码并打开洛谷题目页，
+                在那边点一下书签栏里的「OIworld 提交」，评测结果显示在洛谷页面右上角。
+              </li>
+              <li>
+                洛谷那边<Text strong>拿到 AC 之后</Text>，回本题点
+                <Text strong>「我已在洛谷 AC · 标记本题通过」</Text>，即可解锁下一题
+                （本站读不到洛谷的评测结果，这一步由你确认）。
               </li>
             </ol>
           }
@@ -505,7 +516,7 @@ export function ProProblemPage() {
                 C++ 20
               </Tag>
               <Text type="secondary" style={{ fontSize: 12 }}>
-                Monaco 编辑器 · 代码由你本机的桥接脚本/书签发给洛谷
+                Monaco 编辑器 · 代码由书签脚本在你浏览器里发给洛谷
               </Text>
             </Space>
             <Space>
@@ -544,7 +555,7 @@ export function ProProblemPage() {
             track="cpp"
             pidLabel={luoguAligned ? '洛谷对应题目' : '洛谷同类题目'}
             disabled={!unlocked}
-            onVerdict={handleVerdict}
+            onOpenLuogu={handleOpenLuogu}
           />
         </Card>
 
@@ -557,8 +568,10 @@ export function ProProblemPage() {
           description={
             <Text style={{ fontSize: 12 }}>
               Pro 靶场的题目都来自洛谷的公开题（题号已逐题核对），所以判题直接交给洛谷：
-              你得到的是洛谷官方的评测结果与提交记录，也不用再下载 90MB 的编译器。
+              你得到的是洛谷官方的评测结果，也不用再下载 90MB 的编译器。
               本题的描述、题解与样例是本站自撰的，洛谷那边只用于评测。
+              另外，本站<Text strong>不装浏览器扩展就读不到洛谷的评测结果与提交记录</Text>
+              （跨站读取被浏览器拦截），所以结果在洛谷页面上看、通过与否由你确认后标记。
             </Text>
           }
         />

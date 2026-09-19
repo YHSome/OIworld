@@ -55,7 +55,7 @@ function resolve(){
     if(text&&text.trim()){return {code:text,lang:fallbackLang,enableO2:fallbackO2};}
     throw new Error('empty');
   }).catch(function(){
-    var typed=window.prompt('没读到代码：把 OIworld 里复制的代码粘贴到这里（或改用 OIworld 的桥接脚本自动提交）');
+    var typed=window.prompt('没读到代码：请回到 OIworld 题目页点一次「书签提交」，或把代码直接粘贴到这里');
     if(!typed||!typed.trim())throw new Error('cancel');
     return {code:typed,lang:fallbackLang,enableO2:fallbackO2};
   });

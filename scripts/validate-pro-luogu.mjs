@@ -43,6 +43,7 @@ console.log(`对洛谷样例校验 ${targets.length} 道 Pro 题的参考题解\
 
 let pass = 0;
 const failures = [];
+const pending = [];
 
 for (const entry of targets) {
   const { id, title, luogu_code: code } = entry.problem;
@@ -75,18 +76,29 @@ for (const entry of targets) {
   if (ok) {
     pass += 1;
     console.log(`  ✅ [${id}] ${title} → ${code} ${name}`);
-  } else {
+  } else if (entry.problem.luogu_aligned) {
+    // 标记为"已对齐"却跑不过洛谷样例 —— 这是真正需要拦下来的错误
     failures.push({ id, title, code, name, details });
-    console.log(`  ❌ [${id}] ${title} → ${code} ${name}`);
+    console.log(`  ❌ [${id}] ${title} → ${code} ${name}（标记为已对齐，但样例过不去）`);
     for (const detail of details.slice(0, 2)) console.log(`       ${detail}`);
+  } else {
+    // 还没对齐的题：如实列出来，不算失败（题库正在逐题对齐）
+    pending.push({ id, title, code, name });
+    console.log(`  ⏳ [${id}] ${title} → ${code} ${name}`);
+    for (const detail of details.slice(0, 1)) console.log(`       ${detail}`);
   }
 }
 
 console.log(
-  `\n${failures.length === 0 ? '✅ 全部通过' : `❌ ${failures.length} 道题的参考题解跑不过洛谷样例`}：通过 ${pass}/${targets.length}`,
+  `\n${failures.length === 0 ? '✅ 已对齐的题目全部通过洛谷样例' : `❌ 有 ${failures.length} 道"已对齐"的题跑不过样例`}` +
+    `：通过 ${pass}/${targets.length}，待对齐 ${pending.length} 道`,
 );
 if (failures.length) {
-  console.log('\n需要对齐输入输出格式的题目：');
+  console.log('\n已标记 luogu_aligned 但对不上，需要立刻修：');
   for (const item of failures) console.log(`  - [${item.id}] ${item.title} → ${item.code} ${item.name}`);
   process.exitCode = 1;
+}
+if (pending.length) {
+  console.log('\n待对齐（题面格式与洛谷原题不同，界面上不会预填题号）：');
+  for (const item of pending) console.log(`  - [${item.id}] ${item.title} → ${item.code} ${item.name}`);
 }

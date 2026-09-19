@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Pro 靶场验收（数据结构与进阶算法）。
  *
  * Pro 的判题在洛谷进行，所以这一套重点验证：
@@ -47,74 +47,6 @@ const check = (label, condition, extra = '') => {
 };
 const buttonByText = (text) =>
   page.locator('button').filter({ hasText: new RegExp(`^${text}$`) });
-
-/** 假扩展层：只替换 GM_xmlhttpRequest，桥接脚本用的是站点上真实的那份 */
-function luoguTransportStub() {
-  return () => {
-    const CSRF = '1789843791:oSihpqbI721y5U/hqVcZtPK0D/a3zOLNDtNKdwFldJg=';
-    window.__FAKE_LUOGU_STATE__ = { submits: 0, posts: [] };
-    window.GM_xmlhttpRequest = (options) => {
-      const url = String(options.url);
-      const state = window.__FAKE_LUOGU_STATE__;
-      const reply = (status, body) => {
-        window.setTimeout(() => {
-          if (options.onload) {
-            options.onload({ status, responseText: body, finalUrl: options.url });
-          }
-        }, 30);
-      };
-      if (url.includes('/user/setting')) {
-        reply(200, '<html><script>window.user={"uid":66666,"name":"YHSome"};</script></html>');
-        return;
-      }
-      if (url.includes('/fe/api/problem/submit/')) {
-        state.submits += 1;
-        state.posts.push({ url, data: options.data, headers: options.headers || {} });
-        reply(200, JSON.stringify({ data: { rid: 555001 } }));
-        return;
-      }
-      if (url.includes('/record/list')) {
-        reply(
-          200,
-          JSON.stringify({
-            currentData: {
-              records: {
-                result: [
-                  {
-                    id: 555001,
-                    status: 12,
-                    score: 100,
-                    time: 8,
-                    memory: 1024,
-                    language: 27,
-                    submitTime: 1789843800,
-                  },
-                ],
-              },
-            },
-          }),
-        );
-        return;
-      }
-      if (url.includes('/record/')) {
-        reply(
-          200,
-          JSON.stringify({
-            currentData: {
-              record: { id: 555001, status: 12, score: 100, time: 8, memory: 1024, language: 27 },
-            },
-          }),
-        );
-        return;
-      }
-      if (url.includes('/problem/')) {
-        reply(200, `<html><head><meta name="csrf-token" content="${CSRF}"></head></html>`);
-        return;
-      }
-      reply(404, '{}');
-    };
-  };
-}
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
@@ -234,42 +166,56 @@ try {
     (await page.locator('button').filter({ hasText: /复制题目 JSON/ }).count()) > 0,
   );
 
-  step('装桥后提交到洛谷，洛谷返回 AC → 本题通过');
-  const scriptSource = await fetch(`${base}/oiworld-luogu.user.js`).then((response) => {
-    if (!response.ok) throw new Error(`取不到桥接脚本：HTTP ${response.status}`);
-    return response.text();
+  step('书签提交：复制载荷并打开洛谷对应题目页');
+  await page.addInitScript(() => {
+    window.open = (target) => {
+      window.__lastOpenedUrl = String(target);
+      return { closed: false, close() {}, focus() {}, blur() {} };
+    };
   });
-  await page.addInitScript({
-    content: `try { localStorage.setItem('oiworld:luogu', JSON.stringify({ state: { mode: 'session', clientId: '', uid: '66666', accountName: 'YHSome', boundAt: Date.now(), enableO2: false, languageByTrack: {}, problemIds: {} }, version: 0 })); } catch (e) {}`,
-  });
-  await page.addInitScript(luoguTransportStub());
-  await page.addInitScript({ content: scriptSource });
-  // 上一步用过 ?dev=1，而它会把自己从地址栏清掉；若这时再 goto 同一个地址就只是同文档跳转，
-  // 新加的 init script 不会执行。带一个无害的查询参数，强制走一次真正的导航。
   await hardGoto('/pro/problem/p1-1');
   await page.waitForSelector('.luogu-panel', { timeout: 60_000 });
-  await page.waitForFunction(() => document.body.innerText.includes('桥已连接'), undefined, {
-    timeout: 30_000,
-  });
-  await page.locator('.luogu-panel button').filter({ hasText: /提交到洛谷/ }).click();
-  await page.waitForSelector('.ant-modal-content', { timeout: 60_000 });
+  check(
+    '面板里是「书签提交」，不再有桥接/绑定状态',
+    (await page.locator('.luogu-panel').innerText()).includes('书签提交') &&
+      !(await page.locator('.luogu-panel').innerText()).includes('桥已连接'),
+  );
+  await page.locator('.luogu-panel button').filter({ hasText: /^书签提交$/ }).click();
+  await page.waitForFunction(() => Boolean(window.__lastOpenedUrl), undefined, { timeout: 15_000 });
+  const openedUrl = await page.evaluate(() => window.__lastOpenedUrl ?? '');
+  check(
+    '打开了洛谷对应题目页（带代码载荷）',
+    openedUrl.startsWith('https://www.luogu.com.cn/problem/B3614?oiworld='),
+    openedUrl.slice(0, 80),
+  );
+  const progressAfterSubmit = await page.evaluate(() =>
+    JSON.parse(window.localStorage.getItem('oiworld:pro-progress') ?? '{}'),
+  );
+  check(
+    '本题被记为"已提交"',
+    (progressAfterSubmit?.state?.attemptedProblems ?? []).includes('p1-1'),
+    JSON.stringify(progressAfterSubmit?.state?.attemptedProblems ?? null),
+  );
+  await page.screenshot({ path: path.join(shotDir, 'pro-4-submit.png'), fullPage: true });
+
+  step('在洛谷拿到 AC 后手动标记通过');
+  await page.locator('button').filter({ hasText: /标记本题通过/ }).click();
+  await page.locator('.ant-popconfirm button').filter({ hasText: /^标记为通过$/ }).click();
+  await page.waitForSelector('.ant-modal-content', { timeout: 20_000 });
   const modalText = await page.locator('.ant-modal-content').first().innerText();
-  check('弹出「洛谷评测通过」', /洛谷评测通过/.test(modalText), modalText.replace(/\n/g, ' ').slice(0, 80));
-  const submitState = await page.evaluate(() => window.__FAKE_LUOGU_STATE__);
-  check('桥收到了 1 次提交', submitState.submits === 1, `submits=${submitState.submits}`);
-  const progressAfterAc = await page.evaluate(() =>
+  check('弹出「本题已标记为通过」', /已标记为通过/.test(modalText), modalText.replace(/\n/g, ' ').slice(0, 80));
+  const progressAfterPass = await page.evaluate(() =>
     JSON.parse(window.localStorage.getItem('oiworld:pro-progress') ?? '{}'),
   );
   check(
     '本题已计入通过（oiworld:pro-progress）',
-    (progressAfterAc?.state?.completedProblems ?? []).includes('p1-1'),
-    JSON.stringify(progressAfterAc?.state?.completedProblems ?? null),
+    (progressAfterPass?.state?.completedProblems ?? []).includes('p1-1'),
+    JSON.stringify(progressAfterPass?.state?.completedProblems ?? null),
   );
   await page.keyboard.press('Escape');
   await page.waitForTimeout(300);
-  await page.screenshot({ path: path.join(shotDir, 'pro-4-ac.png'), fullPage: true });
 
-  step('AC 之后解锁下一题');
+  step('通过之后解锁下一题');
   // 前面用过 ?dev=1，开发者模式会持久化并解锁全部题目，这里先关掉才能验证"按顺序解锁"
   await page.evaluate(() => {
     const raw = window.localStorage.getItem('oiworld:progress');
@@ -283,7 +229,7 @@ try {
     .waitForSelector('.problem-page', { timeout: 20_000 })
     .then(() => true)
     .catch(() => false);
-  check('第二题已解锁（因为第一题在洛谷 AC 了）', secondUnlocked);
+  check('第二题已解锁（因为第一题标记为通过了）', secondUnlocked);
   await hardGoto('/pro/problem/p1-3');
   const thirdLocked = await page
     .waitForFunction(() => document.body.innerText.includes('这道题还没有解锁'), undefined, {

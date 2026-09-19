@@ -264,6 +264,11 @@ export function ProProblemPage() {
   /** 洛谷跳转：优先精确题号，其次同类型题目搜索页 */
   const luoguCode = problem.luogu_code?.trim() ?? '';
   const luoguKeyword = problem.luogu_keyword?.trim() ?? '';
+  /**
+   * 只有**格式已对齐洛谷原题**的题目才预填题号。
+   * 本站题面是自撰的，格式未必与洛谷相同；预填会让人误以为"照参考题解写就能 AC"。
+   */
+  const luoguAligned = Boolean(problem.luogu_aligned && luoguCode);
   const luoguUrl = luoguCode
     ? `https://www.luogu.com.cn/problem/${luoguCode}`
     : luoguKeyword
@@ -393,7 +398,7 @@ export function ProProblemPage() {
                   </Text>
                   {luoguCode ? (
                     <Text>
-                      洛谷对应题目：
+                      {luoguAligned ? '洛谷对应题目：' : '洛谷同类题目：'}
                       <a
                         href={luoguUrl}
                         target="_blank"
@@ -419,6 +424,15 @@ export function ProProblemPage() {
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     本站<Text strong>不抓取洛谷题面</Text>：题面、数据与评测都在洛谷，
                     本题的描述与题解为本站自撰。判题以洛谷结果为准，AC 即通过本题。
+                    {!luoguAligned && (
+                      <>
+                        {' '}
+                        <Text type="warning">
+                          注意：本题的输入输出格式是本站自撰的，与洛谷那道题<Text strong>不一定相同</Text>
+                          —— 想交洛谷请先读洛谷题面，把输入输出改成洛谷的格式。
+                        </Text>
+                      </>
+                    )}
                   </Text>
                 </Space>
               </div>
@@ -466,7 +480,11 @@ export function ProProblemPage() {
           message="这道题怎么交？"
           description={
             <ol style={{ margin: 0, paddingInlineStart: 20, fontSize: 12 }}>
-              <li>题号已经按题库填好了（也可以改成别的洛谷题号，会记住）。</li>
+              <li>
+                {luoguAligned
+                  ? '题号已经按题库填好了（也可以改成别的洛谷题号，会记住）。'
+                  : '填上你要提交的洛谷题号（例如 P5788），填过会记住。'}
+              </li>
               <li>在下面的编辑器里写代码。判题由洛谷完成，所以这里没有本地「运行」。</li>
               <li>
                 点<Text strong>「提交到洛谷」</Text>，评测结果会显示在按钮下方；
@@ -520,10 +538,11 @@ export function ProProblemPage() {
         >
           <LuoguSubmitPanel
             problemId={problem.id}
-            defaultPid={luoguCode}
+            defaultPid={luoguAligned ? luoguCode : ''}
             keyword={luoguKeyword}
             code={code}
             track="cpp"
+            pidLabel={luoguAligned ? '洛谷对应题目' : '洛谷同类题目'}
             disabled={!unlocked}
             onVerdict={handleVerdict}
           />

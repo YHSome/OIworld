@@ -200,8 +200,23 @@ try {
   const prefilledPid = await page
     .locator('.luogu-panel input[placeholder*="P1001"]')
     .inputValue();
-  check('提交面板已按题库预填题号 B3614', prefilledPid === 'B3614', prefilledPid);
+  check('已对齐洛谷格式的题会预填题号（p1-1 → B3614）', prefilledPid === 'B3614', prefilledPid);
+  check(
+    '已对齐的题标注为「洛谷对应题目」',
+    problemText.includes('洛谷对应题目') && !problemText.includes('与洛谷那道题'),
+  );
   await page.screenshot({ path: path.join(shotDir, 'pro-3-problem.png'), fullPage: true });
+
+  step('尚未对齐洛谷格式的题：不预填题号，并明确提示格式可能不同');
+  await page.goto(urlWithQuery('/pro/problem/p2-1', 'dev=1'), { waitUntil: 'domcontentloaded' });
+  await page.waitForSelector('.luogu-panel', { timeout: 60_000 });
+  const unalignedPid = await page
+    .locator('.luogu-panel input[placeholder*="P1001"]')
+    .inputValue();
+  check('未对齐的题不预填题号', unalignedPid === '', `实际 "${unalignedPid}"`);
+  const unalignedText = await page.locator('.problem-left').innerText();
+  check('提示了输入输出格式不一定相同', unalignedText.includes('不一定相同'), '');
+  check('标注为「洛谷同类题目」', unalignedText.includes('洛谷同类题目'));
 
   step('开发者模式：填入参考题解（不再本地评测）');
   await page.goto(urlWithQuery('/pro/problem/p1-1', 'dev=1'), { waitUntil: 'domcontentloaded' });

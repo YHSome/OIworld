@@ -36,6 +36,12 @@ export interface Problem {
   luogu_keyword?: string;
   /** 洛谷题号（例如 P3367）。只在人工核对过之后才填 */
   luogu_code?: string;
+  /**
+   * 本题输入输出格式是否已与 luogu_code 那道洛谷题**对齐**：
+   * 对齐后参考题解可以原样提交到洛谷（由 `npm run validate:pro-luogu` 用洛谷样例校验）。
+   * 未对齐时不要在提交面板里预填题号，否则用户会以为照着题解写就能 AC。
+   */
+  luogu_aligned?: boolean;
 }
 
 /** 一个阶段（阶段一到阶段七）的所有题目 */

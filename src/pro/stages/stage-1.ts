@@ -29,35 +29,42 @@ export const STAGE_1: StageData = {
         '很多题目不会直接给你一个栈，而是让你**自己用数组实现一个栈**，然后按操作序列执行。\n\n' +
         '用数组实现栈只需要两样东西：一个数组存数据，一个变量记"栈顶在哪里"。',
       task:
-        '按顺序执行 n 条操作，对 `pop` / `top` / `size` 操作输出结果：\n\n' +
-        '- `push x`：把 x 入栈\n- `pop`：弹出栈顶，输出被弹出的值；栈空时输出 `-1`\n' +
-        '- `top`：输出栈顶元素；栈空时输出 `-1`\n- `size`：输出当前元素个数',
+        '洛谷 B3614【模板】栈：**同一个测试点里有多组数据**，按操作序列维护一个栈，并按要求输出结果。\n' +
+        '\n' +
+        '- `push x`：把 x 入栈（`0 ≤ x < 2^64`，注意用 `unsigned long long`）\n' +
+        '- `pop`：弹出栈顶；**栈空时输出 `Empty`**（不弹出）\n' +
+        '- `query`：输出栈顶；**栈空时输出 `Anguei!`**\n' +
+        '- `size`：输出当前元素个数',
       lesson: `**栈的模型**：只有一个口，后进去的先出来（LIFO）。
 
 用数组实现时，约定一个变量 \`top\`：
 
 \`\`\`cpp
-int st[1005];   // 存数据，开得比最大操作数大一点
-int top = 0;    // 栈顶指针：0 表示栈里没有元素
-                // 元素放在 st[1] .. st[top]
+const int MAXN = 1000005;        // Σn ≤ 10^6，数组要开够
+unsigned long long st[MAXN];     // 存数据；x < 2^64，所以用 unsigned long long
+int top = 0;                     // 0 表示栈里没有元素；元素放在 st[1] .. st[top]
 \`\`\`
 
 ${pointsTable([
   ['入栈 push x', '`st[++top] = x;` —— 先把 top 加 1，再放进去'],
-  ['出栈 pop', '`int v = st[top]; top--;` —— 先取出来，再把 top 减 1'],
-  ['取栈顶 top', '`st[top]` —— 只读，不改 top'],
+  ['出栈 pop', '本题只要 `top--`；如果题目要求"输出被弹出的值"，就先取 `st[top]` 再 `top--`'],
+  ['取栈顶 query', '`st[top]` —— 只读，不改 top'],
   ['栈的大小 size', '正好等于 `top`'],
   ['栈空判断', '`top == 0`（这就是为什么下标从 1 开始：0 天然表示空）'],
+  ['多组数据', '每组开始时把 `top = 0` 重置，上一组的数据必须清干净'],
 ])}
 
 **为什么下标从 1 开始？** 如果从 0 开始存，空栈时 top 该是多少就没有自然的值了（0 既表示空又表示"第 0 个位置有元素"），从 1 开始能省掉一个特判。
 
-复杂度：每个操作都是 $O(1)$，总复杂度 $O(n)$。`,
+复杂度：每个操作都是 $O(1)$，总复杂度 $O(\\sum n)$。`,
       inputFormat:
-        '第一行一个整数 `n`（`1 ≤ n ≤ 1000`），表示操作条数。\n\n' +
-        '接下来 `n` 行，每行一条操作：`push x`（`-1000 ≤ x ≤ 1000`）、`pop`、`top` 或 `size`。保证 `push` 不会超过数组容量。',
+        '第一行一个整数 `T`，表示数据组数。\n' +
+        '\n' +
+        '每组数据：第一行一个整数 `n`（操作条数），接下来 `n` 行每行一条操作 —— `push x`、`pop`、`query` 或 `size`（`push` 与 `x` 之间用空格隔开，其它操作本行没有别的字符）。\n' +
+        '\n' +
+        '数据范围：`1 ≤ T, n ≤ 10^6`，单个测试点内 `Σn ≤ 10^6`；`0 ≤ x < 2^64`。',
       outputFormat:
-        '对每条 `pop` / `top` / `size` 操作输出一行整数（`pop` 与 `top` 在栈空时输出 `-1`）；`push` 不输出。',
+        '按操作顺序输出，每次输出占一行：`pop` 空栈输出 `Empty`；`query` 空栈输出 `Anguei!`、非空输出栈顶元素；`size` 输出元素个数。`push` 不输出任何内容。',
       mistakes: mistakesTable([
         ['让 `top` 从 0 开始存数据', '空栈与"有一个元素"无法区分，边界判断容易错', '下标从 1 开始，`top == 0` 即空栈'],
         ['`push` 写成 `st[top++] = x;`', '第一个元素被放到 `st[0]`，之后所有位置都错位', '用 `st[++top] = x;`'],
@@ -67,84 +74,102 @@ ${pointsTable([
       ]),
       tips:
         '- 本题的输入输出框架已经写好了，你只需要把四个 `// TODO` 补上。\n' +
-        '- 调试时可以先把 `size` 打印出来，确认每次 push/pop 之后元素个数符合预期。\n' +
-        '- 洛谷同类型题目：栈的基本操作（可点击题目页下方的洛谷链接按关键词搜索）。',
-      starter: `#include <iostream>
-#include <string>
-using namespace std;
-
-int main() {
-    int n;
-    cin >> n;
-    // TODO: 定义数组 st（建议开 1005）与栈顶指针 top（初始 0）
-    for (int i = 0; i < n; i++) {
-        string op;
-        cin >> op;
-        if (op == "push") {
-            int x;
-            cin >> x;
-            // TODO: 入栈
-        } else if (op == "pop") {
-            // TODO: 空栈输出 -1，否则弹出并输出被弹出的值
-        } else if (op == "top") {
-            // TODO: 空栈输出 -1，否则输出栈顶
-        } else if (op == "size") {
-            // TODO: 输出元素个数
-        }
-    }
-    return 0;
-}
-`,
-      solution: `#include <iostream>
-#include <string>
-using namespace std;
-
-int st[1005];
-int top = 0;
-
-int main() {
-    int n;
-    cin >> n;
-    for (int i = 0; i < n; i++) {
-        string op;
-        cin >> op;
-        if (op == "push") {
-            int x;
-            cin >> x;
-            st[++top] = x;
-        } else if (op == "pop") {
-            if (top == 0) {
-                cout << -1 << endl;
-            } else {
-                cout << st[top] << endl;
-                top--;
-            }
-        } else if (op == "top") {
-            if (top == 0) {
-                cout << -1 << endl;
-            } else {
-                cout << st[top] << endl;
-            }
-        } else if (op == "size") {
-            cout << top << endl;
-        }
-    }
-    return 0;
-}
-`,
+        '- 提交前可以自己造一组数据：先 `push` 几个数，再用 `size` / `query` 检查栈的状态。\n' +
+        '- 这道题的洛谷原题是 B3614【模板】栈，题号已经填在下面的提交面板里。',
+      starter:
+        '#include <iostream>\n' +
+        '#include <string>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        '// Σn ≤ 10^6，数组开够；x < 2^64 所以用 unsigned long long\n' +
+        'const int MAXN = 1000005;\n' +
+        'unsigned long long st[MAXN];\n' +
+        'int top = 0;   // 0 表示空栈\n' +
+        '\n' +
+        'int main() {\n' +
+        '    ios::sync_with_stdio(false);   // 数据量到 1e6，关掉 cin/cout 同步会快很多\n' +
+        '    cin.tie(nullptr);\n' +
+        '\n' +
+        '    int T;\n' +
+        '    cin >> T;\n' +
+        '    while (T--) {\n' +
+        '        int n;\n' +
+        '        cin >> n;\n' +
+        '        top = 0;   // TODO: 每组数据都要清空栈（想一想为什么不能沿用上一组）\n' +
+        '        for (int i = 0; i < n; i++) {\n' +
+        '            string op;\n' +
+        '            cin >> op;\n' +
+        '            if (op == "push") {\n' +
+        '                unsigned long long x;\n' +
+        '                cin >> x;\n' +
+        '                // TODO: 入栈\n' +
+        '            } else if (op == "pop") {\n' +
+        '                // TODO: 栈空输出 Empty，否则弹出栈顶\n' +
+        '            } else if (op == "query") {\n' +
+        '                // TODO: 栈空输出 Anguei!，否则输出栈顶元素\n' +
+        '            } else {\n' +
+        '                // TODO: size —— 输出当前元素个数\n' +
+        '            }\n' +
+        '        }\n' +
+        '    }\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
+      solution:
+        '#include <iostream>\n' +
+        '#include <string>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'const int MAXN = 1000005;\n' +
+        'unsigned long long st[MAXN];\n' +
+        'int top = 0;\n' +
+        '\n' +
+        'int main() {\n' +
+        '    ios::sync_with_stdio(false);\n' +
+        '    cin.tie(nullptr);\n' +
+        '\n' +
+        '    int T;\n' +
+        '    cin >> T;\n' +
+        '    while (T--) {\n' +
+        '        int n;\n' +
+        '        cin >> n;\n' +
+        '        top = 0;\n' +
+        '        for (int i = 0; i < n; i++) {\n' +
+        '            string op;\n' +
+        '            cin >> op;\n' +
+        '            if (op == "push") {\n' +
+        '                unsigned long long x;\n' +
+        '                cin >> x;\n' +
+        '                st[++top] = x;\n' +
+        '            } else if (op == "pop") {\n' +
+        '                if (top == 0) cout << "Empty" << \'\\n\';\n' +
+        '                else top--;\n' +
+        '            } else if (op == "query") {\n' +
+        '                if (top == 0) cout << "Anguei!" << \'\\n\';\n' +
+        '                else cout << st[top] << \'\\n\';\n' +
+        '            } else {\n' +
+        '                cout << top << \'\\n\';\n' +
+        '            }\n' +
+        '        }\n' +
+        '    }\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
       tests: [
-        { input: '7\npush 5\npush 3\ntop\nsize\npop\nsize\npop\n', expected: '3\n2\n3\n1\n5\n' },
-        { input: '3\npop\ntop\nsize\n', expected: '-1\n-1\n0\n' },
-        { input: '5\npush -7\ntop\npop\npop\nsize\n', expected: '-7\n-7\n-1\n0\n' },
-        { input: '4\npush 1\npush 2\npush 3\nsize\n', expected: '3\n' },
+        { input: '2\n5\npush 2\nquery\nsize\npop\nquery\n3\npop\nquery\nsize\n', expected: '2\n1\nAnguei!\nEmpty\nAnguei!\n0\n' },
+        { input: '1\n4\npop\nquery\nsize\nquery\n', expected: 'Empty\nAnguei!\n0\nAnguei!\n' },
+        { input: '1\n6\npush 18446744073709551615\nquery\nsize\npop\nquery\nsize\n', expected: '18446744073709551615\n1\nAnguei!\n0\n' },
+        { input: '2\n3\npush 1\npush 2\nsize\n5\npush 7\nquery\npop\nquery\nsize\n', expected: '2\n7\nAnguei!\n0\n' },
       ],
       hints: [
-        '用 `st[++top] = x` 入栈、`st[top--]` 出栈，`top` 同时就是元素个数。',
-        '`push` 操作不输出任何东西，只有 `pop` / `top` / `size` 才输出一行。',
-        '别忘了所有取值前都判断 `top == 0`（栈空返回 -1）。',
+        '用 `st[++top] = x` 入栈、`top--` 出栈，`top` 同时就是元素个数。',
+        '空栈的两种提示不一样：`pop` 空栈输出 `Empty`，`query` 空栈输出 `Anguei!`（注意叹号）。',
+        '多组数据别忘了每组开始时把 `top` 清 0，否则上一组的数据会串进来。',
+        '`x` 可以到 `2^64 - 1`，用 `unsigned long long` 存，别用 `int`。',
       ],
       luoguKeyword: '栈',
       luoguCode: 'B3614',
+      luoguAligned: true,
     }),
 
     proLesson({
@@ -156,10 +181,7 @@ int main() {
         '编译器检查你的代码时，第一件事就是看括号有没有配对。\n\n' +
         '这个问题用栈解决得极其漂亮：**遇到左括号就压进去，遇到右括号就看它跟栈顶的左括号是不是一对**。',
       task:
-        '给定一个只由 `(` `)` `[` `]` `{` `}` 组成的字符串，判断括号是否**正确配对**：\n\n' +
-        '- 每个右括号都必须与**最近的一个**未配对左括号类型相同；\n' +
-        '- 全部字符处理完后，不能有剩余的未配对左括号。\n\n' +
-        '配对了输出 `YES`，否则输出 `NO`。',
+        '洛谷 P1739 表达式括号匹配：读入一个以 `@` 结尾的表达式，判断其中的**圆括号** `(` `)` 是否匹配 —— 匹配输出 `YES`，否则输出 `NO`。',
       lesson: `**核心思路**：栈顶永远是"最近一个还没被配对的左括号"。
 
 \`\`\`cpp
@@ -186,8 +208,10 @@ ${pointsTable([
   ['结束时', '栈必须为空，否则说明有左括号没被配对'],
   ['复杂度', '每个字符只处理一次，$O(n)$；栈最多存 $n$ 个字符，$O(n)$'],
 ])}`,
-      inputFormat: '一行，一个只包含 `(` `)` `[` `]` `{` `}` 的字符串 `s`（长度 `1 ≤ |s| ≤ 1000`），不含空格。',
-      outputFormat: '输出一行：`YES` 表示括号正确配对，`NO` 表示不配对（注意全大写）。',
+      inputFormat:
+        '一行：一个以 `@` 结束的表达式。表达式里可能包含数字、小写字母、`+` `-` `*` `/` 和圆括号，长度小于 255，左括号少于 20 个。只需要关心圆括号。',
+      outputFormat:
+        '一行：`YES`（括号匹配）或 `NO`（不匹配）。',
       mistakes: mistakesTable([
         ['遇到右括号不判断栈是否为空', '空栈时读到 `st[0]`，结果错误甚至越界', '先判断 `top == 0` → 直接判定不匹配'],
         ['只检查数量不检查类型', '`([)]` 会被误判为 YES', '右括号必须与栈顶左括号**类型相同**'],
@@ -196,69 +220,74 @@ ${pointsTable([
         ['判断成功后又继续处理', '多余的逻辑可能把 ok 改回去', '发现不匹配就 `break` 或直接输出 NO'],
       ]),
       tips:
-        '- 输入保证不含空格，用 `cin >> s` 直接读一行即可。\n' +
-        '- 洛谷同类型题目：括号匹配（可在题目页按关键词搜索）。',
-      starter: `#include <iostream>
-#include <string>
-using namespace std;
-
-int main() {
-    string s;
-    cin >> s;
-    // TODO: 用栈模拟配对过程，最后输出 YES 或 NO
-    return 0;
-}
-`,
-      solution: `#include <iostream>
-#include <string>
-using namespace std;
-
-char st[1005];
-
-int main() {
-    string s;
-    cin >> s;
-    int top = 0;
-    bool ok = true;
-    for (int i = 0; i < (int)s.size(); i++) {
-        char c = s[i];
-        if (c == '(' || c == '[' || c == '{') {
-            st[++top] = c;
-        } else {
-            if (top == 0) {
-                ok = false;
-                break;
-            }
-            char need;
-            if (c == ')') need = '(';
-            else if (c == ']') need = '[';
-            else need = '{';
-            if (st[top] != need) {
-                ok = false;
-                break;
-            }
-            top--;
-        }
-    }
-    if (top != 0) ok = false;
-    cout << (ok ? "YES" : "NO") << endl;
-    return 0;
-}
-`,
+        '- 读入整行用 `getline(cin, s)`，比 `cin >> s` 稳（表达式中间可能有空格）。\n' +
+        '- 别忘了遇到 `@` 就结束扫描，`@` 后面的字符不属于表达式。\n' +
+        '- 这道题的洛谷原题是 P1739 表达式括号匹配，题号已经填在下面的提交面板里。',
+      starter:
+        '#include <iostream>\n' +
+        '#include <string>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'int main() {\n' +
+        '    string s;\n' +
+        '    getline(cin, s);   // 整行读入，表达式里可能有空格\n' +
+        '\n' +
+        '    int depth = 0;     // 当前有多少个"还没配对"的左括号\n' +
+        '    for (int i = 0; i < (int)s.size(); i++) {\n' +
+        '        char c = s[i];\n' +
+        '        if (c == \'@\') break;      // 表达式结束\n' +
+        '        // TODO: 遇到 \'(\' 让 depth 加 1\n' +
+        '        // TODO: 遇到 \')\' 时，如果 depth 已经是 0 就直接输出 NO 并结束，否则 depth 减 1\n' +
+        '    }\n' +
+        '\n' +
+        '    // TODO: 循环结束后，depth 为 0 输出 YES，否则输出 NO\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
+      solution:
+        '#include <iostream>\n' +
+        '#include <string>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'int main() {\n' +
+        '    string s;\n' +
+        '    getline(cin, s);\n' +
+        '\n' +
+        '    int depth = 0;\n' +
+        '    for (int i = 0; i < (int)s.size(); i++) {\n' +
+        '        char c = s[i];\n' +
+        '        if (c == \'@\') break;\n' +
+        '        if (c == \'(\') {\n' +
+        '            depth++;\n' +
+        '        } else if (c == \')\') {\n' +
+        '            if (depth == 0) {        // 右括号比左括号多了，一定不匹配\n' +
+        '                cout << "NO" << \'\\n\';\n' +
+        '                return 0;\n' +
+        '            }\n' +
+        '            depth--;\n' +
+        '        }\n' +
+        '    }\n' +
+        '\n' +
+        '    if (depth == 0) cout << "YES" << \'\\n\';\n' +
+        '    else cout << "NO" << \'\\n\';\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
       tests: [
-        { input: '([]){}\n', expected: 'YES\n' },
-        { input: '([)]\n', expected: 'NO\n' },
-        { input: '(((\n', expected: 'NO\n' },
-        { input: ')\n', expected: 'NO\n' },
-        { input: '{[()()]}\n', expected: 'YES\n' },
+        { input: '2*(x+y)/(1-x)@\n', expected: 'YES\n' },
+        { input: '(25+x)*(a*(a+b+b)@\n', expected: 'NO\n' },
+        { input: ')(@\n', expected: 'NO\n' },
+        { input: '((()))@\n', expected: 'YES\n' },
+        { input: '(a+b)@\n', expected: 'YES\n' },
       ],
       hints: [
-        '遇到左括号就压栈；遇到右括号就检查栈顶是不是它对应的左括号。',
-        '右括号来时如果栈是空的，说明没有可配对的左括号，直接判 NO。',
-        '循环结束后别忘了检查栈是否为空——否则 `"((("` 会被误判。',
+        '用一个计数器 `depth` 表示"当前还有几个左括号没配对"：遇到 `(` 加 1，遇到 `)` 减 1。',
+        '如果某一步要让 `depth` 减到负数（也就是遇到 `)` 时 `depth == 0`），说明右括号多了，直接输出 `NO`。',
+        '扫描到 `@` 就停下；最后 `depth == 0` 才说明左右数量与顺序都匹配。',
       ],
       luoguKeyword: '括号匹配 栈',
       luoguCode: 'P1739',
+      luoguAligned: true,
     }),
 
     proLesson({
@@ -271,7 +300,7 @@ int main() {
         '把运算符写到操作数后面，变成 `3 4 5 * +` 这种**后缀表达式**（逆波兰表达式），求值就变得非常简单：' +
         '**从左往右扫，遇到数字就压栈，遇到运算符就弹出两个数算一下再压回去。**',
       task:
-        '给定一个以空格分隔的后缀表达式（操作数是非负整数，运算符是 `+` `-` `*`），求它的值。',
+        '洛谷 P1449 后缀表达式：读入一个后缀表达式（数字以 `.` 结尾、`@` 表示结束），求出它的值。',
       lesson: `**为什么后缀表达式好算**：它已经把运算顺序"排好队"了，从左到右扫一遍即可。
 
 \`\`\`cpp
@@ -296,9 +325,9 @@ ${pointsTable([
   ['复杂度', '每个 token 只处理一次，$O(n)$'],
 ])}`,
       inputFormat:
-        '一行后缀表达式，操作数与运算符之间**用一个空格分隔**。操作数是不超过 100 的非负整数，运算符只有 `+`、`-`、`*`。\n\n' +
-        '保证表达式合法：不会出现除零、不会出现栈不够弹的情况。',
-      outputFormat: '输出一个整数，表示表达式的值。',
+        '一行：一个后缀表达式。例如 `3.5.2.-*7.+@` 表示 `3*(5-2)+7`。数字以 `.` 结尾（`3.` 就是数字 3），运算符只有 `+ - * /`，`@` 是结束符；保证除法除数不为 0，且 `/` 的结果向 0 取整（与 C++ 的 `/` 一致）。',
+      outputFormat:
+        '一行：表达式的值（整数）。',
       sample:
         '### 样例\n\n**输入**\n\n```\n3 4 + 5 *\n```\n\n**输出**\n\n```\n35\n```\n\n' +
         '过程：先算 `3 + 4 = 7`（此时栈里是 7），再算 `7 * 5 = 35`。',
@@ -310,67 +339,91 @@ ${pointsTable([
         ['算完没检查栈内容', '表达式不合法时结果错误', '本题保证合法，但可以最后断言栈里恰好剩 1 个数'],
       ]),
       tips:
-        '- 用 `string token; cin >> token;` 逐个读 token 最省事：它天然按空白分隔，多位数字也能一次读完。\n' +
-        '- 判断 token 是运算符还是数字：可以看 `token[0]` 是不是 `+` `-` `*`；由于操作数非负，不会有负数与减号混淆的问题。\n' +
-        '- 洛谷同类型题目：后缀表达式（可在题目页按关键词搜索）。',
-      starter: `#include <iostream>
-#include <string>
-using namespace std;
-
-long long st[1005];
-
-int main() {
-    string token;
-    int top = 0;
-    while (cin >> token) {
-        // TODO: token 是运算符就弹出两个数计算后压回，否则转成数字压栈
-    }
-    // TODO: 输出栈顶（答案）
-    return 0;
-}
-`,
-      solution: `#include <iostream>
-#include <string>
-using namespace std;
-
-long long st[1005];
-
-int main() {
-    string token;
-    int top = 0;
-    while (cin >> token) {
-        if (token == "+" || token == "-" || token == "*") {
-            long long b = st[top--];
-            long long a = st[top--];
-            if (token == "+") st[++top] = a + b;
-            else if (token == "-") st[++top] = a - b;
-            else st[++top] = a * b;
-        } else {
-            long long value = 0;
-            for (int i = 0; i < (int)token.size(); i++) {
-                value = value * 10 + (token[i] - '0');
-            }
-            st[++top] = value;
-        }
-    }
-    cout << st[top] << endl;
-    return 0;
-}
-`,
+        '- 运算符只有 `+ - * /` 四种，可以用 `if / else if` 直接分派。\n' +
+        '- 后弹出的那个数才是左操作数，写反了减法与除法就会出错。\n' +
+        '- 这道题的洛谷原题是 P1449 后缀表达式，题号已经填在下面的提交面板里。',
+      starter:
+        '#include <iostream>\n' +
+        '#include <string>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'long long st[1005];   // 表达式长度有限，栈开够就行\n' +
+        'int top = 0;\n' +
+        '\n' +
+        'int main() {\n' +
+        '    string s;\n' +
+        '    cin >> s;\n' +
+        '\n' +
+        '    for (int i = 0; i < (int)s.size(); i++) {\n' +
+        '        char c = s[i];\n' +
+        '        if (c == \'@\') break;\n' +
+        '        if (c >= \'0\' && c <= \'9\') {\n' +
+        '            // TODO: 把连续的数字拼成一个整数（读到 \'.\' 结束），再入栈\n' +
+        '        } else {\n' +
+        '            // TODO: 弹出栈顶两个数做运算，把结果压回栈里\n' +
+        '            //       注意减法和除法是"先弹出的做右操作数"\n' +
+        '        }\n' +
+        '    }\n' +
+        '\n' +
+        '    // TODO: 输出栈顶元素（表达式的值）\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
+      solution:
+        '#include <iostream>\n' +
+        '#include <string>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'long long st[1005];\n' +
+        'int top = 0;\n' +
+        '\n' +
+        'int main() {\n' +
+        '    string s;\n' +
+        '    cin >> s;\n' +
+        '\n' +
+        '    for (int i = 0; i < (int)s.size(); i++) {\n' +
+        '        char c = s[i];\n' +
+        '        if (c == \'@\') break;\n' +
+        '        if (c >= \'0\' && c <= \'9\') {\n' +
+        '            long long value = 0;\n' +
+        '            while (s[i] >= \'0\' && s[i] <= \'9\') {   // 拼出完整的多位数\n' +
+        '                value = value * 10 + (s[i] - \'0\');\n' +
+        '                i++;\n' +
+        '            }\n' +
+        '            // 此时 s[i] 正好是 \'.\'，for 的 i++ 会跳过它\n' +
+        '            st[++top] = value;\n' +
+        '        } else {\n' +
+        '            long long b = st[top--];   // 先弹出的是右操作数\n' +
+        '            long long a = st[top--];\n' +
+        '            long long r = 0;\n' +
+        '            if (c == \'+\') r = a + b;\n' +
+        '            else if (c == \'-\') r = a - b;\n' +
+        '            else if (c == \'*\') r = a * b;\n' +
+        '            else r = a / b;\n' +
+        '            st[++top] = r;\n' +
+        '        }\n' +
+        '    }\n' +
+        '\n' +
+        '    cout << st[top] << \'\\n\';\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
       tests: [
-        { input: '3 4 + 5 *\n', expected: '35\n' },
-        { input: '3 4 -\n', expected: '-1\n' },
-        { input: '12 3 +\n', expected: '15\n' },
-        { input: '100 100 *\n', expected: '10000\n' },
-        { input: '1 2 + 3 4 + *\n', expected: '21\n' },
+        { input: '3.5.2.-*7.+@\n', expected: '16\n' },
+        { input: '10.28.30./*7.-@\n', expected: '-7\n' },
+        { input: '1.2.+@\n', expected: '3\n' },
+        { input: '7.3.-@\n', expected: '4\n' },
+        { input: '100.10./@\n', expected: '10\n' },
       ],
       hints: [
-        '用 `while (cin >> token)` 逐个读，读到文件/输入结束为止（把整个输入读完即可）。',
-        '运算符时先弹出右操作数 `b`，再弹左操作数 `a`，然后算 `a op b`。',
-        '多位数字要自己拼接：`value = value * 10 + (token[i] - \'0\')`。',
+        '后缀表达式的求值规则：遇到数字就入栈，遇到运算符就弹出两个数计算、再把结果压回去。',
+        '数字是多位的、以 `.` 结尾，所以要边读边算：`value = value * 10 + (c - \'0\')`，读到 `.` 才停。',
+        '减法与除法有顺序：先弹出的是右操作数。设先弹出 `b`、后弹出 `a`，那么计算的是 `a - b` / `a / b`。',
+        '表达式扫描完（遇到 `@`）时，栈里剩下的那个数就是答案。',
       ],
       luoguKeyword: '后缀表达式',
       luoguCode: 'P1449',
+      luoguAligned: true,
     }),
 
     proLesson({
@@ -383,9 +436,12 @@ int main() {
         '用数组实现队列需要一个技巧：头尾指针各自往前跑，跑到数组末尾就绕回开头（环形队列），' +
         '这样不会因为"前面空着却用不了"而浪费空间。',
       task:
-        '按顺序执行 n 条操作，对 `pop` / `front` / `size` 操作输出结果：\n\n' +
-        '- `push x`：把 x 放入队尾\n- `pop`：队头出队，输出该值；队列为空时输出 `-1`\n' +
-        '- `front`：输出队头元素；空队列输出 `-1`\n- `size`：输出当前元素个数',
+        '洛谷 B3616【模板】队列：用数组实现一个队列，按操作序列执行并输出结果。\n' +
+        '\n' +
+        '- `1 x`：把 x 加入队列\n' +
+        '- `2`：弹出队首；空队列时输出 `ERR_CANNOT_POP`\n' +
+        '- `3`：输出队首；空队列时输出 `ERR_CANNOT_QUERY`\n' +
+        '- `4`：输出队列内元素个数',
       lesson: `**用两个指针描述队列**：
 
 \`\`\`cpp
@@ -407,10 +463,11 @@ ${pointsTable([
 
 复杂度：每个操作 $O(1)$，总体 $O(n)$；空间 $O(n)$。`,
       inputFormat:
-        '第一行一个整数 `n`（`1 ≤ n ≤ 1000`）。\n\n' +
-        '接下来 `n` 行，每行一条操作：`push x`（`-1000 ≤ x ≤ 1000`）、`pop`、`front` 或 `size`。',
+        '第一行一个整数 `n`（`1 ≤ n ≤ 10000`），表示操作条数。\n' +
+        '\n' +
+        '接下来 `n` 行，每行一个操作：`1 x`（把 `x` 加入队列，`x` 是 `[1, 10^6]` 内的正整数）、`2`、`3` 或 `4`。',
       outputFormat:
-        '对每条 `pop` / `front` / `size` 输出一行整数（`pop` 与 `front` 在队列为空时输出 `-1`）；`push` 不输出。',
+        '按操作顺序输出，每条输出占一行：`2` 空队列输出 `ERR_CANNOT_POP`；`3` 空队列输出 `ERR_CANNOT_QUERY`、非空输出队首元素；`4` 输出元素个数。`1` 不输出任何内容。',
       mistakes: mistakesTable([
         ['用 `head` 当元素个数', '出队一次后 `size` 就错了', '元素个数是 `tail - head`'],
         ['`head` 和 `tail` 混用', '`push` 和 `pop` 互相覆盖，顺序全乱', '入队动 `tail`，出队动 `head`'],
@@ -418,85 +475,83 @@ ${pointsTable([
         ['数组只开到 n', 'n 次入队时最后一次越界', '开到 `n + 5`'],
       ]),
       tips:
-        '- 与上一题的栈对照着看：栈只有 `top` 一个指针，队列有 `head`/`tail` 两个。\n' +
-        '- 洛谷同类型题目：队列基本操作（可在题目页按关键词搜索）。',
-      starter: `#include <iostream>
-#include <string>
-using namespace std;
-
-int main() {
-    int n;
-    cin >> n;
-    // TODO: 定义数组 q 与 head、tail 两个指针
-    for (int i = 0; i < n; i++) {
-        string op;
-        cin >> op;
-        if (op == "push") {
-            int x;
-            cin >> x;
-            // TODO: 放入队尾
-        } else if (op == "pop") {
-            // TODO: 空则 -1，否则输出队头并出队
-        } else if (op == "front") {
-            // TODO: 空则 -1，否则输出队头
-        } else if (op == "size") {
-            // TODO: 输出元素个数
-        }
-    }
-    return 0;
-}
-`,
-      solution: `#include <iostream>
-#include <string>
-using namespace std;
-
-int q[1005];
-
-int main() {
-    int n;
-    cin >> n;
-    int head = 0;
-    int tail = 0;
-    for (int i = 0; i < n; i++) {
-        string op;
-        cin >> op;
-        if (op == "push") {
-            int x;
-            cin >> x;
-            q[tail++] = x;
-        } else if (op == "pop") {
-            if (head == tail) {
-                cout << -1 << endl;
-            } else {
-                cout << q[head] << endl;
-                head++;
-            }
-        } else if (op == "front") {
-            if (head == tail) {
-                cout << -1 << endl;
-            } else {
-                cout << q[head] << endl;
-            }
-        } else if (op == "size") {
-            cout << tail - head << endl;
-        }
-    }
-    return 0;
-}
-`,
+        '- 与栈相比，队列只在"弹出"的一头不同：栈弹 `tail`，队列弹 `head`。\n' +
+        '- `head` 只会往后走，不会回头，所以数组开到 `n + 5` 就够。\n' +
+        '- 这道题的洛谷原题是 B3616【模板】队列，题号已经填在下面的提交面板里。',
+      starter:
+        '#include <iostream>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'int q[10005];\n' +
+        'int head = 1, tail = 0;   // 队列里的元素是 q[head] .. q[tail]\n' +
+        '\n' +
+        'int main() {\n' +
+        '    int n;\n' +
+        '    cin >> n;\n' +
+        '\n' +
+        '    for (int i = 0; i < n; i++) {\n' +
+        '        int op;\n' +
+        '        cin >> op;\n' +
+        '        if (op == 1) {\n' +
+        '            int x;\n' +
+        '            cin >> x;\n' +
+        '            // TODO: 入队（tail 往后挪一格）\n' +
+        '        } else if (op == 2) {\n' +
+        '            // TODO: 空队列输出 ERR_CANNOT_POP，否则 head 往后挪一格\n' +
+        '        } else if (op == 3) {\n' +
+        '            // TODO: 空队列输出 ERR_CANNOT_QUERY，否则输出队首 q[head]\n' +
+        '        } else {\n' +
+        '            // TODO: 输出元素个数\n' +
+        '        }\n' +
+        '    }\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
+      solution:
+        '#include <iostream>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'int q[10005];\n' +
+        'int head = 1, tail = 0;\n' +
+        '\n' +
+        'int main() {\n' +
+        '    int n;\n' +
+        '    cin >> n;\n' +
+        '\n' +
+        '    for (int i = 0; i < n; i++) {\n' +
+        '        int op;\n' +
+        '        cin >> op;\n' +
+        '        if (op == 1) {\n' +
+        '            int x;\n' +
+        '            cin >> x;\n' +
+        '            q[++tail] = x;\n' +
+        '        } else if (op == 2) {\n' +
+        '            if (head > tail) cout << "ERR_CANNOT_POP" << \'\\n\';\n' +
+        '            else head++;\n' +
+        '        } else if (op == 3) {\n' +
+        '            if (head > tail) cout << "ERR_CANNOT_QUERY" << \'\\n\';\n' +
+        '            else cout << q[head] << \'\\n\';\n' +
+        '        } else {\n' +
+        '            cout << tail - head + 1 << \'\\n\';\n' +
+        '        }\n' +
+        '    }\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
       tests: [
-        { input: '6\npush 1\npush 2\nfront\npop\nfront\nsize\n', expected: '1\n1\n2\n1\n' },
-        { input: '3\npop\nfront\nsize\n', expected: '-1\n-1\n0\n' },
-        { input: '5\npush -3\npush 9\npop\npop\npop\n', expected: '-3\n9\n-1\n' },
-        { input: '4\npush 5\nsize\npop\nsize\n', expected: '1\n5\n0\n' },
+        { input: '13\n1 2\n3\n4\n1 233\n3\n2\n3\n2\n4\n3\n2\n1 144\n3\n', expected: '2\n1\n2\n233\n0\nERR_CANNOT_QUERY\nERR_CANNOT_POP\n144\n' },
+        { input: '4\n3\n2\n4\n1 5\n', expected: 'ERR_CANNOT_QUERY\nERR_CANNOT_POP\n0\n' },
+        { input: '6\n1 1\n1 2\n3\n2\n3\n4\n', expected: '1\n2\n1\n' },
       ],
       hints: [
-        '`q[tail++] = x` 入队，`q[head++]` 出队，元素个数是 `tail - head`。',
-        '队列为空即 `head == tail`。',
-        '`front` 只看不动：输出 `q[head]` 但不改 `head`。',
+        '队列是"先进先出"，所以要用两个指针：`head` 指队首、`tail` 指队尾，区间 `[head, tail]` 就是队列里的元素。',
+        '队列为空的条件是 `head > tail`（初始 `head = 1, tail = 0` 正好表示空）。',
+        '元素个数是 `tail - head + 1`，不需要额外的计数器。',
+        '两个错误提示要一模一样：`ERR_CANNOT_POP` 与 `ERR_CANNOT_QUERY`，别写反。',
       ],
       luoguKeyword: '队列',
       luoguCode: 'B3616',
+      luoguAligned: true,
     }),
 
     proLesson({
@@ -509,8 +564,7 @@ int main() {
         '从右往左扫，并维护一个**从栈底到栈顶递减**的栈（单调栈），就能一遍扫完得到所有答案——' +
         '这是"找最近的大于/小于关系"这一类问题的通用套路。',
       task:
-        '给定 n 个整数，对每个位置 i 输出**右边第一个比 a[i] 大的数**；如果右边没有更大的数，输出 `-1`。\n\n' +
-        '一共输出 n 个数，用空格分隔。',
+        '洛谷 P5788【模板】单调栈：对数列中的每个数，求它**右边第一个比它大的数的下标**；如果不存在就输出 `0`。',
       lesson: `**暴力做法**是每个位置往右找，最坏 $O(n^2)$；单调栈能做到 $O(n)$。
 
 **关键观察**：从右往左处理时，如果栈顶元素比当前数小，那么它对更左边的数来说**永远不可能成为答案**（因为当前数更大、位置更靠左），可以直接扔掉。
@@ -531,8 +585,11 @@ ${pointsTable([
   ['复杂度', '每个元素最多入栈一次、出栈一次，$O(n)$；空间 $O(n)$'],
 ])}`,
       inputFormat:
-        '第一行一个整数 `n`（`1 ≤ n ≤ 1000`）。\n\n第二行 `n` 个整数 `a[1..n]`（`-10^9 ≤ a[i] ≤ 10^9`），用空格分隔。',
-      outputFormat: '输出一行 `n` 个整数：每个位置右边第一个更大元素的值，没有则输出 `-1`；相邻两个数之间用一个空格分隔。',
+        '第一行一个正整数 `n`（`1 ≤ n ≤ 3×10^6`）。\n' +
+        '\n' +
+        '第二行 `n` 个正整数 `a_1 … a_n`（`1 ≤ a_i ≤ 10^9`）。',
+      outputFormat:
+        '一行 `n` 个整数 `f(1) f(2) … f(n)`，用空格隔开：`f(i)` 表示 `i` 右边第一个大于 `a_i` 的元素的下标，不存在则为 `0`。',
       mistakes: mistakesTable([
         ['从左往右扫描', '拿不到"右边"的信息，逻辑会反过来', '从右往左扫，让右边先处理完'],
         ['弹栈条件写成 `st[top] < a[i]`', '相等的元素没被弹掉，答案是相等值而不是更大值', '用 `<=`（题目要求严格更大）'],
@@ -541,64 +598,87 @@ ${pointsTable([
         ['用 `int` 存 a[i]（本题范围内可以，但要注意更大范围）', '遇到 $10^{18}$ 级别的数据会溢出', '养成习惯：大范围数据用 `long long`'],
       ]),
       tips:
-        '- 先写出暴力解法（每个位置往右扫）验证思路，再换成单调栈。\n' +
-        '- 洛谷同类型题目：单调栈（下一个更大元素）。',
-      starter: `#include <iostream>
-using namespace std;
-
-int a[1005];
-int st[1005];   // 单调栈：存的是"候选答案"的值
-int ans[1005];
-
-int main() {
-    int n;
-    cin >> n;
-    for (int i = 1; i <= n; i++) cin >> a[i];
-    int top = 0;
-    // TODO: 从右往左扫描，用单调栈求每个位置的答案
-    // TODO: 按格式输出 ans[1..n]
-    return 0;
-}
-`,
-      solution: `#include <iostream>
-using namespace std;
-
-int a[1005];
-int st[1005];
-int ans[1005];
-
-int main() {
-    int n;
-    cin >> n;
-    for (int i = 1; i <= n; i++) cin >> a[i];
-    int top = 0;
-    for (int i = n; i >= 1; i--) {
-        while (top > 0 && st[top] <= a[i]) top--;
-        ans[i] = (top == 0) ? -1 : st[top];
-        st[++top] = a[i];
-    }
-    for (int i = 1; i <= n; i++) {
-        if (i > 1) cout << " ";
-        cout << ans[i];
-    }
-    cout << endl;
-    return 0;
-}
-`,
+        '- 每个下标最多进栈一次、出栈一次，所以总复杂度是 O(n)，比两层循环的 O(n²) 快得多。\n' +
+        '- 数组要开到 `3×10^6 + 5`，这是这道题最容易踩的坑。\n' +
+        '- 这道题的洛谷原题是 P5788【模板】单调栈，题号已经填在下面的提交面板里。',
+      starter:
+        '#include <iostream>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'const int MAXN = 3000005;   // n 最大 3e6\n' +
+        'int a[MAXN];\n' +
+        'int st[MAXN];    // 单调栈：里面存的是下标\n' +
+        'int ans[MAXN];\n' +
+        '\n' +
+        'int main() {\n' +
+        '    ios::sync_with_stdio(false);   // 3e6 的数据量，必须关掉 cin/cout 同步\n' +
+        '    cin.tie(nullptr);\n' +
+        '\n' +
+        '    int n;\n' +
+        '    cin >> n;\n' +
+        '    for (int i = 1; i <= n; i++) cin >> a[i];\n' +
+        '\n' +
+        '    int top = 0;\n' +
+        '    // TODO: 从右往左扫描，用单调栈求出每个位置的答案\n' +
+        '    //       栈里存"还没被更大值"淘汰"的下标"，从栈顶到栈底对应的值递减\n' +
+        '\n' +
+        '    for (int i = 1; i <= n; i++) {\n' +
+        '        if (i > 1) cout << \' \';\n' +
+        '        cout << ans[i];\n' +
+        '    }\n' +
+        '    cout << \'\\n\';\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
+      solution:
+        '#include <iostream>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'const int MAXN = 3000005;\n' +
+        'int a[MAXN];\n' +
+        'int st[MAXN];\n' +
+        'int ans[MAXN];\n' +
+        '\n' +
+        'int main() {\n' +
+        '    ios::sync_with_stdio(false);\n' +
+        '    cin.tie(nullptr);\n' +
+        '\n' +
+        '    int n;\n' +
+        '    cin >> n;\n' +
+        '    for (int i = 1; i <= n; i++) cin >> a[i];\n' +
+        '\n' +
+        '    int top = 0;\n' +
+        '    for (int i = n; i >= 1; i--) {\n' +
+        '        // 栈里所有"不比 a[i] 大"的下标都不可能成为答案，直接弹掉\n' +
+        '        while (top > 0 && a[st[top]] <= a[i]) top--;\n' +
+        '        ans[i] = (top > 0) ? st[top] : 0;\n' +
+        '        st[++top] = i;\n' +
+        '    }\n' +
+        '\n' +
+        '    for (int i = 1; i <= n; i++) {\n' +
+        '        if (i > 1) cout << \' \';\n' +
+        '        cout << ans[i];\n' +
+        '    }\n' +
+        '    cout << \'\\n\';\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
       tests: [
-        { input: '4\n2 1 3 2\n', expected: '3 3 -1 -1\n' },
-        { input: '1\n5\n', expected: '-1\n' },
-        { input: '5\n1 2 3 4 5\n', expected: '2 3 4 5 -1\n' },
-        { input: '5\n5 4 3 2 1\n', expected: '-1 -1 -1 -1 -1\n' },
-        { input: '3\n3 3 3\n', expected: '-1 -1 -1\n' },
+        { input: '5\n1 4 2 3 5\n', expected: '2 5 4 5 0\n' },
+        { input: '3\n1 2 3\n', expected: '2 3 0\n' },
+        { input: '4\n4 3 2 1\n', expected: '0 0 0 0\n' },
+        { input: '1\n1000000000\n', expected: '0\n' },
+        { input: '6\n5 1 3 2 4 6\n', expected: '6 3 5 5 6 0\n' },
       ],
       hints: [
-        '从右往左处理：处理到位置 i 时，栈里保存的都是 i 右边的"有用"元素。',
-        '把栈里比 `a[i]` 小或相等的元素弹掉，剩下的栈顶就是答案。',
-        '输出时相邻数字用空格分隔，注意不要多输出行末空格。',
+        '从右往左扫更容易想：处理 `i` 时，右边所有位置都已经处理过了。',
+        '栈里始终保存"候选答案"：从栈顶到栈底，值越来越大（单调）。',
+        '遇到 `a[i]` 时，把栈顶那些**小于等于** `a[i]` 的下标全弹掉（它们会被 `a[i]` 挡住），剩下的栈顶就是答案。',
+        '`n` 最大 3e6，记得 `ios::sync_with_stdio(false)` 并且用 `\'\\n\'` 而不是 `endl`。',
       ],
       luoguKeyword: '单调栈',
       luoguCode: 'P5788',
+      luoguAligned: true,
     }),
 
     proLesson({
@@ -610,7 +690,7 @@ int main() {
         '一个长度为 k 的窗口在数组上从左往右滑动，每滑动一次要求出窗口内的最大值。\n\n' +
         '暴力做法每次重新扫 k 个数，是 $O(nk)$。把栈换成**单调队列**（队头最大、从队尾入队），就能做到 $O(n)$。',
       task:
-        '给定 n 个整数和一个窗口长度 k，输出窗口从左到右滑动时**每个位置窗口内的最大值**（共 `n - k + 1` 个）。',
+        '洛谷 P1886 滑动窗口：窗口大小为 `k`，从序列最左端开始每次向右滑动一格，求**每个窗口里的最小值与最大值**。',
       lesson: `**单调队列的两个动作**：
 
 1. **入队前从队尾弹**：如果队尾元素不比当前元素大（\`<=\`），那它在窗口里永远不可能成为最大值（因为当前元素更大且在它右边，会更晚滑出窗口），直接弹掉。
@@ -637,9 +717,11 @@ ${pointsTable([
   ['复杂度', '每个下标进出队各一次，$O(n)$；空间 $O(k)$'],
 ])}`,
       inputFormat:
-        '第一行两个整数 `n` 和 `k`（`1 ≤ k ≤ n ≤ 1000`）。\n\n' +
-        '第二行 `n` 个整数 `a[1..n]`（`-10^9 ≤ a[i] ≤ 10^9`），用空格分隔。',
-      outputFormat: '输出一行 `n - k + 1` 个整数：每个窗口内的最大值，用空格分隔。',
+        '第一行两个正整数 `n, k`（`1 ≤ k ≤ n ≤ 10^6`）。\n' +
+        '\n' +
+        '第二行 `n` 个整数 `a_1 … a_n`（`-2^31 ≤ a_i < 2^31`）。',
+      outputFormat:
+        '输出两行，每行 `n - k + 1` 个数，用空格隔开：第一行是每个窗口的最小值，第二行是每个窗口的最大值。',
       sample:
         '### 样例\n\n**输入**\n\n```\n8 3\n1 3 -1 -3 5 3 6 7\n```\n\n**输出**\n\n```\n3 3 5 5 6 7\n```\n\n' +
         '第 1 个窗口 `[1,3,-1]` 最大值 3；第 2 个窗口 `[3,-1,-3]` 最大值 3；以此类推。',
@@ -651,63 +733,91 @@ ${pointsTable([
         ['用普通队列（只从队尾入、队头出）', '$O(nk)$，数据大时会超时', '关键是"从队尾弹掉没用的元素"这一步'],
       ]),
       tips:
-        '- 建议先用暴力解法对拍：小数据下手写暴力，与单调队列结果比对，确认一致再提交。\n' +
-        '- 洛谷同类型题目：滑动窗口 / 单调队列。',
-      starter: `#include <iostream>
-using namespace std;
-
-long long a[1005];
-int q[1005];   // 单调队列：里面存的是下标
-
-int main() {
-    int n, k;
-    cin >> n >> k;
-    for (int i = 1; i <= n; i++) cin >> a[i];
-    // TODO: 用单调队列求每个长度为 k 的窗口的最大值，并用空格分隔输出
-    return 0;
-}
-`,
-      solution: `#include <iostream>
-using namespace std;
-
-long long a[1005];
-int q[1005];
-
-int main() {
-    int n, k;
-    cin >> n >> k;
-    for (int i = 1; i <= n; i++) cin >> a[i];
-    int head = 1;
-    int tail = 0;
-    bool first = true;
-    for (int i = 1; i <= n; i++) {
-        while (tail >= head && a[q[tail]] <= a[i]) tail--;
-        q[++tail] = i;
-        if (q[head] <= i - k) head++;
-        if (i >= k) {
-            if (!first) cout << " ";
-            cout << a[q[head]];
-            first = false;
-        }
-    }
-    cout << endl;
-    return 0;
-}
-`,
+        '- 每个下标最多进出队列一次，总复杂度 O(n)。\n' +
+        '- 求最大值时弹掉的是"小于等于当前值"的队尾；求最小值时是"大于等于当前值"，别写反。\n' +
+        '- 这道题的洛谷原题是 P1886【模板】单调队列 / 滑动窗口，题号已经填在下面的提交面板里。',
+      starter:
+        '#include <iostream>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'const int MAXN = 1000005;\n' +
+        'int a[MAXN];\n' +
+        'int q[MAXN];    // 单调队列：里面存的是下标\n' +
+        'int res[MAXN];\n' +
+        '\n' +
+        'int main() {\n' +
+        '    ios::sync_with_stdio(false);\n' +
+        '    cin.tie(nullptr);\n' +
+        '\n' +
+        '    int n, k;\n' +
+        '    cin >> n >> k;\n' +
+        '    for (int i = 1; i <= n; i++) cin >> a[i];\n' +
+        '\n' +
+        '    // TODO: 先用单调队列求出每个窗口的最小值（填进 res[]），按格式输出第一行\n' +
+        '    // TODO: 再用同样的方法求最大值（把比较方向反过来），输出第二行\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
+      solution:
+        '#include <iostream>\n' +
+        'using namespace std;\n' +
+        '\n' +
+        'const int MAXN = 1000005;\n' +
+        'int a[MAXN];\n' +
+        'int q[MAXN];\n' +
+        'int res[MAXN];\n' +
+        '\n' +
+        '/** 单调队列求窗口极值：maximum 为 true 时求最大值，否则求最小值 */\n' +
+        'void solve(int n, int k, bool maximum) {\n' +
+        '    int head = 1, tail = 0;\n' +
+        '    for (int i = 1; i <= n; i++) {\n' +
+        '        // 队尾那些"不如当前值"的下标永远不会再成为答案，弹掉\n' +
+        '        while (head <= tail && (maximum ? a[q[tail]] <= a[i] : a[q[tail]] >= a[i])) tail--;\n' +
+        '        q[++tail] = i;\n' +
+        '        // 队首如果已经滑出窗口 [i-k+1, i] 就丢掉\n' +
+        '        if (q[head] <= i - k) head++;\n' +
+        '        if (i >= k) res[i - k + 1] = a[q[head]];\n' +
+        '    }\n' +
+        '}\n' +
+        '\n' +
+        'void output(int count) {\n' +
+        '    for (int i = 1; i <= count; i++) {\n' +
+        '        if (i > 1) cout << \' \';\n' +
+        '        cout << res[i];\n' +
+        '    }\n' +
+        '    cout << \'\\n\';\n' +
+        '}\n' +
+        '\n' +
+        'int main() {\n' +
+        '    ios::sync_with_stdio(false);\n' +
+        '    cin.tie(nullptr);\n' +
+        '\n' +
+        '    int n, k;\n' +
+        '    cin >> n >> k;\n' +
+        '    for (int i = 1; i <= n; i++) cin >> a[i];\n' +
+        '\n' +
+        '    solve(n, k, false);\n' +
+        '    output(n - k + 1);\n' +
+        '    solve(n, k, true);\n' +
+        '    output(n - k + 1);\n' +
+        '    return 0;\n' +
+        '}\n' +
+        '',
       tests: [
-        { input: '8 3\n1 3 -1 -3 5 3 6 7\n', expected: '3 3 5 5 6 7\n' },
-        { input: '1 1\n42\n', expected: '42\n' },
-        { input: '5 5\n1 2 3 4 5\n', expected: '5\n' },
-        { input: '6 2\n-1 -2 -3 -4 -5 -6\n', expected: '-1 -2 -3 -4 -5\n' },
-        { input: '4 3\n5 5 5 5\n', expected: '5 5\n' },
+        { input: '8 3\n1 3 -1 -3 5 3 6 7\n', expected: '-1 -3 -3 -3 3 3\n3 3 5 5 6 7\n' },
+        { input: '1 1\n42\n', expected: '42\n42\n' },
+        { input: '5 5\n4 4 4 4 4\n', expected: '4\n4\n' },
+        { input: '4 2\n-1 -2 -3 -4\n', expected: '-2 -3 -4\n-1 -2 -3\n' },
       ],
       hints: [
-        '队列里存**下标**：既能取值 `a[q[head]]`，又能判断是否滑出窗口。',
-        '入队前从队尾把"不比当前元素大"的都弹掉；入队后从队头把过期下标弹掉。',
-        '队头始终是当前窗口的最大值，`i >= k` 时就可以输出它。',
+        '最小值与最大值是同一个套路，只是比较方向相反，可以写成一个带开关的函数。',
+        '队列里存**下标**而不是值：这样既能比大小，又能判断队首有没有滑出窗口。',
+        '每次移动后：先弹出队尾那些"不可能更好"的元素，再把新下标入队，然后判断队首是否过期，最后记录答案。',
+        '第一个窗口在 `i == k` 时形成，一共 `n - k + 1` 个答案。',
       ],
       luoguKeyword: '单调队列 滑动窗口',
       luoguCode: 'P1886',
+      luoguAligned: true,
     }),
   ],
 };

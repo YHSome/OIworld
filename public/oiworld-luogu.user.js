@@ -167,6 +167,98 @@
     return undefined;
   }
 
+  /** 洛谷页面数据里的 JSON（现代洛谷把数据放在 <script id="lentille-context"> 中） */
+  function extractLentilleContext(html) {
+    var match = /<script id="lentille-context" type="application\/json">([\s\S]*?)<\/script>/.exec(
+      html || '',
+    );
+    if (!match) return null;
+    try {
+      return JSON.parse(match[1]);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * 按"结构"找出评测记录数组，而不是猜包装字段名。
+   *
+   * 洛谷的 _contentOnly 返回结构变过几次（currentData.records / data.records /
+   * records.result 都出现过），靠固定路径解析一旦洛谷改版就会拿到空列表 ——
+   * 这正是"提交了但在本站看不到记录"的根因。这里改成广度优先搜索：
+   * 找到第一个"元素看起来像评测记录（有 status，且有 id/rid）"的数组。
+   */
+  function findRecords(value) {
+    var queue = [value];
+    var guard = 0;
+    while (queue.length && guard < 500) {
+      guard += 1;
+      var node = queue.shift();
+      if (Array.isArray(node)) {
+        if (
+          node.length > 0 &&
+          node.every(function (item) {
+            return item && typeof item === 'object' && 'status' in item && ('id' in item || 'rid' in item);
+          })
+        ) {
+          return node;
+        }
+        for (var i = 0; i < node.length && i < 20; i += 1) {
+          if (node[i] && typeof node[i] === 'object') queue.push(node[i]);
+        }
+        continue;
+      }
+      if (node && typeof node === 'object') {
+        var keys = Object.keys(node);
+        // 常见的容器字段优先
+        var preferred = ['records', 'result', 'list', 'items', 'data', 'currentData'];
+        for (var p = 0; p < preferred.length; p += 1) {
+          if (preferred[p] in node && node[preferred[p]] && typeof node[preferred[p]] === 'object') {
+            queue.unshift(node[preferred[p]]);
+          }
+        }
+        for (var k = 0; k < keys.length; k += 1) {
+          var key = keys[k];
+          if (preferred.indexOf(key) !== -1) continue;
+          var child = node[key];
+          if (child && typeof child === 'object') queue.push(child);
+        }
+      }
+    }
+    return null;
+  }
+
+  /** 按"结构"找一条评测记录对象 */
+  function findRecord(value) {
+    var queue = [value];
+    var guard = 0;
+    while (queue.length && guard < 500) {
+      guard += 1;
+      var node = queue.shift();
+      if (Array.isArray(node)) {
+        for (var i = 0; i < node.length && i < 10; i += 1) {
+          if (node[i] && typeof node[i] === 'object') queue.push(node[i]);
+        }
+        continue;
+      }
+      if (node && typeof node === 'object') {
+        if ('status' in node && ('id' in node || 'rid' in node || 'score' in node)) return node;
+        var keys = Object.keys(node);
+        var preferred = ['record', 'data', 'currentData'];
+        for (var p = 0; p < preferred.length; p += 1) {
+          if (preferred[p] in node && node[preferred[p]] && typeof node[preferred[p]] === 'object') {
+            queue.unshift(node[preferred[p]]);
+          }
+        }
+        for (var k = 0; k < keys.length; k += 1) {
+          var child = node[keys[k]];
+          if (child && typeof child === 'object' && preferred.indexOf(keys[k]) === -1) queue.push(child);
+        }
+      }
+    }
+    return null;
+  }
+
   /** 把洛谷的错误响应翻译成一句人话 */
   function describeFailure(status, json, body) {
     var type = json ? String(json.errorType || '') : '';
@@ -277,14 +369,27 @@
         return { loggedIn: false, status: response.status, unknown: true };
       }
       var html = response.body || '';
-      var uidMatch = /"uid"\s*:\s*(\d+)/.exec(html) || /\/user\/(\d+)/.exec(html);
-      var nameMatch = /"name"\s*:\s*"([^"]{1,32})"/.exec(html);
-      return {
-        loggedIn: true,
-        status: 200,
-        uid: uidMatch ? Number(uidMatch[1]) : null,
-        name: nameMatch ? nameMatch[1] : null,
-      };
+      // 优先读洛谷内嵌的 lentille-context JSON（结构最可靠），拿不到再退回正则
+      var uid = null;
+      var name = null;
+      var context = extractLentilleContext(html);
+      var user = context && context.user;
+      if (user) {
+        if (typeof user.uid === 'number') uid = user.uid;
+        if (typeof user.name === 'string') name = user.name;
+      }
+      if (uid === null) {
+        // 只认「user 对象里的 uid」，避免误抓到页面上其他人的 uid
+        var uidMatch =
+          /"user"\s*:\s*\{[^{}]*?"uid"\s*:\s*(\d+)/.exec(html) || /"uid"\s*:\s*(\d+)/.exec(html);
+        uid = uidMatch ? Number(uidMatch[1]) : null;
+      }
+      if (name === null) {
+        var nameMatch = /"user"\s*:\s*\{[^{}]*?"name"\s*:\s*"([^"]{1,32})"/.exec(html) ||
+          /"name"\s*:\s*"([^"]{1,32})"/.exec(html);
+        name = nameMatch ? nameMatch[1] : null;
+      }
+      return { loggedIn: true, status: 200, uid: uid, name: name };
     });
   }
 
@@ -370,7 +475,7 @@
         var failure = describeFailure(response.status, json, response.body);
         throw Object.assign(new Error(failure.message), { code: failure.code });
       }
-      var data = pick(json || {}, ['currentData.record', 'data.record', 'record']);
+      var data = findRecord(json) || pick(json || {}, ['currentData.record', 'data.record', 'record']);
       if (!data) {
         throw Object.assign(new Error('洛谷没有返回这条评测记录'), { code: 'NO_RECORD' });
       }
@@ -401,13 +506,11 @@
         var failure = describeFailure(response.status, json, response.body);
         throw Object.assign(new Error(failure.message), { code: failure.code });
       }
-      var list = pick(json || {}, [
+      var list = findRecords(json) || pick(json || {}, [
         'currentData.records.result',
         'currentData.records',
         'data.records.result',
         'data.records',
-        'records.result',
-        'records',
       ]);
       if (Array.isArray(list)) return list;
       if (list && Array.isArray(list.result)) return list.result;

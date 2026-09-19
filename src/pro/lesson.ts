@@ -48,6 +48,12 @@ export interface ProLessonInput {
   luoguKeyword?: string;
   /** 洛谷题号（可选，例如 P3367）。只在人工核对过之后才填 */
   luoguCode?: string;
+  /**
+   * 本题输入输出格式是否已与 luoguCode 那道洛谷题**对齐**
+   * （对齐后参考题解可原样提交到洛谷；由 `npm run validate:pro-luogu` 用洛谷样例校验）。
+   * 未对齐时不要在提交面板里预填题号。
+   */
+  luoguAligned?: boolean;
 }
 
 /** 「你可能写成 | 会发生什么 | 正确写法」三列表格 */
@@ -117,6 +123,7 @@ export function proLesson(input: ProLessonInput): Problem {
     hints: input.hints,
     luogu_keyword: input.luoguKeyword,
     luogu_code: input.luoguCode,
+    luogu_aligned: input.luoguAligned,
   };
 }
 

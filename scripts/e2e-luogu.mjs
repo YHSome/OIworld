@@ -131,7 +131,7 @@ function luoguTransportStub() {
           JSON.stringify({
             currentData: {
               record: {
-                id: 987654,
+                id: 98765432,
                 status: settled ? 12 : 1,
                 score: settled ? 100 : 0,
                 time: 15,
@@ -379,15 +379,25 @@ try {
   step('提交成功后自动刷新了提交记录（无需手动点按钮）');
   await page.waitForSelector('.luogu-panel .ant-table-tbody tr.ant-table-row', { timeout: 30_000 });
   const autoRows = await page.locator('.luogu-panel .ant-table-tbody tr.ant-table-row').count();
-  check('记录表格自动出现 3 行', autoRows === 3, `rows=${autoRows}`);
+  // 洛谷列表返回 3 条，再加上"刚刚提交的那一条"，共 4 行
+  check('记录表格自动出现 4 行（3 条列表 + 刚提交的那条）', autoRows === 4, `rows=${autoRows}`);
   const autoText = await page.locator('.luogu-panel .ant-table-tbody').innerText();
   check('自动刷新出的记录含 AC', autoText.includes('AC'));
+  const firstRowText = await page
+    .locator('.luogu-panel .ant-table-tbody tr.ant-table-row')
+    .first()
+    .innerText();
+  check(
+    '刚提交的那条排在最上面',
+    /98765432/.test(firstRowText) && firstRowText.includes('AC'),
+    firstRowText.replace(/\n/g, ' ').slice(0, 60),
+  );
 
   step('刷新提交记录（手动按钮仍然可用）');
   await page.locator('.luogu-panel button').filter({ hasText: /刷新提交记录/ }).click();
   await page.waitForSelector('.luogu-panel .ant-table-tbody tr.ant-table-row', { timeout: 30_000 });
   const rows = await page.locator('.luogu-panel .ant-table-tbody tr.ant-table-row').count();
-  check('提交记录表格出现 3 行', rows === 3, `rows=${rows}`);
+  check('提交记录表格仍为 4 行', rows === 4, `rows=${rows}`);
   const recordText = await page.locator('.luogu-panel .ant-table-tbody').innerText();
   check('记录了 AC / WA / CE 三种状态', ['AC', 'WA', 'CE'].every((item) => recordText.includes(item)));
   check('记录了语言 C++20', recordText.includes('C++20'));

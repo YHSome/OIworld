@@ -228,6 +228,24 @@ export default defineConfig(({ command }) => {
     server: {
       port: 5173,
       open: false,
+      watch: {
+        /**
+         * 不监听这些目录：
+         *  - .tmp / test-results：临时脚本与测试截图。编辑工具/脚本常以
+         *    “临时目录 + 重命名”的方式原子写文件，Windows 上监听器扫到那个临时目录会抛
+         *    EBUSY，直接把 dev server 打死（本项目已经踩过两次）；
+         *  - public 下的运行时资源：加起来上百 MB，监听它们纯属浪费。
+         */
+        ignored: [
+          '**/.tmp/**',
+          '**/test-results/**',
+          '**/dist/**',
+          '**/public/toolchain/**',
+          '**/public/python-runtime/**',
+          '**/public/doppio-runtime/**',
+          '**/public/java-runtime/**',
+        ],
+      },
     },
     build: {
       // monaco-editor 体积较大，放宽警告阈值

@@ -123,6 +123,7 @@ export function LuoguSubmitPanel({
   const [records, setRecords] = useState<LuoguRecord[] | null>(null);
   const [loadingRecords, setLoadingRecords] = useState(false);
   const [recordsError, setRecordsError] = useState('');
+  const [recordsNote, setRecordsNote] = useState('');
   const pollToken = useRef(0);
 
   const language = storedLanguage ?? LUOGU_DEFAULT_LANGUAGE[track];
@@ -136,6 +137,7 @@ export function LuoguSubmitPanel({
     setRecord(null);
     setRecords(null);
     setRecordsError('');
+    setRecordsNote('');
     pollToken.current += 1;
   }, [problemId, defaultPid]);
 
@@ -148,6 +150,11 @@ export function LuoguSubmitPanel({
 
   /**
    * 拉取该题的提交记录。
+   *
+   * 这里刻意**不用**洛谷的 `user=` 参数过滤：只要 uid 解析得不准，过滤结果就是空列表，
+   * 表现为"明明交了却看不到记录"。改成拉公开列表后在本地按 uid 挑出自己的记录，
+   * 挑不出来就原样显示全部并给出说明。
+   *
    * @param silent 静默模式：用于提交成功后自动刷新，不弹提示、失败也不打断用户
    */
   const loadRecords = useCallback(
@@ -158,18 +165,32 @@ export function LuoguSubmitPanel({
       }
       setLoadingRecords(true);
       if (!silent) setRecordsError('');
+      setRecordsNote('');
       try {
-        // 绑定了账号就只看这个账号在这道题上的记录，避免把公开记录列表里
-        // 别人的成绩当成本题进度
-        const list = await fetchLuoguRecords(pid, 1, boundUid || undefined);
-        setRecords(list);
-        if (!silent && list.length === 0) {
-          messageApi.info('洛谷没有返回提交记录（可能这个账号还没交过这题）');
+        const all = await fetchLuoguRecords(pid);
+        const mine = boundUid
+          ? all.filter((item) => String(item.user?.uid ?? '') === String(boundUid))
+          : all;
+        if (boundUid && mine.length === 0 && all.length > 0) {
+          setRecords(all);
+          setRecordsNote(
+            `没能按绑定的 uid（${boundUid}）认出你的记录，下面是这道题的公开记录；点表头右侧的「记录」列可以核对是不是你交的。`,
+          );
+        } else {
+          setRecords(mine);
+          if (!silent && mine.length === 0) {
+            messageApi.info('这道题还没有提交记录（洛谷返回的列表是空的）');
+          }
         }
       } catch (error) {
-        if (silent) return;
+        const message = describeLuoguError(error);
+        if (silent) {
+          // 自动刷新失败也要说一声，否则界面看起来就是"没有记录"
+          setRecordsNote(`自动刷新提交记录失败：${message}`);
+          return;
+        }
         setRecords([]);
-        setRecordsError(describeLuoguError(error));
+        setRecordsError(message);
       } finally {
         setLoadingRecords(false);
       }
@@ -257,8 +278,33 @@ export function LuoguSubmitPanel({
   };
 
   const status = record ? getLuoguStatus(record.status) : null;
+
+  /**
+   * 表格里要显示的记录：把"刚刚提交的这条"并进来。
+   * 洛谷的记录列表有延迟，或者解析/过滤没命中时，用户至少能看到自己这次提交。
+   */
+  const tableRecords = useMemo(() => {
+    if (!records && !record) return null;
+    const base = records ?? [];
+    if (!record) return base;
+    return base.some((item) => item.id === record.id) ? base : [record, ...base];
+  }, [records, record]);
+
   const recordsColumns = useMemo(
     () => [
+      {
+        title: '记录号',
+        key: 'rid',
+        width: 96,
+        render: (_: unknown, item: LuoguRecord) =>
+          item.id ? (
+            <a href={luoguRecordUrl(item.id)} target="_blank" rel="noreferrer">
+              R{item.id}
+            </a>
+          ) : (
+            '—'
+          ),
+      },
       {
         title: '状态',
         dataIndex: 'status',
@@ -299,14 +345,24 @@ export function LuoguSubmitPanel({
         render: (value?: number) => formatLuoguTime(value) || '—',
       },
       {
-        title: '',
-        key: 'action',
-        width: 64,
-        render: (_: unknown, item: LuoguRecord) => (
-          <a href={luoguRecordUrl(item.id)} target="_blank" rel="noreferrer">
-            记录
-          </a>
-        ),
+        title: '账号',
+        key: 'user',
+        width: 110,
+        render: (_: unknown, item: LuoguRecord) =>
+          item.user?.name ?? (item.user?.uid ? `uid ${item.user.uid}` : '—'),
+      },
+      {
+        title: '记录号',
+        key: 'rid',
+        width: 96,
+        render: (_: unknown, item: LuoguRecord) =>
+          item.id ? (
+            <a href={luoguRecordUrl(item.id)} target="_blank" rel="noreferrer">
+              R{item.id}
+            </a>
+          ) : (
+            '—'
+          ),
       },
     ],
     [],
@@ -499,14 +555,20 @@ export function LuoguSubmitPanel({
           <Alert type="error" showIcon message="读取提交记录失败" description={recordsError} />
         )}
 
-        {records && records.length > 0 && (
+        {recordsNote && (
+          <Text type="secondary" style={{ fontSize: 12 }}>
+            {recordsNote}
+          </Text>
+        )}
+
+        {tableRecords && tableRecords.length > 0 && (
           <Table
             size="small"
             rowKey={(item) => String(item.id)}
             columns={recordsColumns}
-            dataSource={records}
+            dataSource={tableRecords}
             pagination={false}
-            scroll={{ x: 620, y: 220 }}
+            scroll={{ x: 760, y: 220 }}
           />
         )}
 

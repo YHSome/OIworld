@@ -82,6 +82,11 @@ try {
   check('阶段页显示阶段标题', stageText.includes('阶段一'));
   check('阶段页列出 6 道题', (await page.locator('table tbody tr').count()) === 6);
   check('阶段页有上下阶段导航', stageText.includes('下一阶段'));
+  check(
+    '阶段页有「洛谷」列并显示已核实的题号',
+    stageText.includes('洛谷') && /B3614|P1739|P1449|B3616|P5788|P1886/.test(stageText),
+    (stageText.match(/[A-Z]{1,2}\d{3,5}/g) ?? []).slice(0, 6).join(' '),
+  );
   await page.screenshot({ path: path.join(shotDir, 'pro-2-stage.png'), fullPage: true });
 
   step('题目页（阶段一第一题）');

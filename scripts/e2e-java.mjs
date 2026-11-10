@@ -92,17 +92,15 @@ try {
   check('Java 语言已生效（编辑器出现 Java 关键字高亮容器）', (await page.locator('.monaco-editor').count()) > 0);
   await page.screenshot({ path: path.join(shotDir, 'java-3-problem.png'), fullPage: true });
 
-  step('等待 Java 运行环境就绪（Doppio，约 100MB）');
-  const readyAt = Date.now();
-  await page.waitForFunction(
-    () => {
-      const nodes = Array.from(document.querySelectorAll('.ant-alert-message'));
-      return nodes.some((node) => (node.textContent ?? '').includes('已就绪'));
-    },
-    undefined,
-    { timeout: 600_000 },
-  );
-  check(`运行环境就绪（${((Date.now() - readyAt) / 1000).toFixed(1)}s）`, true);
+  step('懒加载：进页面不加载运行环境');
+  // 运行环境现在是懒加载的：进页面时状态条不渲染，也不该开始下载 Doppio
+  const runtimeAlertVisible = await page
+    .locator('.ant-alert')
+    .filter({ hasText: /运行环境/ })
+    .first()
+    .isVisible()
+    .catch(() => false);
+  check('进页面不显示运行环境状态条（懒加载）', !runtimeAlertVisible);
 
   step('像真实学生那样：把 // TODO 那一行改成输出语句');
   // 注意：不能用「全选 + insertText 整段替换」——Monaco 对整段插入会触发

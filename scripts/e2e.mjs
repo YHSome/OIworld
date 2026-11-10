@@ -36,10 +36,18 @@ const bad = (text) => {
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
 const consoleErrors = [];
+const requestedUrls = [];
 page.on('pageerror', (error) => consoleErrors.push(error.message));
 page.on('console', (msg) => {
   if (msg.type() === 'error') consoleErrors.push(msg.text());
 });
+page.on('request', (request) => requestedUrls.push(request.url()));
+
+/** 工具链（clang / lld / sysroot，或 jsDelivr 上的 browsercc）请求 */
+const toolchainRequests = () =>
+  requestedUrls.filter(
+    (url) => url.includes('/toolchain/') || url.includes('jsdelivr') || url.includes('browsercc'),
+  );
 
 /** antd 按钮文字里带 JSX 缩进空白，用规范化后的正则匹配 */
 /** 等待 C++ 编译器就绪：题目页右侧的编译器提示条消失即表示已就绪 */
@@ -78,6 +86,18 @@ try {
   await page.waitForSelector('.problem-page', { timeout: 20_000 });
   await page.waitForSelector('.monaco-editor', { timeout: 60_000 });
   ok('题目页与 Monaco 编辑器已加载');
+
+  step('懒加载：进页面不下载编译器，点「运行」才开始下载');
+  const toolchainBeforeRun = toolchainRequests().length;
+  ok(
+    `进页面时没有任何工具链请求（懒加载）`,
+    toolchainBeforeRun === 0,
+    `实际 ${toolchainBeforeRun} 个`,
+  );
+  ok(
+    '进页面时没有"正在下载编译器"提示',
+    !(await page.locator('.ant-alert-message').allInnerTexts()).some((text) => /下载编译器|正在准备/.test(text)),
+  );
 
   step('等待编译器就绪（首次需加载 clang / wasm-ld / C++ 标准库）');
   const readyAt = Date.now();

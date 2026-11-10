@@ -409,23 +409,25 @@ export function JavaProblemPage() {
 
       {/* ---------------- 右侧：代码编辑与运行 ---------------- */}
       <div className="problem-right">
-        <Alert
-          type={
-            runtime.phase === 'failed'
-              ? 'error'
-              : runtime.phase === 'ready'
-                ? 'success'
-                : 'info'
-          }
-          showIcon
-          style={{ marginBottom: 12, display: runtime.phase === 'idle' ? 'none' : undefined }}
-          message={runtime.message}
-          description={
-            runtime.phase === 'ready' || runtime.phase === 'failed'
-              ? undefined
-              : JAVA_RUNTIME_LOADING_HINT
-          }
-        />
+        {runtime.phase !== 'idle' && (
+          <Alert
+            type={
+              runtime.phase === 'failed'
+                ? 'error'
+                : runtime.phase === 'ready'
+                  ? 'success'
+                  : 'info'
+            }
+            showIcon
+            style={{ marginBottom: 12 }}
+            message={runtime.message}
+            description={
+              runtime.phase === 'ready' || runtime.phase === 'failed'
+                ? undefined
+                : JAVA_RUNTIME_LOADING_HINT
+            }
+          />
+        )}
 
         <Card variant="borderless" styles={{ body: { padding: 12 } }}>
           <Space

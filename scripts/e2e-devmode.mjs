@@ -1,4 +1,4 @@
-/**
+﻿/**
  * 开发者模式验收：
  *   1. 默认情况下后面的题目是锁着的（做题顺序是固定的闯关规则，没有开关可关）
  *   2. ?dev=1 能一键解锁全部题目，并在顶栏显示 DEV 标记
@@ -107,7 +107,7 @@ try {
   step('检查开发者面板内容');
   const panel = await page.locator('.developer-panel').innerText();
   check('显示编译参数', panel.includes('-std=c++20') && panel.includes('-fno-exceptions'));
-  check('显示工具链来源', panel.includes('/toolchain') || panel.includes('CDN'));
+  check('显示工具链状态（懒加载时标注尚未加载）', panel.includes('尚未加载') || panel.includes('/toolchain') || panel.includes('CDN'));
   check('显示测试用例数量', panel.includes('测试用例'));
   check('提供"把参考题解填进编辑器"', panel.includes('把参考题解填进编辑器'));
   check('提供"复制题目 JSON"', panel.includes('复制题目 JSON'));

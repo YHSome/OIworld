@@ -131,7 +131,7 @@ export function DeveloperPanel({
           children: (
             <Space wrap>
               <Text code style={{ fontSize: 12 }}>
-                {compilerStatus.base || '（尚未解析）'}
+                {compilerStatus.base || '（尚未加载，点「运行」时下载）'}
               </Text>
               <Tag>{SOURCE_TEXT[compilerStatus.source]}</Tag>
               {compilerStatus.version && <Tag>v{compilerStatus.version}</Tag>}

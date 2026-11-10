@@ -25,6 +25,11 @@ interface ToolchainAlertProps {
 }
 
 export function ToolchainAlert({ status, onRetry }: ToolchainAlertProps) {
+  // 还没开始下载（用户没点过「运行 / 提交」）就什么都不显示，避免页面一打开就挂个"正在准备"
+  if (status.phase === 'idle') {
+    return null;
+  }
+
   if (isToolchainReady(status.phase)) {
     return null;
   }

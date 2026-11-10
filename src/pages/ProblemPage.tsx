@@ -119,14 +119,10 @@ export function ProblemPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [problem?.id]);
 
-  /** 进入页面就预热编译器（后台下载 clang/lld） */
-  useEffect(() => {
-    if (!unlocked) return;
-    void warmUpCompiler().catch(() => {
-      /* 错误已经记录在 compilerService 的状态里 */
-    });
-  }, [unlocked]);
-
+  /**
+   * 不再"进页面就下载编译器"：约 90MB 的 clang/lld/sysroot 改成**第一次点「运行 / 提交」时才下载**
+   * （编译链路内部会 ensureReady），这样题目页能瞬间打开，不会一进来就卡在"准备编译器"。
+   */
   const handleCodeChange = useCallback(
     (value: string) => {
       setCode(value);

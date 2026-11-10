@@ -109,11 +109,7 @@ export function JavaProblemPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [problem?.id]);
 
-  /** 进入题目页就预热 Java 运行环境（后台加载，避免第一次运行干等） */
-  useEffect(() => {
-    if (!unlocked) return;
-    void javaService.warmUp().catch(() => undefined);
-  }, [unlocked]);
+  // 不再进页面就加载 Java 运行环境（约 40MB）：改成第一次点「运行 / 提交」时才加载，页面秒开
 
   if (!problem || !entry) {
     return (
@@ -422,7 +418,7 @@ export function JavaProblemPage() {
                 : 'info'
           }
           showIcon
-          style={{ marginBottom: 12 }}
+          style={{ marginBottom: 12, display: runtime.phase === 'idle' ? 'none' : undefined }}
           message={runtime.message}
           description={
             runtime.phase === 'ready' || runtime.phase === 'failed'
